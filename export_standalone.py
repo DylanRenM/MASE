@@ -18,6 +18,10 @@ _AD_PATTERN = re.compile(
 )
 
 
+# 单条目内容上限（浏览器渲染性能保护）
+MAX_CONTENT_CHARS = 300_000
+
+
 def load_json(path="data/encyclopedia.json"):
     with open(path) as f:
         return json.load(f)
@@ -30,7 +34,7 @@ def generate_html(encyclopedia_data: dict, cases_data: list = None):
     # 构建条目列表
     genres = []
     for genre_name in sorted(by_genre.keys()):
-        topics_dict = by_genre[genre_name]  # {topic_name: entry_dict, ...}
+        topics_dict = by_genre[genre_name]
         topics = []
         for topic_name, entry in sorted(topics_dict.items()):
             if not entry:
@@ -42,12 +46,19 @@ def generate_html(encyclopedia_data: dict, cases_data: list = None):
             content = "\n".join(clean_lines)
             # 兜底正则过滤（LLM未能清理的广告残留）
             content = _AD_PATTERN.sub("", content)
+            # 截断过长内容，保护浏览器渲染性能
+            truncated = False
+            if len(content) > MAX_CONTENT_CHARS:
+                content = content[:MAX_CONTENT_CHARS] + "\n\n... (内容过长已截断，完整内容请查看源数据)"
+                truncated = True
+            # 使用 source_count（block_count 当前为0）
+            count = entry.get("source_count", entry.get("block_count", 0))
             topics.append({
                 "topic": topic_name,
                 "content": content,
-                "source_count": entry.get("source_count", 0),
-                "block_count": entry.get("block_count", 0),
+                "count": count,
                 "see_also": entry.get("see_also", []),
+                "truncated": truncated,
             })
         topics.sort(key=lambda t: t["topic"])
         genres.append({
@@ -121,6 +132,10 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC
 <body>
 <div id="sidebar">
     <h2>八字命理百科全书</h2>
+    <div class="view-tabs" id="view-tabs">
+        <button class="view-tab active" onclick="switchView('genre')">按流派</button>
+        <button class="view-tab" onclick="switchView('topic')">按专题</button>
+    </div>
     <input type="text" id="search-box" placeholder="搜索流派、专题..." oninput="filterTree()">
     <div id="tree"></div>
     <div id="stats-bar">共 {len(genres)} 流派 · {total_topics} 专题 · {case_count} 命例</div>
@@ -136,7 +151,7 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC
 const ENCYCLOPEDIA = {encyclopedia_json};
 
 let activeGenre = null;
-let activeTopic = null;
+let activeView = 'genre';
 
 // Markdown rendering via marked.js
 function renderMd(md) {{
@@ -145,6 +160,16 @@ function renderMd(md) {{
         return '<p>' + md.replace(/\\n/g, '<br>') + '</p>';
     }}
     try {{
+        // 限制大内容渲染：超过 200KB 的 Markdown 分块渲染
+        if (md.length > 200000) {{
+            const parts = md.split('\\n## ');
+            const first = parts[0];
+            const body = parts.slice(1).map(function(p) {{ return '## ' + p; }});
+            // 只渲染前 50 个 section
+            const toRender = [first].concat(body.slice(0, 50)).join('\\n');
+            const rest = body.length > 50 ? '<p><em>（共 ' + body.length + ' 节，仅显示前 50 节）</em></p>' : '';
+            return marked.parse(toRender, {{ breaks: true, gfm: true }}) + rest;
+        }}
         return marked.parse(md, {{ breaks: true, gfm: true }});
     }} catch(e) {{
         return '<p>' + md.replace(/\\n/g, '<br>') + '</p>';
@@ -171,7 +196,7 @@ function buildTree(genres) {{
         g.topics.forEach(function(t, ti) {{
             const item = document.createElement('div');
             item.className = 'topic-item';
-            item.textContent = t.topic + ' (' + t.block_count + ')';
+            item.textContent = t.topic + ' (' + t.count + ')';
             item.onclick = function(e) {{ e.stopPropagation(); selectTopic(gi, ti, item); }};
             list.appendChild(item);
         }});
@@ -199,7 +224,8 @@ function selectTopic(gi, ti, itemEl) {{
 
 function renderContent(genre, topic) {{
     const content = document.getElementById('content');
-    const meta = '<div class="meta"><span>来源: ' + topic.source_count + '本书</span><span>内容块: ' + topic.block_count + '条</span></div>';
+    const truncMsg = topic.truncated ? '<span style="color:#c04040;">（内容已截断）</span> ' : '';
+    const meta = '<div class="meta">' + truncMsg + '<span>来源: ' + topic.count + '本书</span></div>';
     let seeAlso = '';
     if (topic.see_also && topic.see_also.length > 0) {{
         let links = topic.see_also.map(function(s) {{ return '<a onclick="navigateTo(\\'' + s + '\\')">' + s + '</a>'; }}).join(' · ');
@@ -254,6 +280,70 @@ function filterTree() {{
             }}
         }});
         g.style.display = (!q || gn.includes(q) || anyVisible) ? '' : 'none';
+    }});
+}}
+
+function switchView(view) {{
+    activeView = view;
+    document.querySelectorAll('.view-tab').forEach(function(t) {{ t.classList.remove('active'); }});
+    document.getElementById('view-tabs').querySelectorAll('button')[view === 'genre' ? 0 : 1].classList.add('active');
+    if (view === 'genre') {{
+        buildTree(ENCYCLOPEDIA);
+    }} else {{
+        buildTopicTree(ENCYCLOPEDIA);
+    }}
+}}
+
+// 按专题视图：专题为顶层，流派为子项
+function buildTopicTree(genres) {{
+    // 收集所有专题及所属流派
+    var topicMap = {{}};
+    genres.forEach(function(g) {{
+        g.topics.forEach(function(t) {{
+            if (!topicMap[t.topic]) {{
+                topicMap[t.topic] = [];
+            }}
+            topicMap[t.topic].push({{ genre: g, topic: t }});
+        }});
+    }});
+    var sortedTopics = Object.keys(topicMap).sort();
+
+    const tree = document.getElementById('tree');
+    tree.innerHTML = '';
+    sortedTopics.forEach(function(topicName, ti) {{
+        var entries = topicMap[topicName];
+        var group = document.createElement('div');
+        group.className = 'genre-group';
+        group.setAttribute('data-genre', topicName);
+
+        var totalCount = entries.reduce(function(s, e) {{ return s + e.topic.count; }}, 0);
+        var title = document.createElement('div');
+        title.className = 'genre-title';
+        title.innerHTML = '<span class="arrow">▶</span> ' + topicName + ' <span class="count">' + entries.length + '流派 · ' + totalCount + '来源</span>';
+        title.onclick = function() {{ toggleGenre(ti, title); }};
+
+        var list = document.createElement('div');
+        list.className = 'topics-list';
+        list.id = 'topics-' + ti;
+
+        entries.forEach(function(e, ei) {{
+            var item = document.createElement('div');
+            item.className = 'topic-item';
+            item.textContent = e.genre.name + ' (' + e.topic.count + ')';
+            item.setAttribute('data-genre-idx', ENCYCLOPEDIA.indexOf(e.genre));
+            item.setAttribute('data-topic-idx', e.genre.topics.indexOf(e.topic));
+            item.onclick = function(ev) {{
+                ev.stopPropagation();
+                var gi = parseInt(this.getAttribute('data-genre-idx'));
+                var tii = parseInt(this.getAttribute('data-topic-idx'));
+                selectTopic(gi, tii, this);
+            }};
+            list.appendChild(item);
+        }});
+
+        group.appendChild(title);
+        group.appendChild(list);
+        tree.appendChild(group);
     }});
 }}
 
