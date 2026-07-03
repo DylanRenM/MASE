@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>八字百科全书</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f0eb; color: #2c2416; height: 100vh; overflow: hidden; }
+
+/* 顶栏 */
+.header { background: linear-gradient(135deg, #8b4513, #5c2d0a); color: #f5f0eb; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header .stats { font-size: 13px; opacity: 0.8; }
+.header button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 16px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+.header button:hover { background: rgba(255,255,255,0.25); }
+
+/* 双面板主体 */
+.main { display: flex; height: calc(100vh - 48px); }
+
+/* 左面板: 书籍管理 */
+.panel-left { width: 320px; min-width: 280px; background: #fff; border-right: 1px solid #e0d5c7; display: flex; flex-direction: column; overflow: hidden; }
+.panel-left .panel-header { padding: 12px 16px; border-bottom: 1px solid #e0d5c7; display: flex; justify-content: space-between; align-items: center; }
+.panel-left .panel-header h2 { font-size: 16px; color: #5c2d0a; }
+.panel-left .add-btn { background: #8b4513; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+.panel-left .add-btn:hover { background: #6b3410; }
+.book-list { flex: 1; overflow-y: auto; padding: 8px; }
+.book-card { padding: 10px 12px; margin-bottom: 6px; border: 1px solid #e0d5c7; border-radius: 6px; cursor: default; transition: all 0.15s; }
+.book-card:hover { border-color: #c4a882; background: #faf7f2; }
+.book-card .book-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; word-break: break-all; }
+.book-card .book-meta { font-size: 12px; color: #999; margin-bottom: 6px; }
+.book-status { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 10px; }
+.book-status.done { background: #e8f5e9; color: #2e7d32; }
+.book-status.pending { background: #fff3e0; color: #e65100; }
+.book-status.processing { background: #e3f2fd; color: #1565c0; }
+.book-status.failed { background: #ffebee; color: #c62828; }
+.book-card .book-actions { margin-top: 6px; display: flex; gap: 6px; }
+.book-card .book-actions button { font-size: 11px; padding: 3px 10px; border-radius: 3px; cursor: pointer; border: 1px solid #ccc; background: #fff; }
+.book-card .book-actions button:hover { background: #f0f0f0; }
+.book-card .book-actions .btn-merge { background: #8b4513; color: #fff; border-color: #8b4513; }
+.book-card .book-actions .btn-merge:hover { background: #6b3410; }
+.book-card .book-actions .btn-remove { color: #c62828; border-color: #c62828; }
+
+/* 右面板: 百科浏览 */
+.panel-right { flex: 1; display: flex; overflow: hidden; }
+.encyclopedia-tree { width: 260px; min-width: 200px; background: #faf7f2; border-right: 1px solid #e0d5c7; overflow-y: auto; padding: 12px; }
+.encyclopedia-tree .search-box { margin-bottom: 12px; }
+.encyclopedia-tree .search-box input { width: 100%; padding: 8px 12px; border: 1px solid #d0c8b8; border-radius: 4px; font-size: 13px; outline: none; }
+.encyclopedia-tree .search-box input:focus { border-color: #8b4513; }
+
+.tree-node { user-select: none; }
+.tree-node .node-header { display: flex; align-items: center; gap: 4px; padding: 4px 0; cursor: pointer; border-radius: 3px; font-size: 13px; }
+.tree-node .node-header:hover { background: #ede0c8; }
+.tree-node .node-header .arrow { width: 16px; text-align: center; font-size: 10px; transition: transform 0.15s; }
+.tree-node .node-header .arrow.expanded { transform: rotate(90deg); }
+.tree-node .children { padding-left: 16px; }
+.tree-node .children.collapsed { display: none; }
+.tree-node .leaf-item { padding: 3px 8px; cursor: pointer; font-size: 13px; border-radius: 3px; }
+.tree-node .leaf-item:hover { background: #ede0c8; }
+.tree-node .leaf-item.active { background: #8b4513; color: #fff; }
+
+.content-area { flex: 1; overflow-y: auto; padding: 24px 32px; background: #fff; }
+.content-area .entry-header { margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #8b4513; }
+.content-area .entry-header h2 { font-size: 22px; color: #5c2d0a; }
+.content-area .entry-header .entry-meta { font-size: 12px; color: #999; margin-top: 4px; }
+.content-area .empty-state { text-align: center; padding: 80px 20px; color: #999; }
+.content-area .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.content-area .loading-state { text-align: center; padding: 40px; color: #999; }
+.content-area .loading-state .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #e0d5c7; border-top-color: #8b4513; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.content-area h3 { font-size: 17px; color: #5c2d0a; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e0d5c7; }
+.content-area p { line-height: 1.8; margin: 8px 0; font-size: 15px; }
+.content-area blockquote { border-left: 3px solid #c4a882; padding: 6px 16px; margin: 12px 0; background: #faf7f2; color: #666; font-size: 14px; }
+.content-area .see-also { margin-top: 24px; padding: 12px; background: #faf7f2; border-radius: 6px; }
+.content-area .see-also a { color: #8b4513; text-decoration: none; margin-right: 12px; cursor: pointer; }
+.content-area .see-also a:hover { text-decoration: underline; }
+
+/* 命例面板 */
+.case-panel { padding: 0; }
+.case-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; padding: 12px; background: #faf7f2; border-radius: 6px; }
+.case-filters select { padding: 6px 10px; border: 1px solid #d0c8b8; border-radius: 4px; font-size: 13px; }
+.case-card { padding: 12px 16px; margin-bottom: 8px; border: 1px solid #e0d5c7; border-radius: 6px; }
+.case-card .case-source { font-size: 12px; color: #999; }
+.case-card .case-text { margin: 6px 0; line-height: 1.7; }
+.case-card .case-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.case-tag { font-size: 11px; padding: 1px 6px; background: #ede0c8; border-radius: 8px; color: #5c2d0a; }
+
+/* 弹窗 */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 8px; padding: 24px; width: 400px; max-width: 90%; }
+.modal h3 { margin-bottom: 16px; }
+.modal input[type=file] { margin-bottom: 12px; }
+.modal .progress-bar { height: 6px; background: #e0d5c7; border-radius: 3px; margin: 8px 0; overflow: hidden; }
+.modal .progress-bar .fill { height: 100%; background: #8b4513; transition: width 0.3s; }
+.modal .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.modal button { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: 1px solid #ccc; background: #fff; }
+.modal .btn-primary { background: #8b4513; color: #fff; border-color: #8b4513; }
+
+#toast { position: fixed; bottom: 24px; right: 24px; padding: 10px 20px; border-radius: 6px; color: #fff; font-size: 14px; z-index: 200; opacity: 0; transition: opacity 0.3s; }
+#toast.success { background: #2e7d32; }
+#toast.error { background: #c62828; }
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📚 八字百科全书</h1>
+  <span class="stats" id="stats">加载中...</span>
+  <button onclick="rebuildEncyclopedia()">全量重建百科</button>
+</div>
+
+<div class="main">
+  <!-- 左面板: 书籍管理 -->
+  <div class="panel-left">
+    <div class="panel-header">
+      <h2>书籍管理</h2>
+      <button class="add-btn" onclick="showImportModal()">+ 添加书籍</button>
+    </div>
+    <div class="book-list" id="bookList"></div>
+  </div>
+
+  <!-- 右面板: 百科浏览 -->
+  <div class="panel-right">
+    <div class="encyclopedia-tree">
+      <div class="search-box" style="display:flex;gap:6px;">
+        <input type="text" placeholder="🔍 搜索条目..." oninput="filterTree(this.value)" style="flex:1;">
+        <button id="viewToggleBtn" onclick="toggleView()" style="padding:6px 10px;border:1px solid #d0c8b8;border-radius:4px;font-size:12px;cursor:pointer;background:#ede0c8;white-space:nowrap;">按流派</button>
+      </div>
+      <div id="treeContainer"></div>
+    </div>
+    <div class="content-area" id="contentArea">
+      <div class="empty-state">
+        <div class="icon">📖</div>
+        <p>请先导入书籍并完成合并，<br>然后从左侧目录选择条目浏览</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 导入弹窗 -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <h3>添加书籍</h3>
+    <input type="file" id="fileInput" multiple accept=".pdf,.txt,.epub,.docx,.doc">
+    <div id="uploadInfo"></div>
+    <div class="modal-actions">
+      <button onclick="hideImportModal()">取消</button>
+      <button class="btn-primary" onclick="importBooks()">开始导入</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let encyclopediaData = { encyclopedia: {}, cases: [] };
+let bookList = [];
+let currentView = 'genre';  // 'genre' | 'topic'
+let entryCache = {};       // 按需加载缓存
+
+// ========== API ==========
+async function api(path, opts = {}) {
+  const res = await fetch(path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ========== 书籍管理 ==========
+async function loadBooks() {
+  const data = await api('/api/books?limit=200');
+  bookList = data.books || data;  // 兼容旧API
+  renderBooks();
+  updateStats();
+}
+
+function renderBooks() {
+  const el = document.getElementById('bookList');
+  el.innerHTML = bookList.map(b => {
+    const statusCls = b.status;
+    const statusIcon = { done: '✅', pending: '⏳', processing: '🔄', failed: '❌' }[b.status] || '❓';
+    const statusLabel = { done: '已合并', pending: '待合并', processing: '合并中', failed: '失败' }[b.status] || b.status;
+    const progress = b.status === 'processing' ? ` ${Math.round(b.progress * 100)}%` : '';
+    const actions = b.status === 'done'
+      ? `<button class="btn-merge" onclick="remergeBook('${b.id}')">重新合并</button>`
+      : b.status === 'pending'
+        ? `<button class="btn-merge" onclick="mergeBook('${b.id}')">▶ 开始合并</button>`
+        : b.status === 'failed'
+          ? `<button class="btn-merge" onclick="mergeBook('${b.id}')">重试合并</button>`
+          : '';
+    return `
+    <div class="book-card" data-id="${b.id}">
+      <div class="book-title">📗 ${b.title || b.filename}</div>
+      <div class="book-meta">${b.format} · ${b.block_count || 0}块</div>
+      <span class="book-status ${statusCls}">${statusIcon} ${statusLabel}${progress}</span>
+      <div class="book-actions">
+        ${actions}
+        <button class="btn-remove" onclick="removeBook('${b.id}')">移除</button>
+      </div>
+    </div>`;
+  }).join('') || '<div style="text-align:center;padding:40px;color:#999;">暂无书籍<br>点击"+ 添加书籍"导入</div>';
+}
+
+function showImportModal() {
+  document.getElementById('importModal').classList.add('show');
+}
+
+function hideImportModal() {
+  document.getElementById('importModal').classList.remove('show');
+  document.getElementById('fileInput').value = '';
+}
+
+async function importBooks() {
+  const files = document.getElementById('fileInput').files;
+  if (!files.length) return toast('请选择文件', 'error');
+
+  for (const file of files) {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('title', file.name.replace(/\.[^.]+$/, ''));
+    try {
+      await api('/api/books/import', { method: 'POST', body: form });
+      toast(`导入成功: ${file.name}`, 'success');
+    } catch(e) {
+      toast(`导入失败: ${file.name}`, 'error');
+    }
+  }
+
+  hideImportModal();
+  loadBooks();
+  startProgressPolling();
+}
+
+async function mergeBook(id) {
+  await api(`/api/books/${id}/rem`, { method: 'POST' });
+  toast('已提交合并任务', 'success');
+  startProgressPolling();
+}
+
+async function remergeBook(id) {
+  await api(`/api/books/${id}/rem`, { method: 'POST' });
+  toast('已提交重新合并', 'success');
+  startProgressPolling();
+}
+
+function startProgressPolling() {
+  if (window._polling) return;
+  window._polling = setInterval(async () => {
+    const processing = bookList.filter(b => b.status === 'processing');
+    if (!processing.length) {
+      clearInterval(window._polling); window._polling = null;
+      loadEncyclopedia();  // 自动刷新百科
+    }
+    await loadBooks();
+  }, 2000);
+}
+
+// ========== 百科浏览 ==========
+async function loadEncyclopedia() {
+  try {
+    const viewParam = currentView === 'genre' ? '?view=genre' : '?view=topic';
+    const data = await api('/api/encyclopedia' + viewParam);
+    encyclopediaData = data;
+    renderTree();
+    updateStats();
+  } catch(e) {
+    console.error('加载百科失败:', e);
+  }
+}
+
+function toggleView() {
+  currentView = currentView === 'genre' ? 'topic' : 'genre';
+  const btn = document.getElementById('viewToggleBtn');
+  btn.textContent = currentView === 'genre' ? '按流派' : '按专题';
+  entryCache = {};
+  loadEncyclopedia();
+  // 清空内容区
+  document.getElementById('contentArea').innerHTML =
+    '<div class="empty-state"><div class="icon">📖</div><p>请从左侧目录选择条目浏览</p></div>';
+}
+
+function renderTree() {
+  const el = document.getElementById('treeContainer');
+
+  if (currentView === 'genre') {
+    const genres = encyclopediaData.genres || {};
+    if (!Object.keys(genres).length) {
+      el.innerHTML = '<div style="padding:20px;color:#999;text-align:center;">暂无百科内容</div>';
+      return;
+    }
+    let html = '<div class="tree-root"><div class="tree-node"><div class="node-header" onclick="toggleNode(this)"><span class="arrow">▶</span>📖 理论百科（按流派）</div><div class="children collapsed">';
+    for (const [genre, info] of Object.entries(genres)) {
+      const count = (info.topics || []).length;
+      html += `<div class="tree-node"><div class="node-header" onclick="toggleNode(this)"><span class="arrow">▶</span>${genre} (${count})</div><div class="children collapsed">`;
+      for (const topic of (info.topics || [])) {
+        html += `<div class="leaf-item" onclick="showEntry('${genre}','${topic}')">📄 ${topic}</div>`;
+      }
+      html += '</div></div>';
+    }
+    html += '</div></div></div>';
+    el.innerHTML = html;
+  } else {
+    // 按专题视图
+    const topics = encyclopediaData.topics || {};
+    if (!Object.keys(topics).length) {
+      el.innerHTML = '<div style="padding:20px;color:#999;text-align:center;">暂无百科内容</div>';
+      return;
+    }
+    let html = '<div class="tree-root"><div class="tree-node"><div class="node-header" onclick="toggleNode(this)"><span class="arrow">▶</span>📖 理论百科（按专题）</div><div class="children collapsed">';
+    for (const [topic, info] of Object.entries(topics)) {
+      const count = (info.genres || []).length;
+      html += `<div class="tree-node"><div class="node-header" onclick="toggleNode(this)"><span class="arrow">▶</span>${topic} (${count}流派)</div><div class="children collapsed">`;
+      for (const genre of (info.genres || [])) {
+        html += `<div class="leaf-item" onclick="showEntry('${genre}','${topic}')">📄 ${genre}派</div>`;
+      }
+      html += '</div></div>';
+    }
+    html += '</div></div></div>';
+    el.innerHTML = html;
+  }
+}
+
+function toggleNode(header) {
+  const arrow = header.querySelector('.arrow');
+  const children = header.nextElementSibling;
+  arrow.classList.toggle('expanded');
+  children.classList.toggle('collapsed');
+}
+
+function filterTree(query) {
+  const leaves = document.querySelectorAll('.leaf-item');
+  leaves.forEach(l => {
+    l.style.display = !query || l.textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
+  });
+}
+
+async function showEntry(genre, topic) {
+  // 标记当前选中
+  document.querySelectorAll('.leaf-item.active').forEach(e => e.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const area = document.getElementById('contentArea');
+  area.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>加载中...</p></div>';
+
+  const cacheKey = `${genre}|${topic}`;
+  if (entryCache[cacheKey]) {
+    renderEntry(entryCache[cacheKey], genre, topic, area);
+    return;
+  }
+
+  try {
+    const viewParam = currentView === 'genre' ? '?genre=' + genre : '?view=topic&topic=' + topic;
+    const fullParam = viewParam + '&topic=' + encodeURIComponent(topic);
+    const data = await api('/api/encyclopedia' + fullParam);
+    const entry = data.entry;
+    if (entry) {
+      entryCache[cacheKey] = entry;
+      renderEntry(entry, genre, topic, area);
+    } else {
+      area.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>该条目暂无内容</p></div>';
+    }
+  } catch(e) {
+    area.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>加载失败: ${e.message}</p><button onclick="showEntry('${genre}','${topic}')" style="margin-top:12px;padding:6px 16px;cursor:pointer;">重试</button></div>`;
+  }
+}
+
+function renderEntry(entry, genre, topic, area) {
+  let content = entry.content || '暂无内容';
+  let metaParts = [`来源: ${entry.source_count || '多'} 本书籍`];
+  if (entry.core_views && entry.core_views.length) {
+    metaParts.push(`${entry.core_views.length} 条核心观点`);
+  }
+
+  // 参见链接
+  let seeAlsoHtml = '';
+  if (entry.see_also && entry.see_also.length) {
+    seeAlsoHtml = '<div class="see-also"><strong>参见:</strong> ' +
+      entry.see_also.map(s => {
+        const [g, t] = s.split('·');
+        return `<a onclick="showEntry('${g}','${t}')">${s}</a>`;
+      }).join('') + '</div>';
+  }
+
+  area.innerHTML = `
+    <div class="entry-header">
+      <h2>${currentView === 'genre' ? `${topic} — ${genre}视角` : `${genre}派 — ${topic}`}</h2>
+      <div class="entry-meta">${metaParts.join(' · ')}</div>
+    </div>
+    <div class="entry-content">${formatContent(content)}</div>
+    ${seeAlsoHtml}
+  `;
+}
+
+function showCasePanel() {
+  const area = document.getElementById('contentArea');
+  area.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>加载命例...</p></div>';
+
+  api('/api/cases').then(data => {
+    const cases = data || [];
+    const allTopics = [...new Set(cases.flatMap(c => c.topic_tags || []))];
+    const allGenres = [...new Set(cases.flatMap(c => c.genre_tags || []))];
+
+    area.innerHTML = `
+      <div class="entry-header"><h2>命例数据库</h2><div class="entry-meta">共 ${cases.length} 条命例</div></div>
+      <div class="case-filters">
+        <select id="caseFilterTopic" onchange="filterCases()"><option value="">全部专题</option>${allTopics.map(t => `<option>${t}</option>`).join('')}</select>
+        <select id="caseFilterGenre" onchange="filterCases()"><option value="">全部流派</option>${allGenres.map(g => `<option>${g}</option>`).join('')}</select>
+        <input type="text" placeholder="搜索命例内容..." oninput="filterCases()" id="caseFilterText" style="padding:6px 10px;border:1px solid #d0c8b8;border-radius:4px;font-size:13px;flex:1;">
+      </div>
+      <div id="caseList">${renderCases(cases)}</div>
+    `;
+    encyclopediaData.cases = cases;
+  }).catch(e => {
+    area.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>加载失败: ${e.message}</p></div>`;
+  });
+}
+
+function renderCases(cases) {
+  return cases.map(c => `
+    <div class="case-card" data-topic="${(c.topic_tags||[]).join(',')}" data-genre="${(c.genre_tags||[]).join(',')}">
+      <div class="case-source">📌 来源: ${c.source_book || '未知'}</div>
+      <div class="case-text">${c.text || ''}</div>
+      <div class="case-tags">${(c.topic_tags||[]).map(t => `<span class="case-tag">${t}</span>`).join('')} ${(c.genre_tags||[]).map(g => `<span class="case-tag">${g}</span>`).join('')}</div>
+    </div>
+  `).join('') || '<div style="text-align:center;padding:40px;color:#999;">无匹配命例</div>';
+}
+
+function filterCases() {
+  const topic = document.getElementById('caseFilterTopic')?.value || '';
+  const genre = document.getElementById('caseFilterGenre')?.value || '';
+  const text = (document.getElementById('caseFilterText')?.value || '').toLowerCase();
+
+  let cases = encyclopediaData.cases || [];
+  if (topic) cases = cases.filter(c => (c.topic_tags||[]).includes(topic));
+  if (genre) cases = cases.filter(c => (c.genre_tags||[]).includes(genre));
+  if (text) cases = cases.filter(c => (c.text||'').toLowerCase().includes(text));
+
+  document.getElementById('caseList').innerHTML = renderCases(cases);
+}
+
+function formatContent(md) {
+  return md
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^# (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(.+)$/gm, (m) => m.startsWith('<') ? m : `<p>${m}</p>`);
+}
+
+// ========== 其他 ==========
+async function rebuildEncyclopedia() {
+  toast('正在全量重建百科...', 'success');
+  try {
+    await api('/api/rebuild', { method: 'POST' });
+    entryCache = {};
+    await loadEncyclopedia();
+    toast('百科重建完成!', 'success');
+  } catch(e) {
+    toast('重建失败: ' + e.message, 'error');
+  }
+}
+
+function updateStats() {
+  const doneCount = bookList.filter(b => b.status === 'done').length;
+  if (currentView === 'genre') {
+    const genres = Object.keys(encyclopediaData.genres || {}).length;
+    const cases = (encyclopediaData.cases || []).length;
+    document.getElementById('stats').textContent = `已收录 ${doneCount} 本书 | ${genres} 个流派 | ${cases} 条命例`;
+  } else {
+    const topics = Object.keys(encyclopediaData.topics || {}).length;
+    document.getElementById('stats').textContent = `已收录 ${doneCount} 本书 | ${topics} 个专题`;
+  }
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `${type} show`;
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ========== 初始化 ==========
+loadBooks();
+loadEncyclopedia();
+</script>
+</body>
+</html>

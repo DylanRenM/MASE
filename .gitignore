@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment & secrets
+.env
+.env.*
+*.secret
+
+# Data (large binaries, databases, uploads)
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Archives
+*.zip
+*.tar.gz
+
+# Logs
+*.log
+
+# Node (if any)
+node_modules/
