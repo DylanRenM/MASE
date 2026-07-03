@@ -17,7 +17,7 @@ from .book_parser import parse_file, Block
 from .content_vectorizer import Vectorizer, LLMClassifier, RuleClassifier
 from .qdrant_store import get_client, init_collection, upsert_points
 from .dedup_pipeline import DedupPipeline
-from .preprocessor import FormatBridge, ContentCleaner, StructureParser, SemanticChunker, TextBlock
+from .preprocessor import FormatBridge, StructureParser, SemanticChunker, LLMNormalizer, TextBlock
 
 
 class PipelineOrchestrator:
@@ -31,6 +31,7 @@ class PipelineOrchestrator:
         self._dedup = None
         self._format_bridge = None
         self._llm_classifier = None
+        self._normalizer = None
 
         # 进度跟踪
         self._progress = {}
@@ -72,6 +73,12 @@ class PipelineOrchestrator:
             self._dedup = DedupPipeline()
         return self._dedup
 
+    @property
+    def normalizer(self):
+        if self._normalizer is None:
+            self._normalizer = LLMNormalizer()
+        return self._normalizer
+
     def run_pipeline(self, file_path: str, filename: str, fmt: str, title: str = None, author: str = None):
         """同步运行完整管线（集成预处理层）"""
         # 添加书籍记录
@@ -99,20 +106,14 @@ class PipelineOrchestrator:
                     ) for b in blocks
                 ]
             else:
-                self._set_progress(book_id, 1, 0.25, "内容清洗...")
+                self._set_progress(book_id, 1, 0.25, "结构提取...")
                 add_pipeline_log(book_id, "parse", "running",
-                                f"格式转换完成 ({time.time()-t0:.1f}s), 内容清洗...")
-
-                # 1b. ContentCleaner: 内容清洗
-                t1 = time.time()
-                clean_text = ContentCleaner.clean(md_text)
-                add_pipeline_log(book_id, "parse", "running",
-                                f"清洗完成 ({time.time()-t1:.1f}s), 结构提取...")
+                                f"格式转换完成 ({time.time()-t0:.1f}s), 结构提取...")
 
                 # 1c. StructureParser: 结构提取
                 self._set_progress(book_id, 1, 0.50, "结构提取...")
                 t2 = time.time()
-                sections = StructureParser.parse(clean_text)
+                sections = StructureParser.parse(md_text)
                 add_pipeline_log(book_id, "parse", "running",
                                 f"结构提取完成 ({time.time()-t2:.1f}s), {len(sections)}个章节, 语义分块...")
 
@@ -132,6 +133,15 @@ class PipelineOrchestrator:
                             f"预处理完成: {len(text_blocks)} 个文本块 (总耗时 {time.time()-t0:.1f}s)")
             self._set_progress(book_id, 1, 1.0, f"预处理完成: {len(text_blocks)}个块")
             print(f"[Pipeline] 阶段1完成: {len(text_blocks)} 个块")
+
+            # 规范化: LLM文本规范化 + 去广告标注
+            t_norm = time.time()
+            print(f"[Pipeline] 文本规范化...")
+            text_blocks = self.normalizer.normalize(text_blocks)
+            norm_elapsed = time.time() - t_norm
+            add_pipeline_log(book_id, "normalize", "done",
+                            f"规范化完成 ({norm_elapsed:.1f}s)")
+            print(f"[Pipeline] 规范化完成 ({norm_elapsed:.1f}s)")
 
             if not text_blocks or not self._running.get(book_id):
                 if not text_blocks:

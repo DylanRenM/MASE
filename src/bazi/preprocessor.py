@@ -213,119 +213,6 @@ class FormatBridge:
         return None
 
 
-class ContentCleaner:
-    """内容清洗层: 去广告、去水印、换行合并、去乱码"""
-
-    # 水印/广告模式
-    WATERMARK_PATTERNS = [
-        re.compile(r"好又全资源网.*加微信.*送.*电子书", re.IGNORECASE),
-        re.compile(r"AAKK\d+加微信进群聊", re.IGNORECASE),
-        re.compile(r"获取更多.*资料.*加微信.*", re.IGNORECASE),
-    ]
-
-    CONTACT_PATTERNS = [
-        re.compile(r"微信[号:：]?\s*[a-zA-Z0-9_\-]{5,}"),
-        re.compile(r"QQ[群号]?[：:]\s*\d{5,}"),
-        re.compile(r"公众号[：:]\s*\S+"),
-        re.compile(r"购.*教材.*微信[：:]\s*\S+"),
-    ]
-
-    @classmethod
-    def clean(cls, markdown_text: str) -> str:
-        """执行完整的清洗流程"""
-        text = markdown_text
-
-        # 1. 去水印/页眉页脚
-        for pattern in cls.WATERMARK_PATTERNS:
-            text = pattern.sub("", text)
-
-        # 2. 去广告/联系方式
-        for pattern in cls.CONTACT_PATTERNS:
-            text = pattern.sub("", text)
-
-        # 3. 换行合并
-        text = cls._merge_broken_lines(text)
-
-        # 4. 去除重复空行
-        text = re.sub(r"\n{4,}", "\n\n\n", text)
-
-        # 5. 去除乱码行
-        lines = text.split("\n")
-        cleaned_lines = []
-        for line in lines:
-            if cls._is_garbled(line):
-                continue
-            cleaned_lines.append(line)
-        text = "\n".join(cleaned_lines)
-
-        return text
-
-    @classmethod
-    def _merge_broken_lines(cls, text: str) -> str:
-        """合并因PDF提取等原因被强制换行的中文文本行"""
-        lines = text.split("\n")
-        if len(lines) <= 1:
-            return text
-
-        merged = []
-        i = 0
-        while i < len(lines):
-            current = lines[i]
-            next_line = lines[i + 1] if i + 1 < len(lines) else None
-
-            if next_line is None:
-                merged.append(current)
-                break
-
-            # 判断是否合并
-            if cls._should_merge(current, next_line):
-                merged.append(current + next_line)
-                i += 2
-            else:
-                merged.append(current)
-                i += 1
-
-        return "\n".join(merged)
-
-    @staticmethod
-    def _should_merge(line1: str, line2: str) -> bool:
-        """判断两行是否应该合并"""
-        if not line1 or not line2:
-            return False
-
-        # 上一行以句末标点结尾 → 不合并
-        if re.search(r"[。！？…―]$", line1.rstrip()):
-            return False
-
-        # 下一行以 Markdown 标记开头 → 不合并
-        if re.match(r"^[#\-\*>]", line2.lstrip()):
-            return False
-
-        # 上一行以中文字符结尾
-        ends_with_cjk = bool(re.search(r"[\u4e00-\u9fff\uff00-\uffef]$", line1.rstrip()))
-
-        # 下一行以中文字符开头
-        starts_with_cjk = bool(re.search(r"^[\u4e00-\u9fff\uff00-\uffef]", line2.lstrip()))
-
-        if not (ends_with_cjk and starts_with_cjk):
-            return False
-
-        # 合并后不超过 80 字
-        combined_len = len(line1.rstrip()) + len(line2.lstrip())
-        return combined_len <= 80
-
-    @staticmethod
-    def _is_garbled(line: str) -> bool:
-        """判断一行是否为乱码"""
-        if len(line) <= 20:
-            return False
-
-        # 统计非中文字符占比
-        non_cjk = sum(1 for c in line if not re.match(r"[\u4e00-\u9fff\uff00-\uffef]", c))
-        total = max(len(line), 1)
-        return non_cjk / total > 0.7
-
-
 class StructureParser:
     """结构提取层: 解析 Markdown 标题层级，提取章节边界"""
 
@@ -491,3 +378,157 @@ class SemanticChunker:
             chunks.append(current)
 
         return chunks
+
+
+class LLMNormalizer:
+    """LLM驱动的文本规范化与去广告标注
+
+    在分块后、向量化前运行。对每个块：
+    1. 修复断裂词（"结 婚"→"结婚"）
+    2. 合并被误断的短行
+    3. 标注垃圾行（广告/水印/页码）用 [AD] 前缀
+
+    仅对疑似有问题的块调用LLM，干净块直接跳过。
+    """
+
+    NORMALIZE_PROMPT = """你是一个文本预处理助手。请对以下八字命理文本块做两件事：
+
+1. 【文本规范化】
+   - 修复因OCR/PDF提取造成的断裂词（如"结 婚"→"结婚"、"分 析日 干"→"分析日干"）
+   - 合并因强制换行被误断的短行
+   - 保持原文内容不变，不做删改
+
+2. 【垃圾标记】
+   - 标记广告/水印行（如"加微信XXX"、"公众号XXX"、"好又全资源网"等）
+   - 标记页眉页脚/页码残留（如孤立的数字"220"、"221"）
+   - 用 [AD] 前缀标记每条垃圾行
+   - 正文中偶然出现的数字或URL不要标记
+
+输出格式：直接输出处理后的文本，垃圾行前加 [AD] 前缀。
+
+待处理文本：
+{block_text}"""
+
+    # 检测哪些块需要规范化
+    _BROKEN_WORD_RE = re.compile(r"[\u4e00-\u9fff]\s+[\u4e00-\u9fff]")
+    _AD_KEYWORD_RE = re.compile(
+        r"微信|公众号|扫码|免费领取|A{0,2}AKK|QQ群|"
+        r"添加微信|微信号|www\.|http[s]?://|好又全|"
+        r"关注.*公众号|获取更多.*资料|送.*电子书|资源更新|"
+        r"加微信|九鼎学堂",
+        re.IGNORECASE,
+    )
+
+    def __init__(self):
+        from .config import config as cfg
+        self._cfg = cfg
+        self._batch_size = 20
+
+    def _needs_normalization(self, block: TextBlock) -> bool:
+        """快速检测：块是否需要LLM规范化"""
+        text = block.text
+        if not text:
+            return False
+
+        # 1. 检测中文空格断裂
+        if self._BROKEN_WORD_RE.search(text):
+            return True
+
+        # 2. 检测广告关键词
+        if self._AD_KEYWORD_RE.search(text):
+            return True
+
+        # 3. 检测过短行（可能因PDF换行被误断）
+        lines = text.split("\n")
+        short_lines = [l for l in lines if 0 < len(l.strip()) < 10]
+        if len(short_lines) >= 3:
+            return True
+
+        return False
+
+    def _call_llm(self, prompt: str, max_tokens: int = 2048) -> str:
+        """调用 Ollama 兼容的 LLM API"""
+        from openai import OpenAI
+
+        client = OpenAI(
+            base_url=self._cfg.llm_base_url,
+            api_key="ollama",
+            timeout=self._cfg.classifier_timeout,
+            max_retries=self._cfg.classifier_max_retries,
+        )
+        response = client.chat.completions.create(
+            model=self._cfg.llm_model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=max_tokens,
+        )
+        return response.choices[0].message.content.strip()
+
+    def _normalize_single(self, block: TextBlock) -> TextBlock:
+        """规范化单个文本块"""
+        prompt = self.NORMALIZE_PROMPT.format(block_text=block.text[:3000])
+        try:
+            result_text = self._call_llm(prompt, max_tokens=4096)
+        except Exception as e:
+            # LLM调用失败，回退：原样保留
+            print(f"[Normalizer] LLM调用失败 ({block.block_id}): {e}")
+            return block
+
+        return TextBlock(
+            block_id=block.block_id,
+            text=result_text,
+            section=block.section,
+            source=block.source,
+            secondary_genres=block.secondary_genres,
+            secondary_topics=block.secondary_topics,
+            source_file=block.source_file,
+        )
+
+    def _normalize_batch(self, blocks: list[TextBlock]) -> list[TextBlock]:
+        """批处理规范化（逐个调用，带进度）"""
+        results = []
+        for i, block in enumerate(blocks):
+            result = self._normalize_single(block)
+            results.append(result)
+            if (i + 1) % 5 == 0 or len(blocks) <= 5:
+                print(f"  [规范化] {i+1}/{len(blocks)}", flush=True)
+        return results
+
+    def normalize(self, blocks: list[TextBlock]) -> list[TextBlock]:
+        """公共入口：对块列表做选择性规范化
+
+        干净的块原样通过，脏的块调用LLM规范化。
+        """
+        if not blocks:
+            return []
+
+        # 分离干净块和脏块
+        clean_blocks = []
+        dirty_blocks = []
+        for block in blocks:
+            if self._needs_normalization(block):
+                dirty_blocks.append(block)
+            else:
+                clean_blocks.append(block)
+
+        if not dirty_blocks:
+            return clean_blocks
+
+        # 分批处理脏块
+        normalized = []
+        for i in range(0, len(dirty_blocks), self._batch_size):
+            batch = dirty_blocks[i:i + self._batch_size]
+            print(f"[规范化] 批次 {i // self._batch_size + 1}: {len(batch)} 块",
+                  flush=True)
+            normalized.extend(self._normalize_batch(batch))
+
+        # 合并：保持原顺序
+        result = []
+        dirty_iter = iter(normalized)
+        for block in blocks:
+            if block in dirty_blocks:
+                result.append(next(dirty_iter))
+            else:
+                result.append(block)
+
+        return result

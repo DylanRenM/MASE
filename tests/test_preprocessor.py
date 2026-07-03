@@ -2,90 +2,9 @@
 
 import pytest
 from bazi.preprocessor import (
-    TextBlock, ContentCleaner, StructureParser, SemanticChunker
+    TextBlock, StructureParser, SemanticChunker
 )
 from bazi.config import config
-
-
-class TestContentCleaner:
-    """T-004: ContentCleaner 清洗测试"""
-
-    def test_remove_watermark_haoqiquan(self):
-        text = "五行相生相克的理论\n\n好又全资源网，加微信804407916送海量电子书\n\n天干地支..."
-        result = ContentCleaner.clean(text)
-        assert "好又全资源网" not in result
-        assert "五行相生" in result
-        assert "天干地支" in result
-
-    def test_remove_watermark_aakk(self):
-        text = "命理知识\n\nAAKK0088800加微信进群聊\n\n继续内容"
-        result = ContentCleaner.clean(text)
-        assert "AAKK" not in result
-        assert "命理知识" in result
-        assert "继续内容" in result
-
-    def test_remove_wechat_contact(self):
-        text = "如需咨询请联系微信：zhangsan123，了解更多。"
-        result = ContentCleaner.clean(text)
-        assert "zhangsan123" not in result
-        assert "了解更多" in result
-
-    def test_remove_qq_contact(self):
-        text = "加QQ群：12345678一起讨论命理"
-        result = ContentCleaner.clean(text)
-        assert "12345678" not in result
-
-    def test_remove_public_account(self):
-        text = "关注公众号：九鼎学堂获取更多"
-        result = ContentCleaner.clean(text)
-        assert "九鼎学堂" not in result
-
-    def test_remove_buy_book_link(self):
-        text = "购纸质教材微信：duolei1984 包邮"
-        result = ContentCleaner.clean(text)
-        assert "duolei1984" not in result
-
-    def test_merge_broken_lines(self):
-        """换行合并：中文行被强制换行"""
-        text = "五行相生\n相克是命理\n学的基础理论。\n\n第二句开始。"
-        result = ContentCleaner.clean(text)
-        assert "五行相生相克是命理" in result
-        assert "学的基础理论。" in result.split("\n")
-
-    def test_no_merge_sentence_end(self):
-        """句末标点结尾的不合并"""
-        text = "这是第一句。\n这是第二句。"
-        result = ContentCleaner.clean(text)
-        lines = result.split("\n")
-        assert any("这是第一句。" in l for l in lines)
-        assert any("这是第二句。" in l for l in lines)
-
-    def test_no_merge_markdown_header(self):
-        """Markdown 标记开头的不合并"""
-        text = "前面内容\n# 新标题\n后面内容"
-        result = ContentCleaner.clean(text)
-        assert "# 新标题" in result
-
-    def test_remove_duplicate_empty_lines(self):
-        text = "段落A\n\n\n\n\n\n段落B"
-        result = ContentCleaner.clean(text)
-        # 不应有连续5个换行
-        assert "\n\n\n\n\n" not in result
-        assert "段落A" in result
-        assert "段落B" in result
-
-    def test_remove_garbled_lines(self):
-        text = "正常中文内容\n!!!@@@###$$$%%%^^^&&&***((()))\n继续正常内容"
-        result = ContentCleaner.clean(text)
-        assert "!!!" not in result
-        assert "正常中文内容" in result
-        assert "继续正常内容" in result
-
-    def test_keep_short_non_cjk(self):
-        """短的非中文行（<20字符）不应被当作乱码"""
-        text = "天干：甲乙丙丁戊己庚辛壬癸\n123\n地支：子丑寅卯"
-        result = ContentCleaner.clean(text)
-        assert "123" in result
 
 
 class TestStructureParser:
@@ -192,3 +111,64 @@ class TestSemanticChunker:
             text = b.text.strip()
             if text:
                 assert text[-1] in ("。", "！", "？") or len(text) <= config.chunk_max_size
+
+    # —— 新增：结构驱动分块测试 ——
+
+    def test_markdown_header_hard_boundary(self):
+        """标题之间绝不跨越切分"""
+        sections = [
+            ("## 婚姻分析", ["婚姻相关段落" * 20] * 3),
+            ("### 命例", ["命例段落" * 30] * 3),
+        ]
+        blocks = SemanticChunker.chunk(sections, "test", "书")
+        # 两个标题段应该产出至少2个块，标题边界不应被跨越
+        sections_set = {b.section for b in blocks}
+        assert "## 婚姻分析" in sections_set
+        assert "### 命例" in sections_set
+        # 婚姻的内容不应出现在命例块中
+        for b in blocks:
+            if b.section == "## 婚姻分析":
+                assert "婚姻相关段落" in b.text
+                assert "命例" not in b.text
+            elif b.section == "### 命例":
+                assert "命例段落" in b.text
+                assert "婚姻相关段落" not in b.text
+
+    def test_paragraph_boundary_respected(self):
+        """自然段边界作为分块单元，短段不硬切"""
+        sections = [("章", [
+            "第一段：" + "内容。" * 40,   # ~160 chars
+            "第二段：" + "内容。" * 40,   # ~160 chars
+            "第三段：" + "内容。" * 40,   # ~160 chars
+        ])]
+        blocks = SemanticChunker.chunk(sections, "test", "书")
+        # 三个短段可能合并但不应硬切内部
+        assert len(blocks) >= 1
+        for b in blocks:
+            assert len(b.text) <= config.chunk_max_size
+
+    def test_sentence_level_fallback(self):
+        """超长段在句号处拆分"""
+        long_para = "第一句很长的内容。" * 400  # 远超 max_size
+        sections = [("章", [long_para])]
+        blocks = SemanticChunker.chunk(sections, "test", "书")
+        assert len(blocks) >= 2
+        for b in blocks:
+            assert len(b.text) <= config.chunk_max_size
+
+    def test_short_block_merged_with_previous(self):
+        """短块（< min_size）与前一组合并"""
+        sections = [("章", [
+            "A" * 300,   # 正常长度
+            "B" * 50,    # 过短
+        ])]
+        blocks = SemanticChunker.chunk(sections, "test", "书")
+        # 过短的块应被合并，总数 ≤ 1
+        assert len(blocks) <= 1
+
+    def test_single_title_section_not_split(self):
+        """单个标题段 + 适量内容 → 不切开"""
+        sections = [("### 专题分析", ["一段完整的分析内容。" * 20])]
+        blocks = SemanticChunker.chunk(sections, "test", "书")
+        assert len(blocks) == 1
+        assert "一段完整的分析内容" in blocks[0].text
