@@ -35,9 +35,12 @@ dev = [
 requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-packages = ["bazi"]
+[project.scripts]
+mase = "mase_cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["bazi*", "mase_cli*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -77,3 +77,20 @@ v1.0 — 2026-07-03
 ## 许可
 
 Measures (麦哲思) 版权所有
+
+## CLI 工具
+
+框架附带 `mase` 命令行工具：
+
+```bash
+# 安装
+pip install -e .
+
+# 初始化新项目
+mase init my-project -p my_app -c auth payment
+
+# 合规检查
+mase check
+```
+
+详细用法见 `mase --help`。
