@@ -1,0 +1,12 @@
+change-name: "<change-name>"
+status: "draft"  # draft | proposed | designed | building | verifying | released
+created: "YYYY-MM-DD"
+updated: "YYYY-MM-DD"
+project_type:
+  has_ui: false       # true = Web/桌面/移动 UI 项目（强制 E2E 门禁）
+  ui_platform: null   # web | electron | mobile | null（has_ui: true 时必填）
+agents:
+  agent-1-orchestrator: "project-planning-expert, git-commit"
+  agent-2-requirements: "brainstorming, frontend-skill"
+  agent-3-development: "test-driven-development, webapp-testing"
+  agent-4-quality: "code-quality-controller, frontend-design, code-review, TRAE-security-review, bug-fixer"
