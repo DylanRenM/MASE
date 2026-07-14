@@ -11,45 +11,83 @@
 - **六阶段**：Proposal → Design → Build → Verify → Retro → Release
 - **PDCA 闭环**：每一次开发都在自我进化
 
-## 安装方式
+---
 
-### 方式一：自动安装（macOS / Linux）
+## ⚠️ 安装顺序（必读）
+
+```
+第 1 步：  ./install.sh          → 部署框架组件到 ~/.measures-framework/
+第 2 步：  pip install -e .       → 安装 mase 命令行工具
+第 3 步：  mase init ...          → 创建新项目
+```
+
+**必须先运行 `install.sh`，再执行 `pip install`。** 颠倒顺序会导致 `mase init` 生成的 `mase check` 缺少工程规则文件（98% → 100% 的区别）。
+
+---
+
+## 第 1 步：安装框架
 
 ```bash
+cd measures-framework-package
 chmod +x install.sh
 ./install.sh
 ```
 
 安装脚本会自动完成：
-1. 将模板文件部署到 `~/.measures-framework/templates/`
-2. 将 Skills 部署到 AI IDE 技能目录
-3. 将文档和培训讲义复制到 `~/.measures-framework/`
 
-### 方式二：手动安装
+| 操作 | 目标位置 |
+|------|---------|
+| 部署项目模板 | `~/.measures-framework/templates/` |
+| 部署 Agent 定义（4个） | AI IDE skills 目录（自动检测） |
+| 部署 Skills（11个） | AI IDE skills 目录（自动检测） |
+| 部署工程规则 | `~/.measures-framework/project-rules.md` |
+| 部署文档 + 使用手册 | `~/.measures-framework/docs/` |
+| 部署培训讲义 | `~/.measures-framework/training/` |
+| 部署文档索引页 | `~/.measures-framework/index.html` |
 
-```bash
-# 1. 部署项目模板
-cp -r templates/ ~/.measures-framework/templates/
+支持的 AI IDE：Trae / Cursor / Windsurf（自动检测 skills 目录）。
 
-# 2. 部署 Skills
-cp -r skills/* <AI-IDE-skills-directory>/
+---
 
-# 3. 复制文档
-cp -r docs/ ~/.measures-framework/docs/
-cp -r training/ ~/.measures-framework/training/
-```
-
-## 快速开始
-
-1. 安装完成后，在 AI IDE 中打开或创建项目
-2. 将模板复制到项目中：
+## 第 2 步：安装 CLI
 
 ```bash
-cp -r ~/.measures-framework/templates/* openspec/changes/_template/
+cd measures-framework-package
+pip install -e . --break-system-packages
 ```
 
-3. 创建项目目录结构（参考 `templates/STRUCTURE.md`）
-4. 触发 brainstorming — 框架将自动按照六阶段流程运转
+> macOS 用户需要加 `--break-system-packages`（PEP 668）。Linux 用户如果遇到同样错误也加此参数。建议使用虚拟环境：
+> ```bash
+> python3 -m venv .venv && source .venv/bin/activate && pip install -e .
+> ```
+
+验证安装：
+
+```bash
+mase --help
+```
+
+---
+
+## 第 3 步：创建项目
+
+```bash
+mase init my-project -p my_app -c auth payment
+
+cd my-project
+
+# （可选）安装项目开发依赖
+pip install -e .
+
+# 合规检查
+mase check
+```
+
+预期输出：`MASE 合规检查 — ✓ 通过  41/41  100%`
+
+然后对 AI 说：**"创建新项目 my-project"** — 六阶段自动运转。
+
+---
 
 ## 包含内容
 
@@ -61,6 +99,9 @@ cp -r ~/.measures-framework/templates/* openspec/changes/_template/
 | `project-rules.md` | 九大工程原则 + E2E 门禁 + 契约约束（AI 可读格式） |
 | `docs/` | 框架设计文档 + 项目结构规范 + 使用手册 |
 | `training/` | 35 页 Vellum 风格培训讲义（HTML，可直接浏览器打开） |
+| `index.html` | 框架文档索引入口页 |
+
+---
 
 ## 九大工程原则
 
@@ -74,6 +115,27 @@ cp -r ~/.measures-framework/templates/* openspec/changes/_template/
 8. **固定节奏提交** — 每 20 次对话做提交
 9. **及时备份** — 删除/回退必做备份
 
+---
+
+## 命令速查
+
+```bash
+mase init <name> -p <pkg> -c <caps...>   # 创建项目
+mase check                                 # 合规检查（含阶段状态追踪）
+mase --help                                # 完整帮助
+```
+
+---
+
+## 相关文档
+
+- [框架设计文档](docs/design.md)
+- [使用手册](docs/user-guide.md)
+- [项目目录结构规范](docs/project-structure-spec.md)
+- [培训讲义（浏览器打开）](training/measures-training.html)
+
+---
+
 ## 版本
 
 v1.1 — 2026-07-14
@@ -81,20 +143,3 @@ v1.1 — 2026-07-14
 ## 许可
 
 Measures (麦哲思) 版权所有
-
-## CLI 工具
-
-框架附带 `mase` 命令行工具：
-
-```bash
-# 安装
-pip install -e .
-
-# 初始化新项目
-mase init my-project -p my_app -c auth payment
-
-# 合规检查
-mase check
-```
-
-详细用法见 `mase --help`。

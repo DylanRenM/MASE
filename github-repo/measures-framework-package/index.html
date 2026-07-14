@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASE — 麦哲思AI软件开发统一流程</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card-bg: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --orange: #d2991d;
+    --red: #f85149;
+    --code-bg: #1c2128;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--accent); }
+  h2 { font-size: 1.3rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: var(--text); }
+  .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+  }
+  .card h3 { margin-top: 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-right: 0.5rem; }
+  .badge.ok { background: #1b3826; color: var(--green); }
+  .badge.warn { background: #3d3114; color: var(--orange); }
+  .badge.err { background: #3d1a1a; color: var(--red); }
+  kbd {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 0.85rem;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+  .phase-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+  }
+  .phase-card h4 { color: var(--accent); margin-bottom: 0.5rem; }
+  .phase-card .agent { color: var(--muted); font-size: 0.85rem; }
+  .link-list { list-style: none; }
+  .link-list li { margin: 0.5rem 0; }
+  .link-list a { color: var(--accent); text-decoration: none; }
+  .link-list a:hover { text-decoration: underline; }
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 0.85rem;
+  }
+  .flow-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+  }
+  .arrow { color: var(--muted); }
+  pre { background: var(--code-bg); padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 1rem 0; }
+  code { font-family: "SF Mono", Monaco, monospace; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<h1>MASE 麦哲思AI软件开发统一流程</h1>
+<p class="subtitle">Measures AI Software Engineering — v1.1 — 四Agent · 六阶段 · PDCA 闭环</p>
+
+<h2>快速开始</h2>
+<div class="card">
+  <pre><code># 1. 安装框架
+cd measures-framework-package && ./install.sh
+
+# 2. 创建项目
+mase init my-project -p my_app -c auth payment
+
+# 3. 进入项目
+cd my-project
+pip install -e .
+
+# 4. 对 AI 说: "创建新项目" — 六阶段自动运转</code></pre>
+</div>
+
+<h2>六阶段流程</h2>
+<div class="grid">
+  <div class="phase-card">
+    <h4>1. Proposal <span class="badge ok">P</span></h4>
+    <p class="agent">Agent 2 — 需求</p>
+    <p>brainstorming → 原型 → proposal.md → 测试用例</p>
+  </div>
+  <div class="phase-card">
+    <h4>2. Design <span class="badge ok">P</span></h4>
+    <p class="agent">Agent 3 + 4</p>
+    <p>技术预研 → 架构 → 详细设计 → specs → 设计评审</p>
+  </div>
+  <div class="phase-card">
+    <h4>3. Build <span class="badge warn">D</span></h4>
+    <p class="agent">Agent 3 + 4</p>
+    <p>TDD 10步微循环 → 逐个 Scenario 增量构建</p>
+  </div>
+  <div class="phase-card">
+    <h4>4. Verify <span class="badge warn">C</span></h4>
+    <p class="agent">Agent 4</p>
+    <p>端到端验证 → bug-fixer 微循环 → 全部 BUG 关闭</p>
+  </div>
+  <div class="phase-card">
+    <h4>5. Retro <span class="badge warn">A</span></h4>
+    <p class="agent">Agent 4 + 1</p>
+    <p>复盘分析 → 模式识别 → 改进流程</p>
+  </div>
+  <div class="phase-card">
+    <h4>6. Release</h4>
+    <p class="agent">Agent 1</p>
+    <p>合规审查 → 使用手册 → commit → 归档</p>
+  </div>
+</div>
+
+<h2>四Agent架构</h2>
+<div class="grid">
+  <div class="card">
+    <h3><span class="badge ok">Agent 1</span> 计划与统管</h3>
+    <p>接收需求 → 分解任务 → 调度 A2/A3/A4 → 门禁管理 → Release</p>
+    <p style="margin-top:0.5rem;color:var(--muted)">Skills: project-planning-expert, git-commit</p>
+  </div>
+  <div class="card">
+    <h3><span class="badge ok">Agent 2</span> 需求</h3>
+    <p>需求澄清 → 原型确认 → 编写 proposal.md + 验收标准</p>
+    <p style="margin-top:0.5rem;color:var(--muted)">Skills: brainstorming, frontend-skill</p>
+  </div>
+  <div class="card">
+    <h3><span class="badge ok">Agent 3</span> 开发</h3>
+    <p>技术预研 + POC → 架构设计 → specs → TDD 构建</p>
+    <p style="margin-top:0.5rem;color:var(--muted)">Skills: test-driven-development, webapp-testing</p>
+  </div>
+  <div class="card">
+    <h3><span class="badge ok">Agent 4</span> 质量</h3>
+    <p>设计评审 → 代码评审 → 安全扫描 → Bug修复</p>
+    <p style="margin-top:0.5rem;color:var(--muted)">Skills: code-quality-controller, code-review, security-review, bug-fixer</p>
+  </div>
+</div>
+
+<h2>文档索引</h2>
+<ul class="link-list">
+  <li><strong>框架文档</strong></li>
+  <li>📄 <a href="docs/design.md">设计文档</a> — 框架架构、Agent职责、六阶段流程定义</li>
+  <li>📄 <a href="docs/user-guide.md">使用手册</a> — 用户操作指南、命令速查</li>
+  <li>📄 <a href="docs/project-structure-spec.md">项目目录结构规范</a> — 目录布局定义</li>
+  <li>📄 <a href="project-rules.md">九大工程原则</a> — AI IDE 自动加载的工程规则</li>
+</ul>
+<ul class="link-list">
+  <li><strong>模板</strong></li>
+  <li>📂 <a href="templates/">templates/</a> — 项目模板、proposal/contract/spec 模板</li>
+</ul>
+<ul class="link-list">
+  <li><strong>培训</strong></li>
+  <li>📂 <a href="training/">training/</a> — 培训讲义</li>
+</ul>
+<ul class="link-list">
+  <li><strong>CLI 命令</strong></li>
+  <li><kbd>mase init &lt;name&gt; -p &lt;pkg&gt; -c &lt;caps...&gt;</kbd> — 创建新项目</li>
+  <li><kbd>mase check</kbd> — 在项目目录下执行合规检查（含阶段状态）</li>
+</ul>
+
+<h2>TDD 微循环（10步）</h2>
+<div class="card">
+  <div class="flow">
+    <span class="flow-box">① 复用检查</span><span class="arrow">→</span>
+    <span class="flow-box">② 契约→测试</span><span class="arrow">→</span>
+    <span class="flow-box">③ 写测试</span><span class="arrow">→</span>
+    <span class="flow-box">④ 写实现</span><span class="arrow">→</span>
+    <span class="flow-box">⑤ 跑测试</span>
+  </div>
+  <div class="flow">
+    <span class="flow-box">⑥ E2E测试</span><span class="arrow">→</span>
+    <span class="flow-box">⑦ 功能测试</span><span class="arrow">→</span>
+    <span class="flow-box">⑧ 代码评审</span><span class="arrow">→</span>
+    <span class="flow-box">⑨ 安全扫描</span><span class="arrow">→</span>
+    <span class="flow-box">⑩ git commit</span>
+  </div>
+</div>
+
+<p style="margin-top:3rem; color:var(--muted); font-size:0.85rem; text-align:center;">
+  MASE v1.1 — Measures AI Software Engineering — 麦哲思科技
+</p>
+
+</body>
+</html>

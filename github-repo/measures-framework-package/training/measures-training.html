@@ -245,19 +245,19 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
       <div class="step-info"><div class="step-name" style="font-size:26px;">契约式约束</div><div class="step-desc" style="font-size:18px;">从Spec推导DbC契约。API级硬性必做。TDD翻译到测试+运行时断言</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
-      <span class="step-num" style="font-size:18px;">04</span>
+      <span class="step-num" style="font-size:18px;">06</span>
       <div class="step-info"><div class="step-name" style="font-size:26px;">根因分析</div><div class="step-desc" style="font-size:18px;">任何改错必须先找到根本原因，不碰运气</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
-      <span class="step-num" style="font-size:18px;">06</span>
+      <span class="step-num" style="font-size:18px;">07</span>
       <div class="step-info"><div class="step-name" style="font-size:26px;">系统化解决</div><div class="step-desc" style="font-size:18px;">杜绝临时补丁，修一个 Bug 防一类 Bug</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
-      <span class="step-num" style="font-size:18px;">07</span>
+      <span class="step-num" style="font-size:18px;">08</span>
       <div class="step-info"><div class="step-name" style="font-size:26px;">固定节奏提交</div><div class="step-desc" style="font-size:18px;">每 20 次对话执行一次 Git 提交</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
-      <span class="step-num" style="font-size:18px;">08</span>
+      <span class="step-num" style="font-size:18px;">09</span>
       <div class="step-info"><div class="step-name" style="font-size:26px;">及时备份</div><div class="step-desc" style="font-size:18px;">删除或回退代码前必须做备份</div></div>
     </div>
   </div>
@@ -473,10 +473,14 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
   <div style="max-width:850px;width:100%;display:flex;flex-direction:column;gap:8px;">
     <div class="process-item"><span class="step-num">1</span><div class="step-info"><div class="step-name">复用检查</div><div class="step-desc">对照可复用构件清单</div></div></div>
     <div class="process-item"><span class="step-num">2</span><div class="step-info"><div class="step-name">契约翻译 → 测试</div><div class="step-desc">contract.md 前置/后置/不变式 → TDD RED</div></div></div>
-    <div class="process-item"><span class="step-num">3</span><div class="step-info"><div class="step-name">写测试</div><div class="step-desc">pytest 单元测试 + 集成测试 (Spec → TDD RED)</div></div></div>
-    <div class="process-item"><span class="step-num">4</span><div class="step-info"><div class="step-name">写实现 + 跑测试</div><div class="step-desc">含运行时断言 require/ensure • TDD 内层：红 → 绿 → 重构</div></div></div>
-    <div class="process-item"><span class="step-num">5</span><div class="step-info"><div class="step-name">E2E 测试</div><div class="step-desc">Playwright (has_ui: true 时)</div></div></div>
-    <div class="process-item"><span class="step-num">6</span><div class="step-info"><div class="step-name">功能测试 + 评审 + 扫描</div><div class="step-desc">webapp-testing • code-review (spec+契约合规) • 安全扫描</div></div></div>
+    <div class="process-item"><span class="step-num">3</span><div class="step-info"><div class="step-name">写行为测试</div><div class="step-desc">pytest 单元测试 + 集成测试 (Spec → TDD RED)</div></div></div>
+    <div class="process-item"><span class="step-num">4</span><div class="step-info"><div class="step-name">写实现代码</div><div class="step-desc">含运行时断言 require/ensure/invariant_check</div></div></div>
+    <div class="process-item"><span class="step-num">5</span><div class="step-info"><div class="step-name">跑测试</div><div class="step-desc">单元测试 + 集成测试 + 契约测试 (TDD 内层：红 → 绿 → 重构)</div></div></div>
+    <div class="process-item"><span class="step-num">6</span><div class="step-info"><div class="step-name">E2E 测试</div><div class="step-desc">Playwright (has_ui: true 时，webapp-testing)</div></div></div>
+    <div class="process-item"><span class="step-num">7</span><div class="step-info"><div class="step-name">功能测试</div><div class="step-desc">webapp-testing — 页面交互验证</div></div></div>
+    <div class="process-item"><span class="step-num">8</span><div class="step-info"><div class="step-name">代码评审</div><div class="step-desc">code-review（含 spec 合规检查 + 契约合规 + 代码规约检查）</div></div></div>
+    <div class="process-item"><span class="step-num">9</span><div class="step-info"><div class="step-name">安全扫描</div><div class="step-desc">security-review — 漏洞扫描 + 依赖审计 + 权限模型检查</div></div></div>
+    <div class="process-item"><span class="step-num">10</span><div class="step-info"><div class="step-name">git commit</div><div class="step-desc">测试全部通过 → Conventional Commit（每 20 次对话）</div></div></div>
   </div>
   <p class="tag-line" style="margin-top:32px;">每个 Scenario 完成 → 提交 &nbsp;|&nbsp; Capability 门禁: 测试全通过 + 评审通过</p>
   <div class="pin-annotation">
@@ -613,7 +617,7 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:950px;width:100%;">
     <div class="inverse-panel"><div class="panel-title" style="font-size:30px;">需求阶段</div><div class="panel-body">brainstorming · frontend-skill</div></div>
     <div class="compare-panel"><div class="panel-title" style="font-size:30px;">设计阶段</div><div class="panel-body">code-quality-controller · frontend-design · project-planning-expert</div></div>
-    <div class="compare-panel"><div class="panel-title" style="font-size:30px;">构建阶段</div><div class="panel-body">test-driven-development · webapp-testing · code-review(含合规) · TRAE-security-review</div></div>
+    <div class="compare-panel"><div class="panel-title" style="font-size:30px;">构建阶段</div><div class="panel-body">test-driven-development · webapp-testing · code-review(含合规) · security-review</div></div>
     <div class="inverse-panel"><div class="panel-title" style="font-size:30px;">验证阶段</div><div class="panel-body">bug-fixer v3 (含 TRAE-debugger 运行时调试)</div></div>
   </div>
   <div class="inverse-panel" style="margin-top:20px;max-width:950px;width:100%;">
@@ -638,7 +642,7 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
     <div class="inverse-panel"><div class="panel-title" style="font-size:30px;">成功标准</div><div class="panel-body">可验证的验收条件，为后续 Gherkin 打基础</div></div>
   </div>
   <div class="pin-annotation">
-    <span class="pin-line">34 / 35</span>
+    <span class="pin-line">23 / 35</span>
     <span class="pin-line">skill · brainstorming</span>
   </div>
 </section>
@@ -655,7 +659,7 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
     <div class="inverse-panel"><div class="panel-title" style="font-size:30px;">快速迭代</div><div class="panel-body">基于反馈即时修改原型，低沟通成本</div></div>
   </div>
   <div class="pin-annotation">
-    <span class="pin-line">35 / 35</span>
+    <span class="pin-line">24 / 35</span>
     <span class="pin-line">skill · frontend-skill</span>
   </div>
 </section>
@@ -762,10 +766,10 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
   </div>
 </section>
 
-<!-- ============ SLIDE 31: SKILL — TRAE-security-review ============ -->
+<!-- ============ SLIDE 31: SKILL — security-review ============ -->
 <section class="slide" style="gap:0;">
   <div class="kicker" style="margin-bottom:8px;">构建阶段 · Skill</div>
-  <h2 class="h1" style="margin-bottom:40px;">TRAE-security-review</h2>
+  <h2 class="h1" style="margin-bottom:40px;">security-review</h2>
   <p class="lead" style="max-width:800px;margin-bottom:36px;">代码安全漏洞扫描与安全最佳实践审查</p>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:950px;width:100%;">
     <div class="inverse-panel"><div class="panel-title" style="font-size:30px;">漏洞扫描</div><div class="panel-body">注入攻击、XSS、CSRF、敏感信息泄露</div></div>
@@ -783,7 +787,7 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
 <section class="slide" style="gap:0;">
   <div class="kicker" style="margin-bottom:8px;">验证阶段 · Skill</div>
   <h2 class="h1" style="margin-bottom:36px;">bug-fixer v3</h2>
-  <p class="lead" style="max-width:850px;margin-bottom:32px;">九原则驱动的BUG修复闭环 · 含运行时调试</p>
+  <p class="lead" style="max-width:850px;margin-bottom:32px;">八原则驱动的BUG修复闭环 · 含运行时调试</p>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:1050px;width:100%;">
     <div class="inverse-panel" style="padding:20px 24px;"><div class="panel-title" style="font-size:26px;">根因定位</div><div class="panel-body">科学假设→插桩→复现→分析</div></div>
     <div class="compare-panel" style="padding:20px 24px;"><div class="panel-title" style="font-size:26px;">系统修复</div><div class="panel-body">A/B双修方案，根治不复现</div></div>
@@ -820,16 +824,17 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
   <div class="kicker" style="margin-bottom:16px;">快速上手</div>
   <h2 class="h1" style="margin-bottom:44px;">三步启动</h2>
   <div style="max-width:800px;width:100%;display:flex;flex-direction:column;gap:16px;">
-    <div class="process-item"><span class="step-num">1</span><div class="step-info"><div class="step-name">复制模板</div><div class="step-desc">cp -r openspec/changes/_template/ openspec/changes/{project}/</div></div></div>
-    <div class="process-item"><span class="step-num">2</span><div class="step-info"><div class="step-name">创建目录</div><div class="step-desc">按 STRUCTURE.md 创建 src/ tests/ docs/ 分组目录</div></div></div>
-    <div class="process-item"><span class="step-num">3</span><div class="step-info"><div class="step-name">发起需求</div><div class="step-desc">对 AI 说："创建新项目 {name}" — 框架自动运转</div></div></div>
+    <div class="process-item"><span class="step-num">1</span><div class="step-info"><div class="step-name">一条命令创建项目</div><div class="step-desc"><code style="background:var(--code-bg);padding:4px 12px;border-radius:6px;">mase init my-project -p my_app -c auth payment</code></div></div></div>
+    <div class="process-item"><span class="step-num">2</span><div class="step-info"><div class="step-name">进入项目 & 安装依赖</div><div class="step-desc"><code style="background:var(--code-bg);padding:4px 12px;border-radius:6px;">cd my-project && pip install -e . && mase check</code></div></div></div>
+    <div class="process-item"><span class="step-num">3</span><div class="step-info"><div class="step-name">发起需求</div><div class="step-desc">对 AI 说："创建新项目 {name}" — 六阶段自动运转</div></div></div>
   </div>
   <div style="margin-top:40px;display:flex;gap:16px;">
     <span class="cta-tag">命令: "创建新项目"</span>
     <span class="cta-tag">命令: "复盘总结"</span>
+    <span class="cta-tag" style="background:var(--yellow);color:var(--ink);">mase init</span>
   </div>
   <div class="pin-annotation">
-    <span class="pin-line">23 / 35</span>
+    <span class="pin-line">34 / 35</span>
     <span class="pin-line">quick-start</span>
   </div>
 </section>
@@ -848,7 +853,7 @@ img,video,canvas,svg{max-width:100%;max-height:100%}
   </p>
   <p class="caption" style="font-family:'Cormorant Garamond','Noto Serif SC',Georgia,serif;font-style:italic;font-size:20px;margin-top:24px;">unified-dev-framework</p>
   <div class="pin-annotation">
-    <span class="pin-line">24 / 35</span>
+    <span class="pin-line">35 / 35</span>
     <span class="pin-line">closing · q&a</span>
     <span class="pin-line">training deck · 2026</span>
   </div>

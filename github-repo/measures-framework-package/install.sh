@@ -29,7 +29,7 @@ done
 # ----------------------------------------------------------
 # Step 1: Deploy templates
 # ----------------------------------------------------------
-echo "  [1/5] 部署项目模板..."
+echo "  [1/6] 部署项目模板..."
 mkdir -p "$MEASURES_HOME/templates"
 cp -r "$SCRIPT_DIR/templates/"* "$MEASURES_HOME/templates/"
 echo "         → $MEASURES_HOME/templates/"
@@ -37,16 +37,40 @@ echo "         → $MEASURES_HOME/templates/"
 # ----------------------------------------------------------
 # Step 2: Deploy project rules
 # ----------------------------------------------------------
-echo "  [2/5] 部署工程规则..."
+echo "  [2/6] 部署工程规则..."
 if [ -f "$SCRIPT_DIR/project-rules.md" ]; then
     cp "$SCRIPT_DIR/project-rules.md" "$MEASURES_HOME/project-rules.md"
     echo "         → $MEASURES_HOME/project-rules.md"
 fi
 
 # ----------------------------------------------------------
-# Step 3: Deploy Skills
+# Step 3: Deploy Agent definitions
 # ----------------------------------------------------------
-echo "  [3/5] 部署 Skills..."
+echo "  [3/6] 部署 Agent 定义..."
+
+if [ -n "$DETECTED_SKILLS" ]; then
+    for agent_dir in "$SCRIPT_DIR/agents/"*/; do
+        agent_name=$(basename "$agent_dir")
+        target="$DETECTED_SKILLS/$agent_name"
+
+        if [ -d "$target" ]; then
+            echo "         ⚠ $agent_name 已存在，跳过 (如需覆盖请手动删除后重试)"
+        else
+            cp -r "$agent_dir" "$target"
+            echo "         ✓ $agent_name"
+        fi
+    done
+else
+    echo "         ℹ 未检测到 AI IDE Skills 目录"
+    echo "           Agent 文件已复制到 $MEASURES_HOME/agents/"
+    echo "           请手动复制到你的 AI IDE skills 目录"
+    cp -r "$SCRIPT_DIR/agents/" "$MEASURES_HOME/agents/"
+fi
+
+# ----------------------------------------------------------
+# Step 4: Deploy Skills
+# ----------------------------------------------------------
+echo "  [4/6] 部署 Skills..."
 
 if [ -n "$DETECTED_SKILLS" ]; then
     for skill_dir in "$SCRIPT_DIR/skills/"*/; do
@@ -68,20 +92,26 @@ else
 fi
 
 # ----------------------------------------------------------
-# Step 4: Deploy docs
+# Step 5: Deploy docs
 # ----------------------------------------------------------
-echo "  [4/5] 部署文档..."
+echo "  [5/6] 部署文档..."
 mkdir -p "$MEASURES_HOME/docs"
 cp -r "$SCRIPT_DIR/docs/"* "$MEASURES_HOME/docs/"
 echo "         → $MEASURES_HOME/docs/"
 
 # ----------------------------------------------------------
-# Step 5: Deploy training slides
+# Step 6: Deploy training slides
 # ----------------------------------------------------------
-echo "  [5/5] 部署培训讲义..."
+echo "  [6/6] 部署培训讲义及入口页面..."
 mkdir -p "$MEASURES_HOME/training"
 cp -r "$SCRIPT_DIR/training/"* "$MEASURES_HOME/training/"
 echo "         → $MEASURES_HOME/training/"
+
+# Deploy index.html
+if [ -f "$SCRIPT_DIR/index.html" ]; then
+    cp "$SCRIPT_DIR/index.html" "$MEASURES_HOME/index.html"
+    echo "         → $MEASURES_HOME/index.html"
+fi
 
 # ----------------------------------------------------------
 # Done
@@ -91,13 +121,14 @@ echo "  ┌───────────────────────
 echo "  │  ✓ 安装完成！                            │"
 echo "  │                                          │"
 echo "  │  模板位置: ~/.measures-framework/templates/"
+echo "  │  Agents:  ~/.measures-framework/agents/"
 echo "  │  规则位置: ~/.measures-framework/project-rules.md"
 echo "  │  文档位置: ~/.measures-framework/docs/"
 echo "  │  讲义位置: ~/.measures-framework/training/"
 echo "  │                                          │"
 echo "  │  快速开始:                                │"
-echo "  │  1. cp -r ~/.measures-framework/templates/* \\"
-echo "  │       openspec/changes/_template/"
-echo "  │  2. 触发 brainstorming → 框架自动运转     │"
+echo "  │  1. mase init my-project -p my_app        │"
+echo "  │  2. cd my-project                        │"
+echo "  │  3. 对 AI 说: '创建新项目' → 框架自动运转  │"
 echo "  └──────────────────────────────────────────┘"
 echo ""

@@ -398,8 +398,14 @@ description: "Systematically fixes code defects. Invoke when user reports bugs, 
 #### A. Debug Server 管理
 
 **启动命令**（Python 标准库，零依赖）:
-```
-python3 /Users/dylanren/.trae-cn/builtin_skills/TRAE-debugger/tools/debug-server/python/debug-server.py --session <sessionId> --outdir .dbg --clean --idle 1200
+
+首先检测 debug-server 位置（按优先级）：
+1. `$HOME/.trae-cn/builtin_skills/TRAE-debugger/tools/debug-server/python/debug-server.py`
+2. `$HOME/.cursor/builtin_skills/TRAE-debugger/tools/debug-server/python/debug-server.py`
+
+```bash
+DEBUG_SERVER=$(find "$HOME/.trae-cn" "$HOME/.cursor" -path "*/TRAE-debugger/tools/debug-server/python/debug-server.py" 2>/dev/null | head -1)
+python3 "$DEBUG_SERVER" --session <sessionId> --outdir .dbg --clean --idle 1200
 ```
 
 **API 端点**:

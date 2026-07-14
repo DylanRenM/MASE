@@ -91,7 +91,7 @@ Agent 4 设计评审 → Agent 1 门禁确认
 | architecture.md | Design L2 | `openspec/changes/{name}/` |
 | detailed-design.md | Design L2 | `openspec/changes/{name}/` |
 | spec.md | Design L2 | `openspec/changes/{name}/specs/{capability}/` |
-| contract.md | Design L2 | `openspec/changes/{name}/specs/{capability}/` |
+| contract.md | Design L2 | `openspec/changes/{name}/` |
 | tasks.md | Design L2 | `openspec/changes/{name}/` |
 | 源代码 + 测试 | Build | `src/` + `tests/` + `e2e/` |
 
