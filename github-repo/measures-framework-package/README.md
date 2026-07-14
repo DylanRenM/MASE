@@ -56,7 +56,8 @@ cp -r ~/.measures-framework/templates/* openspec/changes/_template/
 | 目录 | 内容 |
 |------|------|
 | `templates/` | 项目初始化模板（proposal/design/specs/tasks/contract + cases/lessons 模板） |
-| `skills/` | 9 个 AI Skills 定义（bug-fixer/code-review/brainstorming/TDD 等） |
+| `skills/` | 11 个 AI Skills 定义（全 MASE 六阶段覆盖） |
+| `project-rules.md` | 九大工程原则 + E2E 门禁 + 契约约束（AI 可读格式） |
 | `docs/` | 框架设计文档 + 项目结构规范 + 使用手册 |
 | `training/` | 35 页 Vellum 风格培训讲义（HTML，可直接浏览器打开） |
 
