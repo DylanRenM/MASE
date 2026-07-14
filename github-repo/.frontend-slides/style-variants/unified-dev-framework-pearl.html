@@ -152,7 +152,7 @@ html,body{background:#EFECE6}
     </div>
     <div class="inverse-panel" style="flex:1;">
       <div class="panel-title">规则靠手工</div>
-      <div class="panel-body">TDD、合规检查、代码评审等 8 条规则纯靠人工记忆，无工具化强制执行</div>
+      <div class="panel-body">TDD、合规检查、代码评审等 9 条规则纯靠人工记忆，无工具化强制执行</div>
     </div>
   </div>
   <p class="lead">目标：一个框架 — 统一规范、编排工具、自动化规则</p>
@@ -463,8 +463,8 @@ html,body{background:#EFECE6}
   <h2 class="h1" style="margin-bottom:44px;">构建 Build</h2>
   <div style="max-width:850px;width:100%;display:flex;flex-direction:column;gap:8px;">
     <div class="process-item"><span class="step-num">1</span><div class="step-info"><div class="step-name">复用检查</div><div class="step-desc">对照可复用构件清单</div></div></div>
-    <div class="process-item"><span class="step-num">2</span><div class="step-info"><div class="step-name">写测试</div><div class="step-desc">pytest 单元测试 + 集成测试 (TDD 外层)</div></div></div>
-    <div class="process-item"><span class="step-num">3</span><div class="step-info"><div class="step-name">写实现 → 跑测试</div><div class="step-desc">TDD 内层：红 → 绿 → 重构</div></div></div>
+    <div class="process-item"><span class="step-num">2</span><div class="step-info"><div class="step-name">契约翻译 → 测试</div><div class="step-desc">contract.md 前置/后置/不变式 → TDD RED</div></div></div>
+    <div class="process-item"><span class="step-num">3</span><div class="step-info"><div class="step-name">写测试</div><div class="step-desc">pytest 单元测试 + 集成测试 (Spec → TDD RED)：红 → 绿 → 重构</div></div></div>
     <div class="process-item"><span class="step-num">4</span><div class="step-info"><div class="step-name">功能测试</div><div class="step-desc">webapp-testing (如有 UI)</div></div></div>
     <div class="process-item"><span class="step-num">5</span><div class="step-info"><div class="step-name">代码评审 + 安全扫描</div><div class="step-desc">code-review (spec合规+代码规约) + TRAE-security-review</div></div></div>
   </div>
@@ -688,7 +688,7 @@ html,body{background:#EFECE6}
   <h2 class="h1" style="margin-bottom:40px;">test-driven-development</h2>
   <p class="lead" style="max-width:800px;margin-bottom:36px;">TDD 微循环：先写测试 → 再写实现 → 重构优化</p>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:950px;width:100%;">
-    <div class="inverse-panel"><div class="panel-title" style="font-size:30px;">TDD 外循环</div><div class="panel-body">基于 Gherkin spec 编写 pytest 测试骨架</div></div>
+    <div class="inverse-panel"><div class="panel-title" style="font-size:30px;">契约翻译</div><div class="panel-body">读取 contract.md，前置/后置/不变式翻译为测试 (TDD RED 第一步)</div></div>
     <div class="compare-panel"><div class="panel-title" style="font-size:30px;">红 → 绿</div><div class="panel-body">先写失败测试 → 最小实现使其通过</div></div>
     <div class="compare-panel"><div class="panel-title" style="font-size:30px;">重构</div><div class="panel-body">消除重复、优化结构，保持测试全绿</div></div>
     <div class="inverse-panel"><div class="panel-title" style="font-size:30px;">最小单元</div><div class="panel-body">每次只实现一个 Scenario，小步快跑</div></div>
@@ -754,7 +754,7 @@ html,body{background:#EFECE6}
 <section class="slide" style="gap:0;">
   <div class="kicker" style="margin-bottom:8px;">验证阶段 · Skill</div>
   <h2 class="h1" style="margin-bottom:36px;">bug-fixer v3</h2>
-  <p class="lead" style="max-width:850px;margin-bottom:32px;">八原则驱动的BUG修复闭环 · 含运行时调试</p>
+  <p class="lead" style="max-width:850px;margin-bottom:32px;">九原则驱动的BUG修复闭环 · 含运行时调试</p>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:1050px;width:100%;">
     <div class="inverse-panel" style="padding:20px 24px;"><div class="panel-title" style="font-size:26px;">根因定位</div><div class="panel-body">科学假设→插桩→复现→分析</div></div>
     <div class="compare-panel" style="padding:20px 24px;"><div class="panel-title" style="font-size:26px;">系统修复</div><div class="panel-body">A/B双修方案，根治不复现</div></div>
