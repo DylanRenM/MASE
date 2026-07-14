@@ -235,26 +235,30 @@ html,body{background:#EFECE6}
     </div>
     <div class="process-item" style="padding:8px 0;">
       <span class="step-num" style="font-size:18px;">03</span>
-      <div class="step-info"><div class="step-name" style="font-size:26px;">根因分析</div><div class="step-desc" style="font-size:18px;">任何改错必须先找到根本原因，不碰运气</div></div>
+      <div class="step-info"><div class="step-name" style="font-size:26px;">契约式约束</div><div class="step-desc" style="font-size:18px;">从Spec推导DbC契约。API级硬性必做。TDD翻译到测试+运行时断言</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
       <span class="step-num" style="font-size:18px;">04</span>
-      <div class="step-info"><div class="step-name" style="font-size:26px;">系统化解决</div><div class="step-desc" style="font-size:18px;">杜绝临时补丁，只做系统性根治方案</div></div>
+      <div class="step-info"><div class="step-name" style="font-size:26px;">根因分析</div><div class="step-desc" style="font-size:18px;">任何改错必须先找到根本原因，不碰运气</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
       <span class="step-num" style="font-size:18px;">05</span>
-      <div class="step-info"><div class="step-name" style="font-size:26px;">TDD 驱动</div><div class="step-desc" style="font-size:18px;">每个功能必须有自动化测试，先写测试再写代码</div></div>
+      <div class="step-info"><div class="step-name" style="font-size:26px;">系统化解决</div><div class="step-desc" style="font-size:18px;">杜绝临时补丁，只做系统性根治方案</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
       <span class="step-num" style="font-size:18px;">06</span>
-      <div class="step-info"><div class="step-name" style="font-size:26px;">提交节奏</div><div class="step-desc" style="font-size:18px;">每 20 次对话执行一次 Git 提交</div></div>
+      <div class="step-info"><div class="step-name" style="font-size:26px;">TDD 驱动</div><div class="step-desc" style="font-size:18px;">每个功能必须有自动化测试，先写测试再写代码</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
       <span class="step-num" style="font-size:18px;">07</span>
-      <div class="step-info"><div class="step-name" style="font-size:26px;">备份机制</div><div class="step-desc" style="font-size:18px;">删除或回退代码前必须做备份</div></div>
+      <div class="step-info"><div class="step-name" style="font-size:26px;">提交节奏</div><div class="step-desc" style="font-size:18px;">每 20 次对话执行一次 Git 提交</div></div>
     </div>
     <div class="process-item" style="padding:8px 0;">
       <span class="step-num" style="font-size:18px;">08</span>
+      <div class="step-info"><div class="step-name" style="font-size:26px;">备份机制</div><div class="step-desc" style="font-size:18px;">删除或回退代码前必须做备份</div></div>
+    </div>
+    <div class="process-item" style="padding:8px 0;">
+      <span class="step-num" style="font-size:18px;">09</span>
       <div class="step-info"><div class="step-name" style="font-size:26px;">合规检查</div><div class="step-desc" style="font-size:18px;">每次评审必须对照 spec + design 文档</div></div>
     </div>
   </div>
@@ -271,7 +275,11 @@ html,body{background:#EFECE6}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:1020px;width:100%;">
     <div class="inverse-panel" style="padding:24px 28px;">
       <span style="font-family:'Cormorant Garamond','LXGW WenKai TC',serif;font-weight:400;font-style:italic;font-size:42px;line-height:1;color:var(--yellow);display:block;margin-bottom:8px;">01</span>
-      <div class="panel-title" style="font-size:26px;">根因分析</div>
+      <div class="panel-title" style="font-size:26px;">契约式约束</div><div class="step-desc" style="font-size:18px;">从Spec推导DbC契约。API级硬性必做。TDD翻译到测试+运行时断言</div></div>
+    </div>
+    <div class="process-item" style="padding:8px 0;">
+      <span class="step-num" style="font-size:18px;">04</span>
+      <div class="step-info"><div class="step-name" style="font-size:26px;">根因分析</div>
       <div class="panel-body">先定位根本原因，再动手修复</div>
     </div>
     <div class="compare-panel" style="padding:24px 28px;">
@@ -365,8 +373,8 @@ html,body{background:#EFECE6}
   <h2 class="h1" style="margin-bottom:48px;">开发</h2>
   <div style="display:flex;gap:24px;max-width:1050px;width:100%;">
     <div class="inverse-panel" style="flex:1;"><div class="panel-title">技术预研</div><div class="panel-body">联网调研 + 方案对比 + POC 验证 + 可复用构件提取</div></div>
-    <div class="compare-panel" style="flex:1;"><div class="panel-title">架构设计</div><div class="panel-body">architecture.md + detailed-design.md + specs/* 三层设计</div></div>
-    <div class="inverse-panel" style="flex:1;"><div class="panel-title">TDD 构建</div><div class="panel-body">Scenario → 测试 → 实现 → 评审 → 扫描 → 提交</div></div>
+    <div class="inverse-panel" style="flex:1;"><div class="panel-title">架构设计</div><div class="panel-body">architecture.md + detailed-design.md + specs/* + contract.md 契约推导</div></div>
+    <div class="compare-panel" style="flex:1;"><div class="panel-title">TDD 构建</div><div class="panel-body">契约翻译→测试→实现→E2E→评审→扫描→提交</div></div>
   </div>
   <p class="lead" style="margin-top:40px;">全链路一体化 — 从预研到架构到编码，技术决策无断点</p>
   <div class="pin-annotation">
@@ -383,6 +391,8 @@ html,body{background:#EFECE6}
     <div class="inverse-panel"><div class="panel-title" style="font-size:34px;">设计评审</div><div class="panel-body">code-quality-controller — 架构合规、需求一致性、技术可行性</div></div>
     <div class="compare-panel"><div class="panel-title" style="font-size:34px;">前端评审</div><div class="panel-body">frontend-design — 视觉、交互、响应式、无障碍、性能</div></div>
     <div class="compare-panel"><div class="panel-title" style="font-size:34px;">代码质量</div><div class="panel-body">code-review (含 spec 合规+代码规约) + 安全扫描</div></div>
+    <div class="inverse-panel"><div class="panel-title" style="font-size:34px;">E2E 自动化回归</div><div class="panel-body">Playwright 全量回归，P0 场景 100% 通过门禁</div></div>
+    <div class="compare-panel"><div class="panel-title" style="font-size:34px;">契约门禁</div><div class="panel-body">API级契约测试硬阻断 + 运行时断言校验</div></div>
     <div class="inverse-panel"><div class="panel-title" style="font-size:34px;">BUG 修复</div><div class="panel-body">bug-fixer v3 — 根因→系统修复→测试复盘→横向扫描</div></div>
   </div>
   <div class="pin-annotation">
@@ -482,7 +492,11 @@ html,body{background:#EFECE6}
   <div style="display:flex;gap:24px;max-width:1000px;width:100%;">
     <div class="inverse-panel" style="flex:1;">
       <div class="panel-title" style="font-size:34px;">BUG 修复闭环</div>
-      <div class="panel-body" style="line-height:1.8;">根因分析<br>→ A/B 双修系统方案<br>→ 回归验证<br>→ 测试缺口复盘<br>→ 横向扫描同类 BUG<br>→ 经验记录</div>
+      <div class="panel-body" style="line-height:1.8;">契约式约束</div><div class="step-desc" style="font-size:18px;">从Spec推导DbC契约。API级硬性必做。TDD翻译到测试+运行时断言</div></div>
+    </div>
+    <div class="process-item" style="padding:8px 0;">
+      <span class="step-num" style="font-size:18px;">04</span>
+      <div class="step-info"><div class="step-name" style="font-size:26px;">根因分析<br>→ A/B 双修系统方案<br>→ 回归验证<br>→ 测试缺口复盘<br>→ 横向扫描同类 BUG<br>→ 经验记录</div>
     </div>
     <div class="compare-panel" style="flex:1;">
       <div class="panel-title" style="font-size:34px;">原则</div>
