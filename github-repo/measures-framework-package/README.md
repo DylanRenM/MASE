@@ -1,0 +1,98 @@
+# 麦哲思AI软件开发统一流程
+
+> MASE (Measures AI Software Engineering) — v1.1
+
+## 概述
+
+本框架是一套完整的 AI 辅助软件开发方法论与工具集，核心架构为"**四 Agent · 九原则 · 六阶段 · PDCA 闭环**"。
+
+- **四 Agent**：计划与统管 (A1) + 需求 (A2) + 开发 (A3) + 质量 (A4)
+- **九大工程原则**：需求澄清 → 设计预研 → 契约式约束 → TDD 驱动 → E2E 验证 → 根因分析 → 系统化解决 → 固定节奏提交 → 及时备份
+- **六阶段**：Proposal → Design → Build → Verify → Retro → Release
+- **PDCA 闭环**：每一次开发都在自我进化
+
+## 安装方式
+
+### 方式一：自动安装（macOS / Linux）
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+安装脚本会自动完成：
+1. 将模板文件部署到 `~/.measures-framework/templates/`
+2. 将 Skills 部署到 AI IDE 技能目录
+3. 将文档和培训讲义复制到 `~/.measures-framework/`
+
+### 方式二：手动安装
+
+```bash
+# 1. 部署项目模板
+cp -r templates/ ~/.measures-framework/templates/
+
+# 2. 部署 Skills
+cp -r skills/* <AI-IDE-skills-directory>/
+
+# 3. 复制文档
+cp -r docs/ ~/.measures-framework/docs/
+cp -r training/ ~/.measures-framework/training/
+```
+
+## 快速开始
+
+1. 安装完成后，在 AI IDE 中打开或创建项目
+2. 将模板复制到项目中：
+
+```bash
+cp -r ~/.measures-framework/templates/* openspec/changes/_template/
+```
+
+3. 创建项目目录结构（参考 `templates/STRUCTURE.md`）
+4. 触发 brainstorming — 框架将自动按照六阶段流程运转
+
+## 包含内容
+
+| 目录 | 内容 |
+|------|------|
+| `templates/` | 项目初始化模板（proposal/design/specs/tasks/contract + cases/lessons 模板） |
+| `skills/` | 9 个 AI Skills 定义（bug-fixer/code-review/brainstorming/TDD 等） |
+| `docs/` | 框架设计文档 + 项目结构规范 + 使用手册 |
+| `training/` | 35 页 Vellum 风格培训讲义（HTML，可直接浏览器打开） |
+
+## 九大工程原则
+
+1. **需求澄清确认** — 原型确认后才进入开发
+2. **设计预研，消除风险** — 技术预研 + POC 验证
+3. **契约式约束** — 从 Spec 推导 DbC 契约（前置/后置/不变式），TDD 翻译到测试 + 运行时断言
+4. **TDD 驱动** — 内外双循环：spec 驱动 + 测试驱动
+5. **验证与确认检查** — E2E 自动化回归 + 人工探索性测试 + 合规审查
+6. **根因分析** — 任何改错必找到根本原因
+7. **系统化解决** — 杜绝临时补丁
+8. **固定节奏提交** — 每 20 次对话做提交
+9. **及时备份** — 删除/回退必做备份
+
+## 版本
+
+v1.1 — 2026-07-14
+
+## 许可
+
+Measures (麦哲思) 版权所有
+
+## CLI 工具
+
+框架附带 `mase` 命令行工具：
+
+```bash
+# 安装
+pip install -e .
+
+# 初始化新项目
+mase init my-project -p my_app -c auth payment
+
+# 合规检查
+mase check
+```
+
+详细用法见 `mase --help`。
