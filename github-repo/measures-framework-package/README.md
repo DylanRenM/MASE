@@ -55,6 +55,7 @@ cp -r ~/.measures-framework/templates/* openspec/changes/_template/
 
 | 目录 | 内容 |
 |------|------|
+| `agents/` | 4 个 Agent 定义（计划与统管 / 需求 / 开发 / 质量，含阶段流程 + 门禁规则） |
 | `templates/` | 项目初始化模板（proposal/design/specs/tasks/contract + cases/lessons 模板） |
 | `skills/` | 11 个 AI Skills 定义（全 MASE 六阶段覆盖） |
 | `project-rules.md` | 九大工程原则 + E2E 门禁 + 契约约束（AI 可读格式） |
