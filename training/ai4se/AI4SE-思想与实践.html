@@ -1,0 +1,1814 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI4SE 思想与实践</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════ TOKENS ═══════════════════════════ */
+    :root {
+      --c-bg: #2a3870;
+      --c-bg-alt: #343f80;
+      --c-fg: #E8D85C;
+      --c-fg-2: rgba(232,216,92,0.62);
+      --c-fg-3: rgba(232,216,92,0.32);
+      --c-accent: #3a7878;
+      --c-emphasis: #F5E168;
+      --c-border: rgba(232,216,92,0.20);
+      --f-display: "Cormorant Garamond", "Noto Serif SC", Georgia, serif;
+      --f-heading: "Cormorant Garamond", "Noto Serif SC", Georgia, serif;
+      --f-body: "DM Sans", "Noto Sans SC", system-ui, sans-serif;
+      --f-mono: "Courier Prime", "Courier New", monospace;
+      --pad-x: 115px;
+      --pad-y: 115px;
+      --gap-lg: 54px;
+      --gap-md: 32px;
+      --gap-sm: 16px;
+    }
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;height:100%;overflow:hidden;background:#000;-webkit-font-smoothing:antialiased}
+
+    /* ── Slide Base ──────────────────────────────────────── */
+    section {
+      background: var(--c-bg);
+      color: var(--c-fg);
+      padding: var(--pad-y) var(--pad-x);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Typography ──────────────────────────────────────── */
+    h1,h2,h3{font-family:var(--f-display);font-style:italic;font-weight:400}
+    h1{font-size:134px;line-height:0.95;letter-spacing:-0.01em}
+    h2{font-size:77px;line-height:1.05}
+    h3{font-size:46px;line-height:1.15;font-weight:500}
+    h1 em,h2 em{font-style:normal;font-weight:600;color:var(--c-emphasis)}
+
+    .display{font-family:var(--f-display);font-size:210px;font-weight:400;font-style:italic;line-height:0.92;letter-spacing:-0.01em}
+    .display em{font-style:normal;font-weight:600;color:var(--c-emphasis)}
+
+    .lead{font-family:var(--f-body);font-size:29px;font-weight:400;line-height:1.6}
+    .body-text{font-family:var(--f-body);font-size:20px;font-weight:400;line-height:1.65}
+    .caption{font-family:var(--f-body);font-size:16px;font-weight:400;line-height:1.5}
+    .mono-label{font-family:var(--f-mono);font-size:14px;font-weight:400;letter-spacing:0.06em}
+
+    .text-muted{color:var(--c-fg-2)}
+    .text-subtle{color:var(--c-fg-3)}
+    .text-accent{color:var(--c-emphasis)}
+
+    /* ── Pin-annotation (bottom-left) ────────────────────── */
+    .pin-annotation {
+      position: absolute;
+      bottom: 103px;
+      left: var(--pad-x);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      z-index: 10;
+      max-width: 420px;
+    }
+    .pin-note {
+      font-family: var(--f-mono);
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--c-accent);
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Page number (bottom-right) ──────────────────────── */
+    .page-num {
+      position: absolute;
+      bottom: 103px;
+      right: var(--pad-x);
+      font-family: var(--f-mono);
+      font-size: 14px;
+      color: var(--c-fg-3);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Quote-mark decoration (top-right on covers) ─────── */
+    .quote-decor {
+      position: absolute;
+      top: 60px;
+      right: 140px;
+      font-family: var(--f-display);
+      font-size: 200px;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--c-accent);
+      line-height: 0.6;
+      opacity: 0.45;
+    }
+
+    /* ── Kicker ──────────────────────────────────────────── */
+    .kicker {
+      font-family: var(--f-mono);
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      color: var(--c-accent);
+    }
+    .rule {
+      width: 28px;
+      height: 1px;
+      background: var(--c-accent);
+    }
+
+    /* ── Slide Cover / Chapter Cover ─────────────────────── */
+    .slide-cover {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .slide-cover .cover-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--gap-md);
+      max-width: 70%;
+    }
+
+    /* ── Slide Content (H2 headline + body) ──────────────── */
+    .slide-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .slide-content .content-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--gap-lg);
+      max-width: 65%;
+    }
+    .slide-content .content-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--gap-md);
+    }
+
+    /* ── Item list with subtle yellow dividers ───────────── */
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
+    }
+    .item-row {
+      font-family: var(--f-body);
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 1.55;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--c-border);
+      text-align: left;
+    }
+    .item-row:last-child {
+      border-bottom: none;
+    }
+
+    /* ── TOC items ───────────────────────────────────────── */
+    .toc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      text-align: left;
+    }
+    .toc-item {
+      font-family: var(--f-body);
+      font-size: 26px;
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--c-fg-2);
+    }
+
+    /* ── Stats layout ────────────────────────────────────── */
+    .slide-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .slide-stats .stats-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--gap-lg);
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      width: 80%;
+    }
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--gap-sm);
+      padding: var(--gap-md);
+      border-right: 1px solid var(--c-border);
+    }
+    .stat-card:last-child { border-right: none; }
+    .stat-val {
+      font-family: var(--f-display);
+      font-size: 106px;
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .stat-label-text {
+      font-family: var(--f-mono);
+      font-size: 16px;
+      color: var(--c-fg-2);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Quadrant 2×2 ────────────────────────────────────── */
+    .quad-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 1px;
+      width: 75%;
+      background: var(--c-border);
+    }
+    .quad-cell {
+      background: var(--c-bg);
+      padding: 40px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    /* ── Timeline ────────────────────────────────────────── */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+    }
+    .tl-entry {
+      display: flex;
+      align-items: baseline;
+      gap: 28px;
+      text-align: left;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .tl-entry:last-child { border-bottom: none; }
+    .tl-year {
+      font-family: var(--f-mono);
+      font-size: 16px;
+      color: var(--c-accent);
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      min-width: 60px;
+    }
+    .tl-desc {
+      font-family: var(--f-body);
+      font-size: 22px;
+      color: var(--c-fg-2);
+      line-height: 1.5;
+    }
+
+    /* ── Phases / Roadmap ────────────────────────────────── */
+    .phase-item {
+      text-align: left;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .phase-item:last-child { border-bottom: none; }
+    .phase-title {
+      font-family: var(--f-body);
+      font-size: 24px;
+      color: var(--c-fg);
+      margin-bottom: 6px;
+    }
+    .phase-desc {
+      font-family: var(--f-body);
+      font-size: 18px;
+      color: var(--c-fg-2);
+      line-height: 1.55;
+    }
+
+    /* ── Two-column layout ───────────────────────────────── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      width: 80%;
+    }
+    .col-card {
+      text-align: left;
+    }
+    .col-card h3 {
+      margin-bottom: 16px;
+      font-size: 38px;
+    }
+    .col-card p {
+      font-family: var(--f-body);
+      font-size: 20px;
+      line-height: 1.65;
+      color: var(--c-fg-2);
+    }
+
+    /* ── Callout box ─────────────────────────────────────── */
+    .callout {
+      border: 1px solid var(--c-border);
+      padding: 36px 48px;
+      text-align: left;
+    }
+    .callout-label {
+      font-family: var(--f-mono);
+      font-size: 14px;
+      color: var(--c-accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .callout-text {
+      font-family: var(--f-body);
+      font-size: 24px;
+      color: var(--c-emphasis);
+      line-height: 1.5;
+    }
+
+    /* ── Grid for tools ──────────────────────────────────── */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      width: 75%;
+    }
+    .tool-cell {
+      text-align: left;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .tool-cell:nth-last-child(-n+2) { border-bottom: none; }
+    .tool-cell-title {
+      font-family: var(--f-mono);
+      font-size: 16px;
+      color: var(--c-accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .tool-cell-body {
+      font-family: var(--f-body);
+      font-size: 19px;
+      color: var(--c-fg-2);
+      line-height: 1.55;
+    }
+
+    /* ── End slide ───────────────────────────────────────── */
+    .slide-end {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .slide-end .end-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--gap-md);
+      max-width: 60%;
+    }
+
+    /* ── Reduced motion ──────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}
+    }
+
+    /* ── Print: pages injected by deck-stage ─────────────── */
+    @media print {
+      html,body{background:none!important}
+    }
+  </style>
+</head>
+<body>
+  <deck-stage width="1920" height="1080">
+
+    <!-- ═══ 01 · 封面 ═══════════════════════════════════════ -->
+    <section data-label="封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1 style="font-size:148px;line-height:1.0">AI4SE：<em>思想与实践</em></h1>
+        <p class="lead" style="color:var(--c-fg-2);max-width:80%">
+          58 篇深度文章分类汇总，系统解读 AI 赋能软件工程的方法论、工具链与落地路径
+        </p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">01 / 60</span>
+        <span class="pin-note">麦哲思科技 · 任甲林</span>
+        <span class="pin-note">2026 年 6 月 · 企业内训材料</span>
+      </div>
+      <div class="page-num">01 / 60</div>
+    </section>
+
+    <!-- ═══ 02 · 目录 ═══════════════════════════════════════ -->
+    <section data-label="目录" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>培训大纲</h2>
+        <div class="toc-list">
+          <div class="toc-item">第一章　AI4SE 总论与趋势</div>
+          <div class="toc-item">第二章　AI 驱动的需求工程</div>
+          <div class="toc-item">第三章　AI 驱动的架构与设计</div>
+          <div class="toc-item">第四章　AI 驱动的编码与实现</div>
+          <div class="toc-item">第五章　AI 驱动的测试与质量保障</div>
+          <div class="toc-item">第六章　AI 驱动的项目管理与度量</div>
+          <div class="toc-item">第七章　AI 工具链与平台生态</div>
+          <div class="toc-item">第八章　企业落地案例与实践路径</div>
+          <div class="toc-item">第九章　未来趋势与展望</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">02 / 60</span>
+        <span class="pin-note">九章 · 58 篇文章</span>
+      </div>
+      <div class="page-num">02 / 60</div>
+    </section>
+
+    <!-- ═══ 03 · 数据总览 ═══════════════════════════════════ -->
+    <section data-label="数据总览" class="slide-stats">
+      <div class="stats-inner">
+        <h2>58 篇文章数据总览</h2>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-val">9</div>
+            <div class="stat-label-text">大主题领域</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">58</div>
+            <div class="stat-label-text">篇深度文章</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">2025</div>
+            <div class="stat-label-text">至 2026 年</div>
+          </div>
+        </div>
+        <p class="lead" style="color:var(--c-fg-2)">
+          方法论 × 工具评测 × 案例分析 × 趋势洞察
+        </p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">03 / 60</span>
+        <span class="pin-note">数据来自 58 篇文章统计</span>
+      </div>
+      <div class="page-num">03 / 60</div>
+    </section>
+
+    <!-- ═══ 04 · 第一章封面 ══════════════════════════════════ -->
+    <section data-label="第一章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第一章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">AI4SE 总论与趋势</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">04 / 60</span>
+        <span class="pin-note">AI for Software Engineering</span>
+        <span class="pin-note">核心理念</span>
+      </div>
+      <div class="page-num">04 / 60</div>
+    </section>
+
+    <!-- ═══ 05 · AI4SE 的定义与边界 ═══════════════════════════ -->
+    <section data-label="AI4SE的定义与边界" class="slide-content">
+      <div class="content-inner" style="max-width:75%">
+        <h2>AI4SE 的定义与边界</h2>
+        <div class="two-col">
+          <div class="col-card">
+            <h3>什么是 AI4SE</h3>
+            <p>AI 技术（大语言模型、机器学习、知识图谱等）在软件工程全生命周期中的应用，涵盖需求、设计、编码、测试、运维、项目管理各阶段。</p>
+          </div>
+          <div class="col-card">
+            <h3>边界与范围</h3>
+            <p>不同于 AI 辅助编程工具的单点应用，AI4SE 强调系统性融合，从个人效率提升到组织级能力升级。</p>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">05 / 60</span>
+        <span class="pin-note">定义 · 边界</span>
+      </div>
+      <div class="page-num">05 / 60</div>
+    </section>
+
+    <!-- ═══ 06 · 从 Copilot 到 Agent 的范式跃迁 ═══════════════ -->
+    <section data-label="范式跃迁" class="slide-content">
+      <div class="content-inner">
+        <h2>从 Copilot 到 Agent 的范式跃迁</h2>
+        <div class="content-body" style="max-width:72%">
+          <p class="lead" style="color:var(--c-fg-2);text-align:left">
+            AI 在软件工程中的角色正从"代码补全助手"向"自主任务执行的智能体"演进。Copilot 阶段：被动响应、单次交互、代码级辅助；Agent 阶段：主动规划、多步推理、任务级自主执行。
+          </p>
+          <div class="callout" style="width:100%">
+            <div class="callout-label">关键转变</div>
+            <div class="callout-text">从"人写代码，AI 提示"到"人定目标，AI 执行"。</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">06 / 60</span>
+        <span class="pin-note">范式跃迁</span>
+      </div>
+      <div class="page-num">06 / 60</div>
+    </section>
+
+    <!-- ═══ 07 · AI4SE 核心能力矩阵 ═══════════════════════════ -->
+    <section data-label="核心能力矩阵" class="slide-content">
+      <div class="content-inner" style="max-width:80%">
+        <h2>AI4SE 核心能力矩阵</h2>
+        <div class="quad-grid">
+          <div class="quad-cell">
+            <h3>理解与分析</h3>
+            <p class="body-text" style="color:var(--c-fg-2)">需求理解、代码语义分析、架构推理</p>
+          </div>
+          <div class="quad-cell">
+            <h3>生成与创造</h3>
+            <p class="body-text" style="color:var(--c-fg-2)">代码生成、测试用例生成、文档生成</p>
+          </div>
+          <div class="quad-cell">
+            <h3>审查与优化</h3>
+            <p class="body-text" style="color:var(--c-fg-2)">Code Review、性能优化、安全检测</p>
+          </div>
+          <div class="quad-cell">
+            <h3>协作与管理</h3>
+            <p class="body-text" style="color:var(--c-fg-2)">智能排期、风险预警、知识管理</p>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">07 / 60</span>
+        <span class="pin-note">四象限能力矩阵</span>
+      </div>
+      <div class="page-num">07 / 60</div>
+    </section>
+
+    <!-- ═══ 08 · 2025–2026 关键趋势 ═══════════════════════════ -->
+    <section data-label="关键趋势" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>2025–2026 关键趋势</h2>
+        <div class="item-list">
+          <div class="item-row">1. 大模型进入软件工程全流程</div>
+          <div class="item-row">2. Agent 模式从实验走向生产</div>
+          <div class="item-row">3. MCP 协议开启工具生态标准化</div>
+          <div class="item-row">4. AI-Native 开发范式兴起</div>
+          <div class="item-row">5. 从辅助到替代：初级岗位被重塑</div>
+          <div class="item-row">6. 软件工程方法论的重构</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">08 / 60</span>
+        <span class="pin-note">基于 58 篇文章的趋势提炼</span>
+      </div>
+      <div class="page-num">08 / 60</div>
+    </section>
+
+    <!-- ═══ 09 · 落地挑战 ════════════════════════════════════ -->
+    <section data-label="落地挑战" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>落地挑战</h2>
+        <div class="item-list">
+          <div class="item-row">幻觉问题：生成代码的可靠性和安全性</div>
+          <div class="item-row">组织适配：流程重构与人员转型</div>
+          <div class="item-row">度量困境：如何科学评估 AI 的工程效能提升</div>
+          <div class="item-row">合规风险：知识产权、数据隐私、监管合规</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">09 / 60</span>
+        <span class="pin-note">四大挑战</span>
+      </div>
+      <div class="page-num">09 / 60</div>
+    </section>
+
+    <!-- ═══ 10 · 第二章封面 ═══════════════════════════════════ -->
+    <section data-label="第二章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第二章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">AI 驱动的需求工程</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">10 / 60</span>
+        <span class="pin-note">Requirements Engineering</span>
+        <span class="pin-note">从模糊到精确</span>
+      </div>
+      <div class="page-num">10 / 60</div>
+    </section>
+
+    <!-- ═══ 11 · 需求工程的 AI 化机遇 ══════════════════════════ -->
+    <section data-label="需求工程AI化机遇" class="slide-content">
+      <div class="content-inner" style="max-width:65%">
+        <h2>需求工程的 AI 化机遇</h2>
+        <div class="content-body">
+          <p class="lead" style="color:var(--c-fg-2);text-align:left">
+            需求工程是软件项目失败的首要原因。AI 的自然语言理解能力为这一环节带来革命性变化——从用户访谈记录中自动提取需求、从历史项目中挖掘隐含需求、自动检测需求冲突与遗漏。
+          </p>
+          <div class="callout" style="width:100%">
+            <div class="callout-label">核心路径</div>
+            <div class="callout-text">自然语言 → 结构化需求 → 可验证规格</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">11 / 60</span>
+        <span class="pin-note">需求工程 · AI 化机遇</span>
+      </div>
+      <div class="page-num">11 / 60</div>
+    </section>
+
+    <!-- ═══ 12 · AI 辅助需求获取 ══════════════════════════════ -->
+    <section data-label="AI辅助需求获取" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>AI 辅助需求获取</h2>
+        <div class="item-list">
+          <div class="item-row">访谈纪要自动分析与要点提取</div>
+          <div class="item-row">竞品文档智能对比与差距分析</div>
+          <div class="item-row">用户反馈的情绪分析与需求聚合</div>
+          <div class="item-row">跨语言需求文档的自动翻译与对齐</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">12 / 60</span>
+        <span class="pin-note">需求获取</span>
+      </div>
+      <div class="page-num">12 / 60</div>
+    </section>
+
+    <!-- ═══ 13 · AI 辅助需求分析与建模 ═════════════════════════ -->
+    <section data-label="AI辅助需求分析与建模" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>AI 辅助需求分析与建模</h2>
+        <div class="item-list">
+          <div class="item-row">用户故事自动生成与 INVEST 评估</div>
+          <div class="item-row">用例图的 AI 辅助绘制</div>
+          <div class="item-row">需求优先级智能排序</div>
+          <div class="item-row">需求冲突自动检测</div>
+          <div class="item-row">从自然语言到形式化规格的转换</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">13 / 60</span>
+        <span class="pin-note">需求分析 · 建模</span>
+      </div>
+      <div class="page-num">13 / 60</div>
+    </section>
+
+    <!-- ═══ 14 · AI 辅助需求管理 ══════════════════════════════ -->
+    <section data-label="AI辅助需求管理" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>AI 辅助需求管理</h2>
+        <div class="item-list">
+          <div class="item-row">需求变更影响分析（波及范围自动测算）</div>
+          <div class="item-row">需求追踪矩阵的智能维护</div>
+          <div class="item-row">需求评审的 AI 辅助预审</div>
+          <div class="item-row">需求文档的自动版本差异分析</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">14 / 60</span>
+        <span class="pin-note">需求管理</span>
+      </div>
+      <div class="page-num">14 / 60</div>
+    </section>
+
+    <!-- ═══ 15 · 第三章封面 ═══════════════════════════════════ -->
+    <section data-label="第三章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第三章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">AI 驱动的架构与设计</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">15 / 60</span>
+        <span class="pin-note">Architecture &amp; Design</span>
+        <span class="pin-note">从经验到智能</span>
+      </div>
+      <div class="page-num">15 / 60</div>
+    </section>
+
+    <!-- ═══ 16 · AI 对软件架构的影响 ═══════════════════════════ -->
+    <section data-label="AI对软件架构的影响" class="slide-content">
+      <div class="content-inner" style="max-width:65%">
+        <h2>AI 对软件架构的影响</h2>
+        <div class="content-body">
+          <p class="lead" style="color:var(--c-fg-2);text-align:left">
+            AI 不仅改变我们如何编码，更在重塑我们如何思考系统。架构决策从"经验驱动"走向"数据驱动"，架构评估从"定性评审"走向"定量分析"。
+          </p>
+          <div class="item-list">
+            <div class="item-row">AI-Native 架构模式（RAG、Agent、Multi-Model Pipeline）</div>
+            <div class="item-row">传统架构在 AI 时代的适配与演进</div>
+            <div class="item-row">架构决策记录（ADR）的 AI 辅助生成</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">16 / 60</span>
+        <span class="pin-note">架构影响</span>
+      </div>
+      <div class="page-num">16 / 60</div>
+    </section>
+
+    <!-- ═══ 17 · AI 辅助架构设计 ═══════════════════════════════ -->
+    <section data-label="AI辅助架构设计" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>AI 辅助架构设计</h2>
+        <div class="item-list">
+          <div class="item-row">从需求到架构方案的自动推导</div>
+          <div class="item-row">架构模式推荐与反模式预警</div>
+          <div class="item-row">架构图的 AI 辅助绘制</div>
+          <div class="item-row">架构评估的量化指标分析</div>
+          <div class="item-row">ADR（架构决策记录）的 AI 辅助管理</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">17 / 60</span>
+        <span class="pin-note">架构设计</span>
+      </div>
+      <div class="page-num">17 / 60</div>
+    </section>
+
+    <!-- ═══ 18 · AI 辅助详细设计 ═══════════════════════════════ -->
+    <section data-label="AI辅助详细设计" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>AI 辅助详细设计</h2>
+        <div class="item-list">
+          <div class="item-row">API 设计的 AI 辅助生成与校验</div>
+          <div class="item-row">数据库 Schema 的智能设计</div>
+          <div class="item-row">设计模式的自动推荐</div>
+          <div class="item-row">类图/时序图的自动生成</div>
+          <div class="item-row">设计评审的 AI 预审</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">18 / 60</span>
+        <span class="pin-note">详细设计</span>
+      </div>
+      <div class="page-num">18 / 60</div>
+    </section>
+
+    <!-- ═══ 19 · AI 辅助代码重构 ═══════════════════════════════ -->
+    <section data-label="AI辅助代码重构" class="slide-content">
+      <div class="content-inner" style="max-width:65%">
+        <h2>AI 辅助代码重构</h2>
+        <div class="content-body">
+          <p class="lead" style="color:var(--c-fg-2);text-align:left">
+            重构是持续改善代码质量的核心活动。AI 可以识别代码坏味道、推荐重构策略，并安全执行重构操作。
+          </p>
+          <div class="item-list">
+            <div class="item-row">代码坏味道的智能识别</div>
+            <div class="item-row">重构方案推荐与影响分析</div>
+            <div class="item-row">大范围重构的安全自动化</div>
+            <div class="item-row">重构前后的质量对比</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">19 / 60</span>
+        <span class="pin-note">代码重构</span>
+      </div>
+      <div class="page-num">19 / 60</div>
+    </section>
+
+    <!-- ═══ 20 · 第四章封面 ═══════════════════════════════════ -->
+    <section data-label="第四章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第四章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">AI 驱动的编码与实现</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">20 / 60</span>
+        <span class="pin-note">Coding &amp; Implementation</span>
+        <span class="pin-note">从辅助到生成</span>
+      </div>
+      <div class="page-num">20 / 60</div>
+    </section>
+
+    <!-- ═══ 21 · AI 编程工具的演进 ═════════════════════════════ -->
+    <section data-label="AI编程工具的演进" class="slide-content">
+      <div class="content-inner" style="max-width:62%">
+        <h2>AI 编程工具的演进</h2>
+        <div class="timeline">
+          <div class="tl-entry">
+            <span class="tl-year">2021</span>
+            <span class="tl-desc">GitHub Copilot（代码补全）</span>
+          </div>
+          <div class="tl-entry">
+            <span class="tl-year">2022</span>
+            <span class="tl-desc">ChatGPT（对话式编码）</span>
+          </div>
+          <div class="tl-entry">
+            <span class="tl-year">2023</span>
+            <span class="tl-desc">Cursor / Copilot Chat（上下文感知）</span>
+          </div>
+          <div class="tl-entry">
+            <span class="tl-year">2024</span>
+            <span class="tl-desc">Devin / Copilot Workspace（任务级 Agent）</span>
+          </div>
+          <div class="tl-entry">
+            <span class="tl-year">2025</span>
+            <span class="tl-desc">Claude Code / Codex CLI（终端级全栈 Agent）</span>
+          </div>
+          <div class="tl-entry">
+            <span class="tl-year">2026</span>
+            <span class="tl-desc">MCP 生态标准化（工具互联互通）</span>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">21 / 60</span>
+        <span class="pin-note">工具演进时间线</span>
+      </div>
+      <div class="page-num">21 / 60</div>
+    </section>
+
+    <!-- ═══ 22 · AI 编码模式对比 ═══════════════════════════════ -->
+    <section data-label="AI编码模式对比" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>AI 编码模式对比</h2>
+        <div class="item-list">
+          <div class="item-row">补全模式（Completion）— tab 键接受，单行/多行</div>
+          <div class="item-row">对话模式（Chat）— 问答式，上下文窗口</div>
+          <div class="item-row">内联编辑模式（Inline Edit）— 选中代码，直接修改</div>
+          <div class="item-row">Agent 模式（Agent）— 自主规划，多文件操作，终端执行</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">22 / 60</span>
+        <span class="pin-note">四种编码模式</span>
+      </div>
+      <div class="page-num">22 / 60</div>
+    </section>
+
+    <!-- ═══ 23 · Prompt Engineering 方法论 ══════════════════════ -->
+    <section data-label="Prompt Engineering方法论" class="slide-content">
+      <div class="content-inner" style="max-width:62%">
+        <h2>Prompt Engineering 方法论</h2>
+        <div class="item-list">
+          <div class="item-row">角色设定：你是一位资深 Java 架构师</div>
+          <div class="item-row">上下文注入：提供相关代码文件、架构文档</div>
+          <div class="item-row">约束明确：指定技术栈、设计模式、编码规范</div>
+          <div class="item-row">分步引导：复杂任务拆解为子步骤</div>
+          <div class="item-row">反馈迭代：测试 → 修正 → 优化循环</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">23 / 60</span>
+        <span class="pin-note">好的 Prompt 是生产力杠杆</span>
+      </div>
+      <div class="page-num">23 / 60</div>
+    </section>
+
+    <!-- ═══ 24 · 代码质量与 AI ═════════════════════════════════ -->
+    <section data-label="代码质量与AI" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>代码质量与 AI</h2>
+        <div class="item-list">
+          <div class="item-row">AI 生成代码的可读性与可维护性</div>
+          <div class="item-row">测试覆盖率：AI 生成代码的测试策略</div>
+          <div class="item-row">安全性：AI 代码的常见漏洞与防范</div>
+          <div class="item-row">性能：AI 生成代码的性能考量</div>
+          <div class="item-row">规范遵循：AI 与编码规范的结合</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">24 / 60</span>
+        <span class="pin-note">代码质量 · 五个维度</span>
+      </div>
+      <div class="page-num">24 / 60</div>
+    </section>
+
+    <!-- ═══ 25 · 第五章封面 ═══════════════════════════════════ -->
+    <section data-label="第五章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第五章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">AI 驱动的测试与质量保障</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">25 / 60</span>
+        <span class="pin-note">Testing &amp; Quality</span>
+        <span class="pin-note">从人工到智能</span>
+      </div>
+      <div class="page-num">25 / 60</div>
+    </section>
+
+    <!-- ═══ 26 · AI 测试全景图 ═════════════════════════════════ -->
+    <section data-label="AI测试全景图" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>AI 测试全景图</h2>
+        <div class="item-list">
+          <div class="item-row">测试用例自动生成（单元测试、集成测试、E2E 测试）</div>
+          <div class="item-row">测试数据智能构造</div>
+          <div class="item-row">缺陷预测与风险分析</div>
+          <div class="item-row">测试结果智能诊断</div>
+          <div class="item-row">回归测试自动选择</div>
+          <div class="item-row">视觉测试与 UI 自动化</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">26 / 60</span>
+        <span class="pin-note">测试 · 全景图</span>
+      </div>
+      <div class="page-num">26 / 60</div>
+    </section>
+
+    <!-- ═══ 27 · AI 辅助测试用例生成 ═══════════════════════════ -->
+    <section data-label="AI辅助测试用例生成" class="slide-content">
+      <div class="content-inner" style="max-width:65%">
+        <h2>AI 辅助测试用例生成</h2>
+        <div class="content-body">
+          <p class="lead" style="color:var(--c-fg-2);text-align:left">
+            测试用例编写是软件工程中最耗时的工作之一。AI 能够从源代码、需求文档和历史测试中学习，自动生成高质量测试用例。
+          </p>
+          <div class="item-list">
+            <div class="item-row">基于代码的单元测试生成</div>
+            <div class="item-row">基于 API 文档的接口测试生成</div>
+            <div class="item-row">边界条件与异常路径覆盖</div>
+            <div class="item-row">测试场景的组合爆炸处理</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">27 / 60</span>
+        <span class="pin-note">测试用例生成</span>
+      </div>
+      <div class="page-num">27 / 60</div>
+    </section>
+
+    <!-- ═══ 28 · AI 辅助缺陷管理 ═══════════════════════════════ -->
+    <section data-label="AI辅助缺陷管理" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>AI 辅助缺陷管理</h2>
+        <div class="item-list">
+          <div class="item-row">缺陷自动分类与优先级排序</div>
+          <div class="item-row">故障根因的智能定位</div>
+          <div class="item-row">相似缺陷的聚类分析</div>
+          <div class="item-row">缺陷修复建议的自动推荐</div>
+          <div class="item-row">回归范围的智能选择</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">28 / 60</span>
+        <span class="pin-note">缺陷管理</span>
+      </div>
+      <div class="page-num">28 / 60</div>
+    </section>
+
+    <!-- ═══ 29 · AI 辅助代码审查 ═══════════════════════════════ -->
+    <section data-label="AI辅助代码审查" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>AI 辅助代码审查</h2>
+        <div class="item-list">
+          <div class="item-row">代码 Diff 的语义级理解</div>
+          <div class="item-row">潜在 Bug 的主动发现</div>
+          <div class="item-row">编码规范的自动检查</div>
+          <div class="item-row">安全漏洞的扫描与预警</div>
+          <div class="item-row">审查意见的自动总结</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">29 / 60</span>
+        <span class="pin-note">代码审查</span>
+      </div>
+      <div class="page-num">29 / 60</div>
+    </section>
+
+    <!-- ═══ 30 · 第六章封面 ═══════════════════════════════════ -->
+    <section data-label="第六章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第六章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">AI 驱动的项目管理与度量</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">30 / 60</span>
+        <span class="pin-note">Project Management</span>
+        <span class="pin-note">从经验到数据</span>
+      </div>
+      <div class="page-num">30 / 60</div>
+    </section>
+
+    <!-- ═══ 31 · AI 赋能项目管理 ═══════════════════════════════ -->
+    <section data-label="AI赋能项目管理" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>AI 赋能项目管理</h2>
+        <div class="item-list">
+          <div class="item-row">智能排期与工期预测</div>
+          <div class="item-row">风险自动识别与预警</div>
+          <div class="item-row">工作量智能估算</div>
+          <div class="item-row">会议纪要自动生成与行动项提取</div>
+          <div class="item-row">项目报告自动生成</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">31 / 60</span>
+        <span class="pin-note">项目管理</span>
+      </div>
+      <div class="page-num">31 / 60</div>
+    </section>
+
+    <!-- ═══ 32 · AI 辅助度量与分析 ═════════════════════════════ -->
+    <section data-label="AI辅助度量与分析" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>AI 辅助度量与分析</h2>
+        <div class="item-list">
+          <div class="item-row">代码度量的智能解读与建议</div>
+          <div class="item-row">团队效能的 AI 分析</div>
+          <div class="item-row">技术债务的量化评估</div>
+          <div class="item-row">工程质量的多维评分模型</div>
+          <div class="item-row">DORA 指标的 AI 优化建议</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">32 / 60</span>
+        <span class="pin-note">度量 · 分析</span>
+      </div>
+      <div class="page-num">32 / 60</div>
+    </section>
+
+    <!-- ═══ 33 · AI 对研发效能的影响 ═══════════════════════════ -->
+    <section data-label="AI对研发效能的影响" class="slide-content">
+      <div class="content-inner" style="max-width:62%">
+        <h2>AI 对研发效能的影响</h2>
+        <div class="item-list">
+          <div class="item-row">效率提升：编码速度、文档生成、测试编写</div>
+          <div class="item-row">质量改善：Bug 减少、代码规范、知识沉淀</div>
+          <div class="item-row">团队影响：角色变化、协作模式、技能需求</div>
+          <div class="item-row">度量挑战：传统效能指标在 AI 时代的适配</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">33 / 60</span>
+        <span class="pin-note">研发效能</span>
+      </div>
+      <div class="page-num">33 / 60</div>
+    </section>
+
+    <!-- ═══ 34 · 知识管理与 AI ═════════════════════════════════ -->
+    <section data-label="知识管理与AI" class="slide-content">
+      <div class="content-inner" style="max-width:58%">
+        <h2>知识管理与 AI</h2>
+        <div class="item-list">
+          <div class="item-row">代码库的语义搜索与问答</div>
+          <div class="item-row">技术文档的自动维护</div>
+          <div class="item-row">最佳实践的自动提取与推荐</div>
+          <div class="item-row">新人入职的 AI 辅助学习路径</div>
+          <div class="item-row">组织知识沉淀的 AI 化</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">34 / 60</span>
+        <span class="pin-note">知识管理</span>
+      </div>
+      <div class="page-num">34 / 60</div>
+    </section>
+
+    <!-- ═══ 35 · 第七章封面 ═══════════════════════════════════ -->
+    <section data-label="第七章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第七章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">AI 工具链与平台生态</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">35 / 60</span>
+        <span class="pin-note">Tools &amp; Ecosystem</span>
+        <span class="pin-note">工具矩阵</span>
+      </div>
+      <div class="page-num">35 / 60</div>
+    </section>
+
+    <!-- ═══ 36 · AI 编码工具矩阵 ═══════════════════════════════ -->
+    <section data-label="AI编码工具矩阵" class="slide-content">
+      <div class="content-inner" style="max-width:80%">
+        <h2>AI 编码工具矩阵</h2>
+        <div class="tool-grid">
+          <div class="tool-cell">
+            <div class="tool-cell-title">IDE 插件类</div>
+            <div class="tool-cell-body">GitHub Copilot, Cursor, Continue, Codeium</div>
+          </div>
+          <div class="tool-cell">
+            <div class="tool-cell-title">CLI 终端类</div>
+            <div class="tool-cell-body">Claude Code, Codex CLI, Gemini CLI</div>
+          </div>
+          <div class="tool-cell">
+            <div class="tool-cell-title">Agent 平台类</div>
+            <div class="tool-cell-body">Devin, Copilot Workspace, Replit Agent</div>
+          </div>
+          <div class="tool-cell">
+            <div class="tool-cell-title">开源方案</div>
+            <div class="tool-cell-body">Aider, Continue, OpenHands</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">36 / 60</span>
+        <span class="pin-note">工具矩阵 · 四大类别</span>
+      </div>
+      <div class="page-num">36 / 60</div>
+    </section>
+
+    <!-- ═══ 37 · MCP 协议与工具互联 ════════════════════════════ -->
+    <section data-label="MCP协议与工具互联" class="slide-content">
+      <div class="content-inner" style="max-width:65%">
+        <h2>MCP 协议与工具互联</h2>
+        <div class="content-body">
+          <p class="lead" style="color:var(--c-fg-2);text-align:left">
+            Model Context Protocol（MCP）正在成为 AI 工具生态的标准化连接协议。它让不同的 AI 模型、工具和数据源能够互联互通，形成可组合的智能工具链。
+          </p>
+          <div class="item-list">
+            <div class="item-row">MCP Server 生态：Slack, GitHub, Jira, 数据库…</div>
+            <div class="item-row">自定义 MCP Server 的方法与实践</div>
+            <div class="item-row">MCP 对企业工具链的价值</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">37 / 60</span>
+        <span class="pin-note">MCP · Model Context Protocol</span>
+      </div>
+      <div class="page-num">37 / 60</div>
+    </section>
+
+    <!-- ═══ 38 · 企业级 AI 平台选型 ════════════════════════════ -->
+    <section data-label="企业级AI平台选型" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>企业级 AI 平台选型</h2>
+        <div class="item-list">
+          <div class="item-row">GitHub Copilot Enterprise</div>
+          <div class="item-row">GitLab Duo</div>
+          <div class="item-row">Amazon Q Developer</div>
+          <div class="item-row">Google Gemini Code Assist</div>
+          <div class="item-row">私有化部署方案（Ollama, vLLM…）</div>
+          <div class="item-row">安全合规考量</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">38 / 60</span>
+        <span class="pin-note">企业平台选型</span>
+      </div>
+      <div class="page-num">38 / 60</div>
+    </section>
+
+    <!-- ═══ 39 · AI 工具选型方法论 ═════════════════════════════ -->
+    <section data-label="AI工具选型方法论" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>AI 工具选型方法论</h2>
+        <div class="item-list">
+          <div class="item-row">场景匹配：编码 vs 测试 vs 文档 vs 运维</div>
+          <div class="item-row">团队适配：技术水平、工作流、工具偏好</div>
+          <div class="item-row">成本评估：License 费用 vs 隐性成本</div>
+          <div class="item-row">ROI 测算：效率提升 × 团队规模 × 时间</div>
+          <div class="item-row">安全合规：数据出境、代码隐私、合规审查</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">39 / 60</span>
+        <span class="pin-note">工具选型方法论</span>
+      </div>
+      <div class="page-num">39 / 60</div>
+    </section>
+
+    <!-- ═══ 40 · 第八章封面 ═══════════════════════════════════ -->
+    <section data-label="第八章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第八章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">企业落地案例与实践路径</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">40 / 60</span>
+        <span class="pin-note">Case Studies</span>
+        <span class="pin-note">从理论到实践</span>
+      </div>
+      <div class="page-num">40 / 60</div>
+    </section>
+
+    <!-- ═══ 41 · AI4SE 企业落地路线图 ═══════════════════════════ -->
+    <section data-label="落地路线图" class="slide-content">
+      <div class="content-inner" style="max-width:70%">
+        <h2>AI4SE 企业落地路线图</h2>
+        <div class="item-list">
+          <div class="phase-item">
+            <div class="phase-title">阶段一：试点探索（1–3 月）</div>
+            <div class="phase-desc">选择 1–2 个团队，引入 AI 编码工具，收集数据</div>
+          </div>
+          <div class="phase-item">
+            <div class="phase-title">阶段二：工具集成（3–6 月）</div>
+            <div class="phase-desc">集成 CI/CD，建立评测基准，制定使用规范</div>
+          </div>
+          <div class="phase-item">
+            <div class="phase-title">阶段三：流程重构（6–12 月）</div>
+            <div class="phase-desc">Agent 模式引入，测试流程 AI 化，知识管理 AI 化</div>
+          </div>
+          <div class="phase-item">
+            <div class="phase-title">阶段四：组织变革（12+ 月）</div>
+            <div class="phase-desc">角色重塑，能力升级，文化转变</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">41 / 60</span>
+        <span class="pin-note">落地路线图 · 四阶段</span>
+      </div>
+      <div class="page-num">41 / 60</div>
+    </section>
+
+    <!-- ═══ 42 · 成功要素与踩坑指南 ═══════════════════════════ -->
+    <section data-label="成功要素与踩坑指南" class="slide-content">
+      <div class="content-inner" style="max-width:72%">
+        <h2>成功要素与踩坑指南</h2>
+        <div class="two-col" style="gap:48px">
+          <div class="col-card">
+            <h3>成功要素</h3>
+            <div class="item-list">
+              <div class="item-row">高层支持与技术 Champions 双驱动</div>
+              <div class="item-row">从工具开始，逐步到流程、文化</div>
+              <div class="item-row">建立 AI 使用规范和评测框架</div>
+              <div class="item-row">重视人员培训与技能转型</div>
+            </div>
+          </div>
+          <div class="col-card">
+            <h3>踩坑指南</h3>
+            <div class="item-list">
+              <div class="item-row">盲目追求最新工具</div>
+              <div class="item-row">忽视代码审查的重要性</div>
+              <div class="item-row">低估组织变革阻力</div>
+              <div class="item-row">缺少可量化的成功指标</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">42 / 60</span>
+        <span class="pin-note">成功 · 踩坑</span>
+      </div>
+      <div class="page-num">42 / 60</div>
+    </section>
+
+    <!-- ═══ 43 · 不同规模企业的 AI4SE 策略 ═══════════════════════ -->
+    <section data-label="不同规模企业策略" class="slide-content">
+      <div class="content-inner" style="max-width:62%">
+        <h2>不同规模企业的 AI4SE 策略</h2>
+        <div class="item-list">
+          <div class="item-row">初创公司：全栈 Agent + 开源工具，轻量化落地</div>
+          <div class="item-row">中型企业：商业工具 + 定制化 MCP Server，平衡效率与成本</div>
+          <div class="item-row">大型企业：私有部署 + 合规优先 + 多级推广，追求规模效应</div>
+          <div class="item-row">外包/离岸：AI 弥合沟通鸿沟，提升交付质量</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">43 / 60</span>
+        <span class="pin-note">按规模定制策略</span>
+      </div>
+      <div class="page-num">43 / 60</div>
+    </section>
+
+    <!-- ═══ 44 · 典型场景案例要点 ══════════════════════════════ -->
+    <section data-label="案例要点汇总" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>典型场景案例要点</h2>
+        <div class="item-list">
+          <div class="item-row">遗留系统现代化 — AI 辅助理解、重构、迁移</div>
+          <div class="item-row">微服务架构转型 — AI 辅助拆解、通信设计</div>
+          <div class="item-row">质量债务清偿 — AI 驱动的测试补充与重构</div>
+          <div class="item-row">DevOps 智能化 — AI 辅助故障诊断与自动修复</div>
+          <div class="item-row">API 优先开发 — AI 辅助设计、文档、测试</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">44 / 60</span>
+        <span class="pin-note">典型案例</span>
+      </div>
+      <div class="page-num">44 / 60</div>
+    </section>
+
+    <!-- ═══ 45 · 第九章封面 ═══════════════════════════════════ -->
+    <section data-label="第九章封面" class="slide-cover">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="cover-inner">
+        <h1>第九章</h1>
+        <p class="lead" style="color:var(--c-fg-2)">未来趋势与展望</p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">45 / 60</span>
+        <span class="pin-note">Future</span>
+        <span class="pin-note">2026 及以后</span>
+      </div>
+      <div class="page-num">45 / 60</div>
+    </section>
+
+    <!-- ═══ 46 · AI 重塑软件工程职业 ═══════════════════════════ -->
+    <section data-label="AI重塑软件工程职业" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>AI 重塑软件工程职业</h2>
+        <div class="item-list">
+          <div class="item-row">初级工程师角色演变：从写代码到驾驭 AI</div>
+          <div class="item-row">架构师价值跃升：AI 放大系统思维的价值</div>
+          <div class="item-row">新兴角色涌现：Prompt Engineer、AI 质量保障工程师</div>
+          <div class="item-row">终身学习成为刚需：工具半衰期持续缩短</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">46 / 60</span>
+        <span class="pin-note">职业重塑</span>
+      </div>
+      <div class="page-num">46 / 60</div>
+    </section>
+
+    <!-- ═══ 47 · AI-Native 开发范式 ════════════════════════════ -->
+    <section data-label="AI-Native开发范式" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>AI-Native 开发范式</h2>
+        <div class="item-list">
+          <div class="item-row">Vibe Coding：与 AI 结对编程的新体验</div>
+          <div class="item-row">Spec-Driven Development：规格驱动，AI 执行</div>
+          <div class="item-row">Test-First AI：先定义测试，再让 AI 生成代码</div>
+          <div class="item-row">对话式 DevOps：自然语言驱动的运维</div>
+          <div class="item-row">自适应系统：AI 自主优化系统行为</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">47 / 60</span>
+        <span class="pin-note">AI-Native 范式</span>
+      </div>
+      <div class="page-num">47 / 60</div>
+    </section>
+
+    <!-- ═══ 48 · 软件工程的范式重构 ═══════════════════════════ -->
+    <section data-label="范式重构" class="slide-content">
+      <div class="content-inner" style="max-width:60%">
+        <h2>软件工程的范式重构</h2>
+        <div class="item-list">
+          <div class="item-row">从"编写代码"到"定义意图"</div>
+          <div class="item-row">从"代码复用"到"知识复用"</div>
+          <div class="item-row">从"项目制"到"持续演进"</div>
+          <div class="item-row">从"分工协作"到"人机协作"</div>
+          <div class="item-row">软件工程方法论需要从底层重新审视</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">48 / 60</span>
+        <span class="pin-note">范式重构</span>
+      </div>
+      <div class="page-num">48 / 60</div>
+    </section>
+
+    <!-- ═══ 49 · 推荐阅读与学习路径 ═══════════════════════════ -->
+    <section data-label="推荐阅读与学习路径" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>推荐学习路径</h2>
+        <div class="item-list">
+          <div class="item-row">入门篇：AI 辅助编码工具实操（5 篇核心）</div>
+          <div class="item-row">进阶篇：Prompt Engineering 与 AI 工作流设计（8 篇）</div>
+          <div class="item-row">深度篇：AI4SE 方法论与企业实践（12 篇）</div>
+          <div class="item-row">前沿篇：Agent 模式与未来趋势（8 篇）</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">49 / 60</span>
+        <span class="pin-note">专栏地址 blog.csdn.net/dylanren</span>
+      </div>
+      <div class="page-num">49 / 60</div>
+    </section>
+
+    <!-- ═══ 50 · AI4SE 实施中的组织变革管理 ══════════════════ -->
+    <section data-label="组织变革管理" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>组织变革管理</h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">AI4SE 落地的最大阻力往往不是技术，而是组织</p>
+        <div class="item-list">
+          <div class="item-row">文化转变：从“AI 会取代我”到“AI 赋能我”</div>
+          <div class="item-row">角色重塑：开发者 → AI 驾驭者，评审者 → AI 校验者</div>
+          <div class="item-row">激励机制：鼓励 AI 使用、分享 Prompt、沉淀实践</div>
+          <div class="item-row">渐进式推广：从意见领袖到早期多数，再到全员</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">50 / 60</span>
+        <span class="pin-note">组织变革 · Change Management</span>
+      </div>
+      <div class="page-num">50 / 60</div>
+    </section>
+
+    <!-- ═══ 51 · AI 编码生产力的科学度量 ══════════════════════ -->
+    <section data-label="AI编码生产力度量" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>AI 生产力的<em>科学度量</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">不能用传统指标衡量 AI 时代的生产力</p>
+        <div class="item-list">
+          <div class="item-row">产出指标：交付速度、功能吞吐量、任务完成率</div>
+          <div class="item-row">质量指标：Bug 密度、测试覆盖率、代码可维护性</div>
+          <div class="item-row">效能指标：开发者体验（DevEx）、Flow State 时间占比</div>
+          <div class="item-row">创新指标：AI 辅助创新数量、技术债务减少率</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">51 / 60</span>
+        <span class="pin-note">度量 · Measurement</span>
+      </div>
+      <div class="page-num">51 / 60</div>
+    </section>
+
+    <!-- ═══ 52 · AI 辅助文档与知识沉淀 ═══════════════════════ -->
+    <section data-label="AI辅助文档与知识沉淀" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>AI 辅助<em>文档与知识</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">文档是软件工程的“遗忘曲线”解药</p>
+        <div class="item-list">
+          <div class="item-row">API 文档自动生成：从代码到 OpenAPI/Swagger</div>
+          <div class="item-row">架构文档自动维护：从代码变更到架构图更新</div>
+          <div class="item-row">知识库智能问答：基于代码仓的语义搜索与 RAG</div>
+          <div class="item-row">新人 Guide 自动生成：从代码仓到学习路径</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">52 / 60</span>
+        <span class="pin-note">Documentation · Knowledge</span>
+      </div>
+      <div class="page-num">52 / 60</div>
+    </section>
+
+    <!-- ═══ 53 · 行业应用场景深度解析 ══════════════════════════ -->
+    <section data-label="行业应用场景" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>行业应用<em>场景解析</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">不同行业，AI4SE 的切入点和侧重点各不相同</p>
+        <div class="item-list">
+          <div class="item-row">金融科技：合规优先，AI 辅助监管代码生成与审计追踪</div>
+          <div class="item-row">医疗健康：安全至上，AI 辅助验证与形式化证明</div>
+          <div class="item-row">制造业：物联网 + AI，嵌入式开发的智能化升级</div>
+          <div class="item-row">互联网：快速迭代，AI Agent 驱动的全流程自动化</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">53 / 60</span>
+        <span class="pin-note">Industry · Application</span>
+      </div>
+      <div class="page-num">53 / 60</div>
+    </section>
+
+    <!-- ═══ 54 · AI 辅助 DevOps 与持续交付 ═════════════════════ -->
+    <section data-label="AI辅助DevOps" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>AI 辅助<em>DevOps</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">AI 正在重塑持续集成、持续交付与运维的全流程</p>
+        <div class="item-list">
+          <div class="item-row">CI 失败自动诊断：Pipeline 日志智能分析与修复建议</div>
+          <div class="item-row">部署风险评估：基于变更范围自动评估发布风险</div>
+          <div class="item-row">告警智能降噪：关联分析 + 优先级排序 + 自动响应</div>
+          <div class="item-row">故障自愈：常见故障模式的自动检测与修复</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">54 / 60</span>
+        <span class="pin-note">DevOps · CI/CD + AI</span>
+      </div>
+      <div class="page-num">54 / 60</div>
+    </section>
+
+    <!-- ═══ 55 · 安全左移：AI 辅助安全开发 ════════════════════ -->
+    <section data-label="AI辅助安全开发" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>安全左移：<em>AI 辅助</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">在编码阶段就发现安全漏洞，代价最低</p>
+        <div class="item-list">
+          <div class="item-row">SAST 智能化：静态分析 + AI 语义理解，降低误报率</div>
+          <div class="item-row">依赖安全：AI 辅助评估第三方库风险与替代建议</div>
+          <div class="item-row">AI 代码安全审查：Prompt 注入、敏感信息泄露检测</div>
+          <div class="item-row">安全需求自动验证：合规检查与安全测试用例生成</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">55 / 60</span>
+        <span class="pin-note">Security · Shift Left</span>
+      </div>
+      <div class="page-num">55 / 60</div>
+    </section>
+
+    <!-- ═══ 56 · 多模态 AI 在软件工程中的应用 ══════════════════ -->
+    <section data-label="多模态AI在软件工程中的应用" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>多模态 AI 的<em>工程应用</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">超越文本：视觉、语音、视频在 SE 中的融合</p>
+        <div class="item-list">
+          <div class="item-row">UI 设计稿 → 代码：Figma/Sketch 到前端组件的 AI 转换</div>
+          <div class="item-row">白板讨论 → 用户故事：会议录音 + 白板照片的 AI 理解</div>
+          <div class="item-row">视频演示 → 测试用例：操作录屏的 AI 识别与自动化</div>
+          <div class="item-row">架构草图 → 架构代码：手绘架构图的 AI 解析与生成</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">56 / 60</span>
+        <span class="pin-note">Multimodal · Vision + Code</span>
+      </div>
+      <div class="page-num">56 / 60</div>
+    </section>
+
+    <!-- ═══ 57 · 个人与团队的 AI 能力升级路径 ══════════════════ -->
+    <section data-label="AI能力升级路径" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>能力升级<em>路径</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">从个人到团队，AI 能力需要系统化建设</p>
+        <div class="item-list">
+          <div class="item-row">L1 使用：会用 Copilot/Cursor 完成基础编码</div>
+          <div class="item-row">L2 驾驭：精通 Prompt Engineering，建立个人工作流</div>
+          <div class="item-row">L3 扩展：定制 MCP Server，构建团队 AI 工具链</div>
+          <div class="item-row">L4 引领：设计 AI-Native 架构，推动组织级 AI 转型</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">57 / 60</span>
+        <span class="pin-note">Capability · Ladder</span>
+      </div>
+      <div class="page-num">57 / 60</div>
+    </section>
+
+    <!-- ═══ 58 · 总结与核心要点回顾 ══════════════════════════ -->
+    <section data-label="核心要点回顾" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>核心要点<em>回顾</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">九个维度，一个体系</p>
+        <div class="item-list">
+          <div class="item-row">AI4SE 不是替代，是范式跃迁：从 Copilot 到 Agent</div>
+          <div class="item-row">全生命周期覆盖：需求→架构→编码→测试→运维→管理</div>
+          <div class="item-row">工具只是入口，方法论才是核心：Prompt 工程 + 流程重构</div>
+          <div class="item-row">落地需要三驾马车：技术 × 组织 × 文化</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">58 / 60</span>
+        <span class="pin-note">Summary · Key Takeaways</span>
+      </div>
+      <div class="page-num">58 / 60</div>
+    </section>
+
+    <!-- ═══ 59 · AI4SE 的行动建议 ══════════════════════════════ -->
+    <section data-label="行动建议" class="slide-content">
+      <div class="content-inner" style="max-width:55%">
+        <h2>行动<em>建议</em></h2>
+        <p class="lead" style="color:var(--c-fg-2);margin-bottom:20px">从今天开始，你可以做的三件事</p>
+        <div class="item-list">
+          <div class="item-row">第一周：全员开通 AI 编码工具，建立使用规范与评测基线</div>
+          <div class="item-row">第一个月：组建 AI 实践社区，沉淀 Prompt 库与最佳实践</div>
+          <div class="item-row">第一季度：启动 AI4SE 试点项目，建立可量化的成功指标</div>
+          <div class="item-row">第一年：从工具应用到流程重构，实现组织级 AI 能力升级</div>
+        </div>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">59 / 60</span>
+        <span class="pin-note">Action · Next Steps</span>
+      </div>
+      <div class="page-num">59 / 60</div>
+    </section>
+
+    <!-- ═══ 60 · 结尾页 ═══════════════════════════════════════ -->
+    <section data-label="结尾页" class="slide-end">
+      <div class="quote-decor">&ldquo;</div>
+      <div class="end-inner">
+        <h1>Thank You</h1>
+        <p class="lead" style="color:var(--c-fg-2);max-width:80%">
+          58 篇文章，一个体系。AI 赋能软件工程的旅程才刚刚开始。
+        </p>
+        <p class="body-text" style="color:var(--c-fg-3);margin-top:20px">
+          专栏地址 blog.csdn.net/dylanren/category_13140358.html
+        </p>
+      </div>
+      <div class="pin-annotation">
+        <span class="pin-note">60 / 60</span>
+        <span class="pin-note">麦哲思科技 · 任甲林</span>
+        <span class="pin-note">2026 年 6 月</span>
+      </div>
+      <div class="page-num">60 / 60</div>
+    </section>
+
+</deck-stage>
+
+<script>
+/**
+ * <deck-stage> — reusable web component for HTML decks.
+ *
+ * Handles:
+ *  (a) speaker notes — reads <script type="application/json" id="speaker-notes">
+ *      and posts {slideIndexChanged: N} to the parent window on nav.
+ *  (b) keyboard navigation — ←/→, PgUp/PgDn, Space, Home/End, number keys.
+ *  (c) press R to reset to slide 0 (with a tasteful keyboard hint).
+ *  (d) bottom-center overlay showing slide count + hints, fades out on idle.
+ *  (e) auto-scaling — inner canvas is a fixed design size (default 1920×1080)
+ *      scaled with `transform: scale()` to fit the viewport, letterboxed.
+ *  (f) print — `@media print` lays every slide out as its own page at the
+ *      design size, so the browser's Print → Save as PDF produces a clean
+ *      one-page-per-slide PDF with no extra setup.
+ *
+ * Slides are HIDDEN, not unmounted. Non-active slides stay in the DOM with
+ * `visibility: hidden` + `opacity: 0`, so their state is preserved.
+ */
+(() => {
+  const DESIGN_W_DEFAULT = 1920;
+  const DESIGN_H_DEFAULT = 1080;
+  const OVERLAY_HIDE_MS = 1800;
+  const VALIDATE_ATTR = 'no_overflowing_text,no_overlapping_text,slide_sized_text';
+  const pad2 = (n) => String(n).padStart(2, '0');
+
+  const stylesheet = `
+    :host {
+      position: fixed; inset: 0; display: block; background: #000; color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+    .stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: #fff; will-change: transform; }
+    ::slotted(*) { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; box-sizing: border-box !important; overflow: hidden; opacity: 0; pointer-events: none; visibility: hidden; }
+    ::slotted([data-deck-active]) { opacity: 1; pointer-events: auto; visibility: visible; }
+    .tapzones { position: fixed; inset: 0; display: flex; z-index: 2147482000; pointer-events: none; }
+    .tapzone { flex: 1; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+    @media (hover: hover) and (pointer: fine) { .tapzones { display: none; } }
+    .overlay { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 6px) scale(0.92); filter: blur(6px); display: flex; align-items: center; gap: 4px; padding: 4px; background: #000; color: #fff; border-radius: 999px; font-size: 12px; font-feature-settings: "tnum" 1; letter-spacing: 0.01em; opacity: 0; pointer-events: none; transition: opacity 260ms ease, transform 260ms cubic-bezier(.2,.8,.2,1), filter 260ms ease; transform-origin: center bottom; z-index: 2147483000; user-select: none; }
+    .overlay[data-visible] { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); filter: blur(0); }
+    .btn { appearance: none; -webkit-appearance: none; background: transparent; border: 0; margin: 0; padding: 0; color: inherit; font: inherit; cursor: default; display: inline-flex; align-items: center; justify-content: center; height: 28px; min-width: 28px; border-radius: 999px; color: rgba(255,255,255,0.72); transition: background 140ms ease, color 140ms ease; -webkit-tap-highlight-color: transparent; }
+    .btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .btn svg { width: 14px; height: 14px; display: block; }
+    .btn.reset { font-size: 11px; font-weight: 500; padding: 0 10px 0 12px; gap: 6px; }
+    .btn.reset .kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 4px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 10px; color: rgba(255,255,255,0.88); background: rgba(255,255,255,0.12); border-radius: 4px; }
+    .count { font-variant-numeric: tabular-nums; color: #fff; font-weight: 500; padding: 0 8px; min-width: 42px; text-align: center; font-size: 12px; }
+    .count .sep { color: rgba(255,255,255,0.45); margin: 0 3px; }
+    .count .total { color: rgba(255,255,255,0.55); }
+    .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.18); margin: 0 2px; }
+    @media print {
+      :host { position: static; inset: auto; background: none; overflow: visible; color: inherit; }
+      .stage { position: static; display: block; }
+      .canvas { transform: none !important; width: auto !important; height: auto !important; background: none; will-change: auto; }
+      ::slotted(*) { position: relative !important; inset: auto !important; width: var(--deck-design-w) !important; height: var(--deck-design-h) !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto; break-after: page; page-break-after: always; break-inside: avoid; overflow: hidden; }
+      ::slotted(*:last-child) { break-after: auto; page-break-after: auto; }
+      .overlay, .tapzones { display: none !important; }
+    }
+  `;
+
+  class DeckStage extends HTMLElement {
+    static get observedAttributes() { return ['width', 'height', 'noscale']; }
+    constructor() {
+      super();
+      this._root = this.attachShadow({ mode: 'open' });
+      this._index = 0; this._slides = []; this._notes = []; this._hideTimer = null;
+      this._onKey = this._onKey.bind(this); this._onResize = this._onResize.bind(this);
+      this._onSlotChange = this._onSlotChange.bind(this); this._onMouseMove = this._onMouseMove.bind(this);
+      this._onTapBack = this._onTapBack.bind(this); this._onTapForward = this._onTapForward.bind(this);
+    }
+    get designWidth() { return parseInt(this.getAttribute('width'), 10) || DESIGN_W_DEFAULT; }
+    get designHeight() { return parseInt(this.getAttribute('height'), 10) || DESIGN_H_DEFAULT; }
+    connectedCallback() {
+      this._render(); this._loadNotes(); this._syncPrintPageRule();
+      window.addEventListener('keydown', this._onKey); window.addEventListener('resize', this._onResize);
+      window.addEventListener('mousemove', this._onMouseMove, { passive: true });
+    }
+    disconnectedCallback() {
+      window.removeEventListener('keydown', this._onKey); window.removeEventListener('resize', this._onResize);
+      window.removeEventListener('mousemove', this._onMouseMove);
+      if (this._hideTimer) clearTimeout(this._hideTimer);
+    }
+    attributeChangedCallback() {
+      if (this._canvas) {
+        this._canvas.style.width = this.designWidth + 'px';
+        this._canvas.style.height = this.designHeight + 'px';
+        this._canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+        this._canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+        this._fit(); this._syncPrintPageRule();
+      }
+    }
+    _render() {
+      const style = document.createElement('style'); style.textContent = stylesheet;
+      const stage = document.createElement('div'); stage.className = 'stage';
+      const canvas = document.createElement('div'); canvas.className = 'canvas';
+      canvas.style.width = this.designWidth + 'px'; canvas.style.height = this.designHeight + 'px';
+      canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+      canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+      const slot = document.createElement('slot'); slot.addEventListener('slotchange', this._onSlotChange);
+      canvas.appendChild(slot); stage.appendChild(canvas);
+      const tapzones = document.createElement('div'); tapzones.className = 'tapzones export-hidden';
+      tapzones.setAttribute('aria-hidden', 'true'); tapzones.setAttribute('data-noncommentable', '');
+      const tzBack = document.createElement('div'); tzBack.className = 'tapzone tapzone--back';
+      const tzMid = document.createElement('div'); tzMid.className = 'tapzone tapzone--mid'; tzMid.style.pointerEvents = 'none';
+      const tzFwd = document.createElement('div'); tzFwd.className = 'tapzone tapzone--fwd';
+      tzBack.addEventListener('click', this._onTapBack); tzFwd.addEventListener('click', this._onTapForward);
+      tapzones.append(tzBack, tzMid, tzFwd);
+      const overlay = document.createElement('div'); overlay.className = 'overlay export-hidden';
+      overlay.setAttribute('role', 'toolbar'); overlay.setAttribute('aria-label', 'Deck controls');
+      overlay.setAttribute('data-noncommentable', '');
+      overlay.innerHTML = '<button class="btn prev" type="button" aria-label="Previous slide" title="Previous (←)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><span class="count" aria-live="polite"><span class="current">1</span><span class="sep">/</span><span class="total">1</span></span><button class="btn next" type="button" aria-label="Next slide" title="Next (→)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button><span class="divider"></span><button class="btn reset" type="button" aria-label="Reset to first slide" title="Reset (R)">Reset<span class="kbd">R</span></button>';
+      overlay.querySelector('.prev').addEventListener('click', () => this._go(this._index - 1, 'click'));
+      overlay.querySelector('.next').addEventListener('click', () => this._go(this._index + 1, 'click'));
+      overlay.querySelector('.reset').addEventListener('click', () => this._go(0, 'click'));
+      this._root.append(style, stage, tapzones, overlay);
+      this._canvas = canvas; this._slot = slot; this._overlay = overlay;
+      this._countEl = overlay.querySelector('.current'); this._totalEl = overlay.querySelector('.total');
+    }
+    _syncPrintPageRule() {
+      const id = 'deck-stage-print-page'; let tag = document.getElementById(id);
+      if (!tag) { tag = document.createElement('style'); tag.id = id; document.head.appendChild(tag); }
+      tag.textContent = '@page { size: ' + this.designWidth + 'px ' + this.designHeight + 'px; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: none !important; overflow: visible !important; height: auto !important; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }';
+    }
+    _onSlotChange() { this._collectSlides(); this._restoreIndex(); this._applyIndex({ showOverlay: false, broadcast: true, reason: 'init' }); this._fit(); }
+    _collectSlides() {
+      const assigned = this._slot.assignedElements({ flatten: true });
+      this._slides = assigned.filter(el => { const tag = el.tagName; return tag !== 'TEMPLATE' && tag !== 'SCRIPT' && tag !== 'STYLE'; });
+      this._slides.forEach((slide, i) => {
+        const n = i + 1; let label = slide.getAttribute('data-label');
+        if (!label) { const h = slide.querySelector('h1, h2, h3'); if (h) label = (h.textContent || '').trim().slice(0, 40); }
+        if (!label) label = 'Slide';
+        slide.setAttribute('data-screen-label', pad2(n) + ' ' + label);
+        if (!slide.hasAttribute('data-om-validate')) slide.setAttribute('data-om-validate', VALIDATE_ATTR);
+        slide.setAttribute('data-deck-slide', String(i));
+      });
+      if (this._totalEl) this._totalEl.textContent = String(this._slides.length || 1);
+      if (this._index >= this._slides.length) this._index = Math.max(0, this._slides.length - 1);
+    }
+    _loadNotes() {
+      const tag = document.getElementById('speaker-notes');
+      if (!tag) { this._notes = []; return; }
+      try { const parsed = JSON.parse(tag.textContent || '[]'); if (Array.isArray(parsed)) this._notes = parsed; }
+      catch (e) { this._notes = []; }
+    }
+    _restoreIndex() {
+      const h = (location.hash || '').match(/^#(\d+)$/);
+      if (h) { const n = parseInt(h[1], 10) - 1; if (n >= 0 && n < this._slides.length) this._index = n; }
+    }
+    _applyIndex({ showOverlay = true, broadcast = true, reason = 'init' } = {}) {
+      if (!this._slides.length) return;
+      const prev = this._prevIndex == null ? -1 : this._prevIndex;
+      const curr = this._index;
+      try { history.replaceState(null, '', '#' + (curr + 1)); } catch (e) {}
+      this._slides.forEach((s, i) => { if (i === curr) s.setAttribute('data-deck-active', ''); else s.removeAttribute('data-deck-active'); });
+      if (this._countEl) this._countEl.textContent = String(curr + 1);
+      if (broadcast) {
+        try { window.postMessage({ slideIndexChanged: curr }, '*'); } catch (e) {}
+        this.dispatchEvent(new CustomEvent('slidechange', { detail: { index: curr, previousIndex: prev, total: this._slides.length, slide: this._slides[curr] || null, previousSlide: prev >= 0 ? (this._slides[prev] || null) : null, reason: reason }, bubbles: true, composed: true }));
+      }
+      this._prevIndex = curr; if (showOverlay) this._flashOverlay();
+    }
+    _flashOverlay() {
+      if (!this._overlay) return;
+      this._overlay.setAttribute('data-visible', '');
+      if (this._hideTimer) clearTimeout(this._hideTimer);
+      this._hideTimer = setTimeout(() => { this._overlay.removeAttribute('data-visible'); }, OVERLAY_HIDE_MS);
+    }
+    _fit() {
+      if (!this._canvas) return;
+      if (this.hasAttribute('noscale')) { this._canvas.style.transform = 'none'; return; }
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const s = Math.min(vw / this.designWidth, vh / this.designHeight);
+      this._canvas.style.transform = 'scale(' + s + ')';
+    }
+    _onResize() { this._fit(); }
+    _onMouseMove() { this._flashOverlay(); }
+    _onTapBack(e) { e.preventDefault(); this._go(this._index - 1, 'tap'); }
+    _onTapForward(e) { e.preventDefault(); this._go(this._index + 1, 'tap'); }
+    _onKey(e) {
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const key = e.key; let handled = true;
+      if (key === 'ArrowRight' || key === 'PageDown' || key === ' ' || key === 'Spacebar') this._go(this._index + 1, 'keyboard');
+      else if (key === 'ArrowLeft' || key === 'PageUp') this._go(this._index - 1, 'keyboard');
+      else if (key === 'Home') this._go(0, 'keyboard');
+      else if (key === 'End') this._go(this._slides.length - 1, 'keyboard');
+      else if (key === 'r' || key === 'R') this._go(0, 'keyboard');
+      else if (/^[0-9]$/.test(key)) { const n = key === '0' ? 9 : parseInt(key, 10) - 1; if (n < this._slides.length) this._go(n, 'keyboard'); }
+      else handled = false;
+      if (handled) { e.preventDefault(); this._flashOverlay(); }
+    }
+    _go(i, reason = 'api') {
+      if (!this._slides.length) return;
+      const clamped = Math.max(0, Math.min(this._slides.length - 1, i));
+      if (clamped === this._index) { this._flashOverlay(); return; }
+      this._index = clamped; this._applyIndex({ showOverlay: true, broadcast: true, reason });
+    }
+    get index() { return this._index; }
+    get length() { return this._slides.length; }
+    goTo(i) { this._go(i, 'api'); }
+    next() { this._go(this._index + 1, 'api'); }
+    prev() { this._go(this._index - 1, 'api'); }
+    reset() { this._go(0, 'api'); }
+  }
+  if (!customElements.get('deck-stage')) customElements.define('deck-stage', DeckStage);
+})();
+</script>
+</body>
+</html>

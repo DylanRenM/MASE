@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>统一开发框架 - Emerald Editorial Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,700;0,6..96,800;0,6..96,900;1,6..96,400;1,6..96,500;1,6..96,700;1,6..96,800;1,6..96,900&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --stage-bg: #25B377;
+  --slide-bg: #3CD896;
+  --bg: #3CD896;
+  --bg-2: #2DC684;
+  --bg-3: #25B377;
+  --ink: #0F1A5C;
+  --ink-2: #1B2774;
+  --ink-3: #3A4593;
+  --paper: #F1E9D6;
+}
+
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--slide-bg,#fff)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg,#fff)}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+img,video,canvas,svg{max-width:100%;max-height:100%}
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000}
+@media(print){html,body{width:1920px;height:auto;overflow:visible;background:#fff}.deck-viewport{position:static;overflow:visible;background:#fff}.deck-stage{position:static;width:auto;height:auto;transform:none!important;background:none}.slide{position:relative;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;width:1920px;height:1080px;break-after:page}.slide:last-child{break-after:auto}.deck-controls{display:none!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important}}
+
+/* Slide */
+.slide.s01 {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 140px;
+  background: var(--bg);
+}
+
+.s01 .masthead {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 80px;
+}
+
+.s01 .masthead .double-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 48px;
+}
+
+.s01 .masthead .double-rule span {
+  display: block;
+  height: 4px;
+  background: var(--ink);
+  border-radius: 0;
+}
+
+.s01 .masthead .masthead-text {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--ink);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.s01 .title {
+  font-family: 'Bodoni Moda', serif;
+  font-weight: 900;
+  font-size: 120px;
+  line-height: 1.05;
+  color: var(--ink);
+  margin: 0 0 40px 0;
+  max-width: 1400px;
+}
+
+.s01 .subtitle {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 500;
+  font-size: 28px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.s01 .subtitle-en {
+  font-family: 'Bodoni Moda', serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 24px;
+  color: var(--ink-3);
+  margin: 8px 0 0 0;
+}
+
+.s01 .bottom-strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 80px;
+}
+
+.s01 .bottom-strip span {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--paper);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.s01 .page-num {
+  position: absolute;
+  bottom: 100px;
+  right: 80px;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+  <div class="deck-stage">
+    <div class="slide s01 active">
+      <div class="masthead">
+        <div class="double-rule">
+          <span></span>
+          <span></span>
+        </div>
+        <div class="masthead-text">TRAINING DECK · 2026</div>
+      </div>
+      <h1 class="title">统一开发框架</h1>
+      <p class="subtitle">四 Agent · 六阶段 · PDCA 闭环 · TDD 驱动</p>
+      <p class="subtitle-en">Unified Development Framework</p>
+      <div class="bottom-strip">
+        <span>UNIFIED DEV FRAMEWORK</span>
+        <span>01</span>
+      </div>
+      <div class="page-num">1 / N</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const vp=document.querySelector('.deck-viewport');
+  const st=document.querySelector('.deck-stage');
+  function scale(){
+    const w=window.innerWidth,h=window.innerHeight;
+    const s=Math.min(w/1920,h/1080);
+    const l=(w-1920*s)/2,t=(h-1080*s)/2;
+    st.style.transform='translate('+l+'px,'+t+'px) scale('+s+')';
+  }
+  window.addEventListener('resize',scale);
+  scale();
+})();
+</script>
+</body>
+</html>

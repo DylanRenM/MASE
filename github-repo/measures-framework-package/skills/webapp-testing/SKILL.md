@@ -107,7 +107,7 @@ with sync_playwright() as p:
 每页一个 class，测试用例不裸写选择器。封装在 `e2e/helpers/pages.js`。
 
 ### fixtures 数据准备规范
-`seed.py` 生成 `fixtures.json`，测试只读，不修改 fixtures 数据。
+`seed.py` 生成 `fixtures.json`，测试只读，不修改 fixtures 数据。fixtures 是一种数据约定，不是 DbC 契约。
 
 ### 场景优先级标注
 使用 Playwright tags 标注优先级，对应 proposal.md 中的 P0/P1/P2：
