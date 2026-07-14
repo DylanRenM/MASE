@@ -61,15 +61,15 @@
 ## 快速开始
 
 ```bash
-# 1. 安装（部署 Skills 到 Trae IDE）
+# 1. 安装（部署 Skills 到 AI IDE）
 cd measures-framework-package
 ./install.sh
 
 # 2. 创建新项目
-# 对 AI 说："创建新项目 {name}" — 框架自动运转
+# 触发 brainstorming → 框架自动运转
 
 # 3. 复盘总结
-# 对 AI 说："复盘总结" — 触发四层蒸馏复盘
+# 触发 Retro 阶段 — 四层蒸馏复盘
 ```
 
 ## 目录结构
