@@ -58,34 +58,48 @@
 | 有复盘闭环？ | 无 | 无 | **有（PDCA）** |
 | 能自我进化？ | 不能 | 不能 | **能** |
 
-## 快速开始
+## ⚠️ 快速开始（按顺序执行）
 
 ```bash
-# 1. 安装（部署 Skills 到 AI IDE）
+# 第 1 步：部署框架组件
 cd measures-framework-package
+chmod +x install.sh
 ./install.sh
 
-# 2. 创建新项目
-# 触发 brainstorming → 框架自动运转
+# 第 2 步：安装 CLI
+pip install -e . --break-system-packages
 
-# 3. 复盘总结
-# 触发 Retro 阶段 — 四层蒸馏复盘
+# 第 3 步：创建项目
+mase init my-project -p my_app -c demo
+
+# 第 4 步：合规检查
+cd my-project
+pip install -e .          # 可选：安装项目依赖
+mase check                # 预期：✓ 通过 41/41 100%
+
+# 第 5 步：启动开发
+# 对 AI 说："创建新项目 my-project" → 六阶段自动运转
 ```
 
 ## 目录结构
 
 ```
 measures-framework-package/
-├── training/          # 培训讲义（HTML 幻灯片）
+├── agents/            # 4 个 Agent 定义（计划/需求/开发/质量）
+├── skills/            # 11 个 Skill 定义（全六阶段覆盖）
+├── templates/         # 全套模板体系（proposal/design/specs/tasks/contract + cases/lessons）
+├── mase_cli/          # CLI 工具（mase init / mase check + 契约断言库）
+├── project-rules.md   # 九大工程原则（AI 可读格式）
+├── training/          # 35 页培训讲义（HTML，浏览器直接打开）
 ├── docs/              # 设计文档、项目结构规范、用户手册
-├── skills/            # Skill 定义文件
-├── templates/         # 全套模板体系
+├── index.html         # 文档索引入口页
+├── pyproject.toml     # Python 包配置（mase CLI 入口点）
 └── install.sh         # 一键部署脚本
-
-docs/
-├── superpowers/       # 统一开发框架设计文档
-└── mase-framework-introduction-blog.md   # 详细介绍博文
 ```
+
+## 版本
+
+v1.1 — 2026-07-14
 
 ## License
 
