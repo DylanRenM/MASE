@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harness成熟度模型 (HMM)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    
+    .slides-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+    
+    .slide {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: none;
+      flex-direction: column;
+      padding: 40px 60px;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .slide.active { display: flex; }
+    
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .slide-number {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: monospace;
+    }
+    
+    .slide-title {
+      font-size: 28px;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .slide-content { flex: 1; display: flex; flex-direction: column; }
+    
+    .slide-content h1 {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .slide-content h2 {
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #00d4ff;
+    }
+    
+    .slide-content h3 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #a5b4fc;
+    }
+    
+    .slide-content p {
+      font-size: 18px;
+      line-height: 1.8;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 16px;
+    }
+    
+    .slide-body {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 20px;
+    }
+    
+    .slide-body::-webkit-scrollbar { width: 6px; }
+    .slide-body::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); }
+    .slide-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 3px; }
+    
+    /* 封面样式 */
+    .cover-slide {
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .cover-slide h1 {
+      font-size: 56px;
+      margin-bottom: 30px;
+    }
+    
+    .cover-slide .subtitle {
+      font-size: 22px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 40px;
+    }
+    
+    .cover-slide .meta {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    
+    /* 目录样式 */
+    .toc-list {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .toc-list li {
+      font-size: 20px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .toc-list li::before {
+      content: '▸';
+      color: #00d4ff;
+      margin-right: 12px;
+    }
+    
+    /* 成熟度层级样式 */
+    .maturity-levels {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .level-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 4px solid #00d4ff;
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .level-card.l1 { border-left-color: #ef4444; }
+    .level-card.l2 { border-left-color: #f97316; }
+    .level-card.l3 { border-left-color: #eab308; }
+    .level-card.l4 { border-left-color: #22c55e; }
+    .level-card.l5 { border-left-color: #00d4ff; }
+    
+    .level-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    
+    .level-desc {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    /* 表格样式 */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .data-table th, .data-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .data-table th {
+      background: rgba(255, 255, 255, 0.05);
+      font-weight: 600;
+      color: #a5b4fc;
+    }
+    
+    .data-table td {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .data-table tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    /* 指标卡片 */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    
+    .metric-title {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 8px;
+    }
+    
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #00d4ff;
+    }
+    
+    .metric-target {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 4px;
+    }
+    
+    /* 行动清单 */
+    .action-list {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .action-list li {
+      font-size: 16px;
+      padding: 10px 0 10px 28px;
+      position: relative;
+      color: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .action-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      width: 20px;
+      height: 20px;
+      background: #00d4ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #1a1a2e;
+      font-weight: 700;
+    }
+    
+    /* 导航 */
+    .navigation {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+    }
+    
+    .nav-btn {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+    
+    .nav-btn.active {
+      background: #00d4ff;
+      transform: scale(1.3);
+    }
+    
+    .controls {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 30px;
+      z-index: 100;
+    }
+    
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* 渐变文字 */
+    .gradient-text {
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* 强调文字 */
+    .highlight {
+      color: #00d4ff;
+      font-weight: 600;
+    }
+    
+    /* 标签 */
+    .tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .tag.l1 { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .tag.l2 { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+    .tag.l3 { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+    .tag.l4 { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .tag.l5 { background: rgba(0, 212, 255, 0.2); color: #00d4ff; }
+  </style>
+</head>
+<body>
+  <div class="slides-container" id="slidesContainer">
+    <!-- Slide 01 - Cover -->
+    <section class="slide cover-slide active">
+      <h1>Harness 成熟度模型</h1>
+      <div class="subtitle">HMM - Harness Maturity Model</div>
+      <p class="meta">量化评估 · 诊断差距 · 规划改进</p>
+    </section>
+
+    <!-- Slide 02 - Agenda -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">目录</div>
+        <div class="slide-number">02 / 12</div>
+      </div>
+      <div class="slide-body">
+        <ul class="toc-list">
+          <li>引言：为什么需要 HMM？</li>
+          <li>五级成熟度模型详解</li>
+          <li>L1-L2：从个人到项目</li>
+          <li>L3：组织级标准确立</li>
+          <li>L4：量化管理与度量体系</li>
+          <li>L5：AI 自驱动演进</li>
+          <li>成熟度全貌对比</li>
+          <li>评估方法与自评问卷</li>
+          <li>升级路径指南</li>
+          <li>核心要点总结</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Slide 03 - Introduction -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">引言</div>
+        <div class="slide-number">03 / 12</div>
+      </div>
+      <div class="slide-body">
+        <h2>AI 编程时代的新命题</h2>
+        <p>随着 AI 编程工具的普及，"如何管理 AI"已经成为软件工程领域的新命题。</p>
+        <p><span class="highlight">OSSP → PDP → Harness</span> 的三层体系系统化管理人机协作过程。</p>
+        <div style="margin-top: 30px; padding: 20px; background: rgba(0, 212, 255, 0.1); border-radius: 8px;">
+          <p style="font-size: 20px; font-weight: 600; color: #00d4ff; margin-bottom: 12px;">核心问题</p>
+          <p style="font-size: 18px;">你和你的团队，现在的 Harness 到了什么水平？还差多远才能达到 "人马合一"？</p>
+        </div>
+        <p style="margin-top: 20px;">借鉴 CMMI 成熟度模型思想，设计 <span class="highlight">Harness 成熟度模型（HMM）</span>，帮助量化评估、诊断差距、规划改进路径。</p>
+      </div>
+    </section>
+
+    <!-- Slide 04 - Five Levels Overview -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">五级成熟度模型</div>
+        <div class="slide-number">04 / 12</div>
+      </div>
+      <div class="slide-body">
+        <div class="maturity-levels">
+          <div class="level-card l5">
+            <div class="level-title">L5 优化级</div>
+            <div class="level-desc">AI 自驱动演进，预测性质量</div>
+          </div>
+          <div class="level-card l4">
+            <div class="level-title">L4 量化管理级</div>
+            <div class="level-desc">数据驱动度量，效果可量化</div>
+          </div>
+          <div class="level-card l3">
+            <div class="level-title">L3 已定义级</div>
+            <div class="level-desc">组织级标准，三级体系完整</div>
+          </div>
+          <div class="level-card l2">
+            <div class="level-title">L2 可管理级</div>
+            <div class="level-desc">项目级规则，基础复用</div>
+          </div>
+          <div class="level-card l1">
+            <div class="level-title">L1 初始级</div>
+            <div class="level-desc">零散个人习惯，不成体系</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 05 - L1 & L2 -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">L1 & L2 详解</div>
+        <div class="slide-number">05 / 12</div>
+      </div>
+      <div class="slide-body">
+        <h3><span class="tag l1">L1</span> 初始级：个人英雄主义时代</h3>
+        <p><strong>一句话概括：</strong>Harness 不存在，全靠个人悟性。</p>
+        <p><strong>典型表现：</strong>零散的个人习惯，每次从零开始写 Prompt，踩坑不留痕。</p>
+        <p><strong>痛点：</strong>同一个 Bug 反复出现，新人无指南可参考，AI 输出质量不稳定。</p>
+        
+        <h3 style="margin-top: 24px;"><span class="tag l2">L2</span> 可管理级：项目级秩序初现</h3>
+        <p><strong>一句话概括：</strong>项目级规则开始建立，基础复用成为可能。</p>
+        <p><strong>典型表现：</strong>有 project_rules.md（3-10 条核心规则），1-3 个基础 Skill，有 bug-fixes.md 记录历史 Bug。</p>
+        <p><strong>核心能力：</strong>同一个坑基本不踩第二次，团队有一致的 AI 使用底线规则。</p>
+      </div>
+    </section>
+
+    <!-- Slide 06 - L3 -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">L3 已定义级</div>
+        <div class="slide-number">06 / 12</div>
+      </div>
+      <div class="slide-body">
+        <h2><span class="tag l3">L3</span> 已定义级：组织级标准确立</h2>
+        <p><strong>一句话概括：</strong>组织级 Harness 框架建立，三级体系（组织→项目→个人）完整贯通。</p>
+        
+        <h3>组织级 Harness 框架结构</h3>
+        <pre style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 8px; font-size: 14px; color: rgba(255, 255, 255, 0.7);">
+├── policy/policy.md        ← 组织方针
+├── ossp/ossp.md            ← 标准软件流程
+├── lcm/lcm.md              ← 生命周期定义
+├── process/process.md      ← 过程定义
+├── templates/              ← 标准模板
+├── guidelines/             ← 最佳实践指南
+├── checklists/             ← 检查单
+├── dod/                    ← 完工准则
+└── lessons-learned/        ← 经验教训库</pre>
+        
+        <p><strong>核心能力：</strong>新项目直接复制组织级模板快速建立 Harness，不同项目可选择重装/轻装模式，经验教训跨项目共享。</p>
+      </div>
+    </section>
+
+    <!-- Slide 07 - L4 -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">L4 量化管理级</div>
+        <div class="slide-number">07 / 12</div>
+      </div>
+      <div class="slide-body">
+        <h2><span class="tag l4">L4</span> 量化管理级：数据驱动优化</h2>
+        <p><strong>一句话概括：</strong>建立完整的度量体系，用数据说话，持续优化有依据。</p>
+        
+        <h3>核心指标体系</h3>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-title">AI 代码一次通过率</div>
+            <div class="metric-value">&gt; 70%</div>
+            <div class="metric-target">目标值</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">评审通过率</div>
+            <div class="metric-value">&gt; 85%</div>
+            <div class="metric-target">目标值</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">规则覆盖率</div>
+            <div class="metric-value">&gt; 80%</div>
+            <div class="metric-target">目标值</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">Bug 重复率</div>
+            <div class="metric-value">&lt; 5%</div>
+            <div class="metric-target">目标值</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 08 - L5 -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">L5 优化级</div>
+        <div class="slide-number">08 / 12</div>
+      </div>
+      <div class="slide-body">
+        <h2><span class="tag l5">L5</span> 优化级：AI 自驱动演进</h2>
+        <p><strong>一句话概括：</strong>AI 自动提炼经验、建议规则、预判风险。Harness 成为自我进化的有机体。</p>
+        
+        <h3>智能系统架构</h3>
+        <p>经验教训库 → AI 分析引擎 → 自动提炼规则 → 规则库更新</p>
+        <p>新项目启动 → AI 评估引擎 → 推荐裁剪方案</p>
+        <p>开发者使用 → AI 学习引擎 → 个人 Harness 自动优化</p>
+        
+        <h3>核心能力示例</h3>
+        <ul class="action-list">
+          <li>自动规则提炼：从历史 Bug 中自动发现模式</li>
+          <li>智能裁剪推荐：根据项目特征自动推荐方案</li>
+          <li>个人适配优化：学习开发者偏好自动调整</li>
+          <li>预测性质量：预判可能出现的问题模式</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Slide 09 - Comparison Table -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">成熟度全貌对比</div>
+        <div class="slide-number">09 / 12</div>
+      </div>
+      <div class="slide-body">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>维度</th>
+              <th>L1</th>
+              <th>L2</th>
+              <th>L3</th>
+              <th>L4</th>
+              <th>L5</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>规则数量</td><td>0</td><td>3-10</td><td>10-50</td><td>50+</td><td>动态</td></tr>
+            <tr><td>组织级</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>项目级</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Skill 库</td><td>0</td><td>1-3</td><td>5+</td><td>10+</td><td>动态</td></tr>
+            <tr><td>度量</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>AI 分析</td></tr>
+            <tr><td>决策方式</td><td>个人感觉</td><td>团队共识</td><td>组织流程</td><td>数据驱动</td><td>AI 辅助</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Slide 10 - Assessment -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">评估方法</div>
+        <div class="slide-number">10 / 12</div>
+      </div>
+      <div class="slide-body">
+        <h2>自评问卷</h2>
+        <p>对以下每项评估，得分 1-5（对应 L1-L5），最后取平均值：</p>
+        
+        <ol style="padding-left: 24px; color: rgba(255, 255, 255, 0.8);">
+          <li style="margin-bottom: 8px;">组织级 Harness 是否存在并被维护？</li>
+          <li style="margin-bottom: 8px;">项目级规则是否体系化、可裁剪？</li>
+          <li style="margin-bottom: 8px;">个人 Harness 是否可与项目/组织级同步？</li>
+          <li style="margin-bottom: 8px;">经验是否被系统化记录和复用？</li>
+          <li style="margin-bottom: 8px;">是否有度量指标来衡量 Harness 效能？</li>
+          <li style="margin-bottom: 8px;">重装/轻装模式是否可以灵活切换？</li>
+          <li style="margin-bottom: 8px;">Skill 库是否完善且被持续使用？</li>
+          <li>Bug 修复后是否触发规则/Skill 改进？</li>
+        </ol>
+        
+        <h3 style="margin-top: 20px;">评分解释</h3>
+        <table class="data-table" style="font-size: 12px;">
+          <tr><td>1.0-1.9</td><td>L1 初始级</td><td>开始记录 bug-fixes.md</td></tr>
+          <tr><td>2.0-2.9</td><td>L2 可管理级</td><td>建立组织级模板</td></tr>
+          <tr><td>3.0-3.9</td><td>L3 已定义级</td><td>开始收集度量数据</td></tr>
+          <tr><td>4.0-4.9</td><td>L4 量化管理级</td><td>探索 AI 自动分析</td></tr>
+          <tr><td>5.0</td><td>L5 优化级</td><td>保持！行业标杆</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- Slide 11 - Upgrade Path -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">升级路径指南</div>
+        <div class="slide-number">11 / 12</div>
+      </div>
+      <div class="slide-body">
+        <h2>L1 → L2：从个人到项目</h2>
+        <ul class="action-list">
+          <li>创建 docs/bug-fixes.md，记录每一个 Bug</li>
+          <li>从 Bug 记录中提炼 3-5 条项目规则</li>
+          <li>引入 bug-fixer Skill，建立固定修复流程</li>
+        </ul>
+        <p style="color: rgba(255, 255, 255, 0.5); font-size: 14px;">预计时间：2-4 周</p>
+        
+        <h2 style="margin-top: 24px;">L2 → L3：从项目到组织</h2>
+        <ul class="action-list">
+          <li>提取项目 Harness 的通用部分为组织级模板</li>
+          <li>建立 Policy、OSSP、LCM、Process 等资产</li>
+          <li>完善 Templates、Guidelines、Checklists、DoD</li>
+        </ul>
+        <p style="color: rgba(255, 255, 255, 0.5); font-size: 14px;">预计时间：1-3 个月</p>
+        
+        <h2 style="margin-top: 24px;">L3 → L4 → L5</h2>
+        <p><strong>L3→L4：</strong>定义效能指标体系，建立数据采集机制，定期生成效能报告。（2-6 个月）</p>
+        <p><strong>L4→L5：</strong>建立经验向量化存储，开发规则自动提炼的 AI Pipeline，构建组织级知识图谱。（6-12 个月）</p>
+      </div>
+    </section>
+
+    <!-- Slide 12 - Summary -->
+    <section class="slide">
+      <div class="slide-header">
+        <div class="slide-title">总结</div>
+        <div class="slide-number">12 / 12</div>
+      </div>
+      <div class="slide-body">
+        <h2>Harness 成熟度模型核心要点</h2>
+        
+        <ul class="action-list">
+          <li><strong>成熟度不是目的，是手段</strong> — 不是每个组织都需要达到 L5，适合的才是最好的</li>
+          <li><strong>层级递进，不可跳级</strong> — 没经过 L2 的项目级积累，直接搞 L3 会水土不服</li>
+          <li><strong>度量的价值在于行动</strong> — L4 的数据如果不转化为规则改进，就只是数字</li>
+          <li><strong>L5 是人机协作的理想状态</strong> — AI 帮你管理 AI，你只需关注创造性决策</li>
+        </ul>
+        
+        <div style="margin-top: 30px; text-align: center;">
+          <p style="font-size: 24px; color: #00d4ff; font-weight: 600;">你的 Harness，现在在哪一级？</p>
+          <p style="margin-top: 16px; color: rgba(255, 255, 255, 0.5);">开始评估，规划你的改进路径</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="controls">
+    <button class="control-btn" onclick="prevSlide()">‹</button>
+    <button class="control-btn" onclick="nextSlide()">›</button>
+  </div>
+  
+  <div class="navigation" id="navigation"></div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+    
+    function showSlide(index) {
+      if (index < 0) index = slides.length - 1;
+      if (index >= slides.length) index = 0;
+      
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+      
+      updateNavigation(index);
+      currentSlide = index;
+    }
+    
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+    
+    function updateNavigation(current) {
+      const nav = document.getElementById('navigation');
+      nav.innerHTML = '';
+      slides.forEach((_, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'nav-btn' + (i === current ? ' active' : '');
+        btn.onclick = () => showSlide(i);
+        nav.appendChild(btn);
+      });
+    }
+    
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') prevSlide();
+      else if (e.key === 'ArrowRight' || e.key === 'PageDown') nextSlide();
+    });
+    
+    updateNavigation(0);
+  </script>
+</body>
+</html>

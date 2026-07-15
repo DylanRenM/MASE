@@ -56,7 +56,7 @@ Agent 1 门禁确认
 |--------|------|------|
 | proposal.md | `openspec/changes/{name}/proposal.md` | 必须包含 E2E 验收场景章节 |
 | 交互原型 | HTML 文件 | 覆盖核心操作流程 |
-| .openspec.yaml | 项目根目录 | 声明 has_ui, ui_platform |
+| mase-state.yaml | openspec/changes/{name}/ | 阶段状态：has_ui, ui_platform, phase, capabilities |
 
 ## E2E 验收场景定义
 

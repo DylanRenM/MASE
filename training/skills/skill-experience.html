@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>白话Skill之6 经验与教训</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', 'Noto Serif SC', sans-serif; }
+    
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      display: flex;
+      background: #f5f5f7;
+    }
+    
+    .slide {
+      flex: 0 0 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      padding: 5vw 7vw;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Hero Cover */
+    .hero-cover {
+      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      color: white;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .h-hero {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 4.5vw;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 2vw;
+    }
+    
+    .h-sub {
+      font-size: 1.4vw;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Content Slides */
+    .content-slide {
+      background: white;
+    }
+    
+    .slide-header {
+      margin-bottom: 3vw;
+    }
+    
+    .h-md {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 2.5vw;
+      font-weight: 600;
+      color: #1a202c;
+      line-height: 1.3;
+    }
+    
+    .lead {
+      font-size: 1.3vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 2vw;
+    }
+    
+    /* Principle Card */
+    .principle-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2vw;
+      border-radius: 12px;
+      color: white;
+      margin-bottom: 1.5vw;
+    }
+    
+    .principle-num {
+      font-size: 1.5vw;
+      font-weight: 700;
+      margin-bottom: 0.5vw;
+    }
+    
+    .principle-title {
+      font-size: 1.3vw;
+      font-weight: 600;
+      margin-bottom: 0.8vw;
+    }
+    
+    .principle-desc {
+      font-size: 1vw;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    
+    /* Two Column */
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2vw;
+      margin-top: 2vw;
+    }
+    
+    .col-card {
+      background: #f7fafc;
+      padding: 1.8vw;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+    
+    .col-card.bad { border-color: #e53e3e; }
+    .col-card.good { border-color: #48bb78; }
+    
+    .col-title {
+      font-size: 1.1vw;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 0.8vw;
+    }
+    
+    .col-desc {
+      font-size: 0.95vw;
+      line-height: 1.6;
+      color: #4a5568;
+    }
+    
+    /* Code Block */
+    .code-block { 
+      background: #2c2416; 
+      padding: 1.5vw; 
+      border-radius: 8px; 
+      font-family: monospace; 
+      font-size: 0.85vw; 
+      color: #e8e4dc; 
+      overflow-x: auto;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    
+    /* List */
+    .list {
+      list-style: none;
+      max-width: 900px;
+      margin-top: 1.5vw;
+    }
+    
+    .list li {
+      font-size: 1.15vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 1.2vw;
+      padding-left: 2vw;
+      position: relative;
+    }
+    
+    .list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-size: 1.2vw;
+    }
+    
+    /* Rules Table */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.2vw;
+      margin-top: 2vw;
+    }
+    
+    .rule-box {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+      padding: 1.5vw;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .rule-num {
+      font-size: 1.8vw;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 0.5vw;
+    }
+    
+    .rule-text {
+      font-size: 0.9vw;
+      line-height: 1.5;
+      color: #4a5568;
+    }
+    
+    /* Navigation */
+    #nav {
+      position: fixed;
+      bottom: 3vw;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.6vw;
+      z-index: 100;
+    }
+    
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-dot.active {
+      background: #667eea;
+      transform: scale(1.4);
+    }
+    
+    .foot {
+      position: fixed;
+      bottom: 3vw;
+      right: 7vw;
+      font-size: 0.8vw;
+      color: rgba(0, 0, 0, 0.3);
+      font-family: monospace;
+    }
+    
+    .highlight {
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    .red-highlight {
+      color: #e53e3e;
+      font-weight: 600;
+    }
+    
+    .green-highlight {
+      color: #48bb78;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <!-- 01 Cover -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">白话 Skill</h1>
+      <h2 class="h-sub">第六讲：编写 Skill 的经验与教训</h2>
+    </section>
+
+    <!-- 02 Overview -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">16 个核心原则概览</h2>
+      </div>
+      <div class="rules-grid">
+        <div class="rule-box">
+          <div class="rule-num">01-02</div>
+          <div class="rule-text">参数命名原则</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-num">03-04</div>
+          <div class="rule-text">版本管理原则</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-num">05-06</div>
+          <div class="rule-text">测试原则</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-num">07-08</div>
+          <div class="rule-text">性能原则</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-num">09-10</div>
+          <div class="rule-text">AI调用稳定性</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-num">11-14</div>
+          <div class="rule-text">约束与规则设计</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-num">15-16</div>
+          <div class="rule-text">迭代与维护</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-num">总结</div>
+          <div class="rule-text">核心要点</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 Principles 1-2 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">原则 1-2：参数命名原则</h2>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 1</div>
+        <div class="principle-title">见名知意 —— 参数名要能表达完整含义</div>
+        <div class="principle-desc">bad: name → good: attendee_name<br>bad: data → good: meeting_transcript<br>bad: result → good: formatted_summary</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 2</div>
+        <div class="principle-title">向后兼容 —— 旧参数能继续用</div>
+        <div class="principle-desc">使用双问号语法：{{ new_param || old_param }}<br>提供迁移指南和版本变更说明</div>
+      </div>
+    </section>
+
+    <!-- 04 Principles 3-4 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">原则 3-4：版本管理原则</h2>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 3</div>
+        <div class="principle-title">语义化版本 —— 版本号要传达变更程度</div>
+        <div class="principle-desc">v1.0.0 → v1.1.0（新增功能）→ v1.0.1（修复bug）→ v2.0.0（不兼容变更）</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 4</div>
+        <div class="principle-title">版本稳定 —— 不要频繁更新</div>
+        <div class="principle-desc">稳定版本每1-2个月发布一次<br>开发版本在本地或测试环境迭代<br>只有经过充分测试的版本才发布</div>
+      </div>
+    </section>
+
+    <!-- 05 Principles 5-6 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">原则 5-6：测试原则</h2>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 5</div>
+        <div class="principle-title">用例先行 —— 每个 Skill 必须有测试用例集</div>
+        <div class="principle-desc">覆盖正常输入、边界情况、异常格式<br>定义预期输出，便于自动化测试</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 6</div>
+        <div class="principle-title">步步校验 —— 每个 LLM 步骤的输出都要验证</div>
+        <div class="principle-desc">验证 JSON 格式、数组结构、字段合法性<br>失败时重试或优雅降级</div>
+      </div>
+    </section>
+
+    <!-- 06 Principles 7-8 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">原则 7-8：性能原则</h2>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 7</div>
+        <div class="principle-title">固化责任 —— 确定性逻辑交给脚本，别靠 LLM“脑补”</div>
+        <div class="principle-desc">格式化、数据处理等确定性任务用脚本完成<br>LLM只做理解、决策、生成等创造性工作</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 8</div>
+        <div class="principle-title">控制流与数据流分离</div>
+        <div class="principle-desc">LLM 负责控制流（理解、决策）<br>Agent/脚本负责数据流（读文件、执行命令、格式化）</div>
+      </div>
+    </section>
+
+    <!-- 07 Principles 9-10 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">原则 9-10：AI 调用稳定性原则</h2>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 9</div>
+        <div class="principle-title">描述带“攻击性” —— 触发条件写得越具体，AI 调用越稳定</div>
+        <div class="principle-desc">详细描述适用场景和不适用场景<br>给出典型用户表述示例</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 10</div>
+        <div class="principle-title">边界清晰 —— 告诉 AI 什么时候不该用</div>
+        <div class="principle-desc">明确不适用场景和参数缺失处理策略</div>
+      </div>
+    </section>
+
+    <!-- 08 Principles 11-14 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">原则 11-14：约束与规则设计原则</h2>
+      </div>
+      <div class="two-column">
+        <div class="col-card good">
+          <div class="col-title">原则 11：白名单优于黑名单</div>
+          <div class="col-desc">"只能用"比"不要用"更有效。列出允许的输出格式，而不是禁止的内容。</div>
+        </div>
+        <div class="col-card good">
+          <div class="col-title">原则 12：样例胜过描述</div>
+          <div class="col-desc">给一个"金标准"样例，LLM有样学样，输出格式更一致。</div>
+        </div>
+        <div class="col-card good">
+          <div class="col-title">原则 13：强制输出格式</div>
+          <div class="col-desc">使用 JSON Schema 等强制格式，不允许自由发挥。</div>
+        </div>
+        <div class="col-card good">
+          <div class="col-title">原则 14：幻觉控制</div>
+          <div class="col-desc">只能用资料回答，不能推理。拿不准的信息输出"未提及"。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 09 Principles 15-16 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">原则 15-16：迭代与维护原则</h2>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 15</div>
+        <div class="principle-title">反馈闭环 —— 错例收集 → 规则强化 → 模板更新</div>
+        <div class="principle-desc">收集错例记录，每次发现问题更新约束或 prompt<br>更新模板和知识库</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">原则 16</div>
+        <div class="principle-title">脚本自包含 —— 核心脚本尽量少依赖外部服务</div>
+        <div class="principle-desc">优先使用标准库和本地文件，减少外部依赖<br>依赖越多，失败概率越大</div>
+      </div>
+    </section>
+
+    <!-- 10 Summary -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">终极总结</h2>
+      </div>
+      <ul class="list">
+        <li><span class="highlight">规则严</span> —— 白名单优于黑名单，强制约束优于善意建议</li>
+        <li><span class="highlight">流程清</span> —— 单一职责，控制流与数据流分离</li>
+        <li><span class="highlight">格式死</span> —— JSON Schema，LLM 没有自由发挥空间</li>
+        <li><span class="highlight">校验全</span> —— 步步验证，输入输出都要检查</li>
+        <li><span class="highlight">知识库准</span> —— 严禁编造，只能引用原文</li>
+        <li><span class="highlight">迭代快</span> —— 反馈闭环，错例驱动改进</li>
+      </ul>
+      <p class="lead" style="text-align: center; margin-top: 3vw; color: #667eea;">
+        Skill 不是高科技，是经验的结构化。你的经验值多少，你的 Skill 就值多少。
+      </p>
+    </section>
+
+    <!-- 11 End -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">谢谢观看</h1>
+      <h2 class="h-sub">白话 Skill 系列 · 第六讲</h2>
+    </section>
+  </div>
+
+  <div id="nav"></div>
+  <div class="foot" id="foot">01/11</div>
+
+  <script>
+    const deck = document.getElementById('deck');
+    const nav = document.getElementById('nav');
+    const foot = document.getElementById('foot');
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      nav.appendChild(dot);
+    });
+
+    function updateNav(current) {
+      document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+      foot.textContent = String(current + 1).padStart(2, '0') + '/' + String(totalSlides).padStart(2, '0');
+    }
+
+    function goToSlide(index) {
+      deck.scrollTo({ left: index * window.innerWidth, behavior: 'smooth' });
+    }
+
+    deck.addEventListener('scroll', () => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      updateNav(current);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      if (e.key === 'ArrowLeft' && current > 0) goToSlide(current - 1);
+      if (e.key === 'ArrowRight' && current < totalSlides - 1) goToSlide(current + 1);
+    });
+  </script>
+</body>
+</html>

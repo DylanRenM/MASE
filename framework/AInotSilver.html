@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI编程的正确理念 — 麦哲思科技</title>
+  <style>
+    /* ===========================================================
+       Deck framework — DO NOT EDIT
+       =========================================================== */
+    :root {
+      --bg: #ffffff;
+      --fg: #1a2332;
+      --muted: #5e6b7e;
+      --accent: #e87a30;
+      --blue-dark: #0f2b44;
+      --blue-mid: #1a3a5c;
+      --blue-light: #e8edf2;
+      --surface: #ffffff;
+      --shell: #0f2b44;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--shell);
+      color: var(--fg);
+      font: 18px/1.5 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', -apple-system, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .deck-shell {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+    .deck-stage {
+      width: 1920px;
+      height: 1080px;
+      background: var(--bg);
+      position: relative;
+      transform-origin: top left;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+    }
+    .slide {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .slide:not(.active) { display: none !important; }
+    :where(.slide.active) { display: flex; flex-direction: column; }
+    .deck-counter {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(15, 43, 68, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.18em;
+      z-index: 1000;
+    }
+    .deck-counter button {
+      width: 36px; height: 36px;
+      background: transparent;
+      color: #fff;
+      border: 0;
+      border-radius: 50%;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: background 0.15s;
+    }
+    .deck-counter button:hover { background: rgba(255, 255, 255, 0.12); }
+    .deck-counter button[disabled] { opacity: 0.3; cursor: default; }
+    .deck-counter .deck-count { padding: 0 14px; letter-spacing: 0.22em; }
+    .deck-counter .deck-count .total { color: rgba(255, 255, 255, 0.5); }
+    .deck-hint {
+      position: fixed;
+      bottom: 26px;
+      right: 28px;
+      color: rgba(255, 255, 255, 0.4);
+      font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      z-index: 999;
+      pointer-events: none;
+    }
+    @media print {
+      @page { size: 1920px 1080px; margin: 0; }
+      html, body { width: 1920px !important; height: auto !important; overflow: visible !important; background: #fff !important; }
+      .deck-shell { position: static !important; display: block !important; inset: auto !important; }
+      .deck-stage { width: 1920px !important; height: auto !important; transform: none !important; box-shadow: none !important; position: static !important; }
+      .slide { display: flex !important; position: relative !important; inset: auto !important; width: 1920px !important; height: 1080px !important; page-break-after: always; break-after: page; }
+      .slide:last-child { page-break-after: auto; break-after: auto; }
+      .deck-counter, .deck-hint { display: none !important; }
+    }
+  </style>
+  <style>
+    /* ===========================================================
+       Per-deck styles — 麦哲思科技 × AI编程理念
+       =========================================================== */
+    /* 整体排版 */
+    .s-content { padding: 80px 100px; height: 100%; display: flex; flex-direction: column; }
+    .s-content.has-bar { padding: 80px 100px 80px 120px; position: relative; }
+
+    /* 左侧品牌色条 */
+    .brand-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 60px;
+      height: 100%;
+      background: var(--blue-dark);
+    }
+    .brand-bar-inner {
+      writing-mode: vertical-rl;
+      color: rgba(255,255,255,0.12);
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      padding: 40px 0;
+      text-align: center;
+      width: 60px;
+    }
+
+    /* Logo 区域 */
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      letter-spacing: 0.1em;
+    }
+    .logo-mark {
+      display: flex;
+      gap: 4px;
+    }
+    .logo-mark span {
+      display: block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+    .logo-mark .lm-1 { background: #e87a30; }
+    .logo-mark .lm-2 { background: #3a7ba8; }
+    .logo-mark .lm-3 { background: #5a9e6f; }
+    .logo-mark .lm-4 { background: #c0392b; }
+
+    /* 标题系统 */
+    .slide-title {
+      font-size: 52px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .slide-title .highlight {
+      color: var(--accent);
+    }
+    .slide-subtitle {
+      font-size: 22px;
+      color: var(--muted);
+      font-weight: 400;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .slide-number {
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    /* 内容排版 */
+    .body-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 18px;
+    }
+    .body-text {
+      font-size: 24px;
+      line-height: 1.7;
+      color: var(--fg);
+      max-width: 80%;
+    }
+    .body-text strong {
+      color: var(--blue-dark);
+      font-weight: 700;
+    }
+    .body-text .accent-word {
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .body-text-lg {
+      font-size: 28px;
+      line-height: 1.7;
+      color: var(--fg);
+    }
+
+    /* 三点卡片布局 */
+    .point-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 32px;
+      margin-top: 24px;
+      flex: 1;
+      align-content: center;
+    }
+    .point-card {
+      background: var(--blue-light);
+      border-radius: 12px;
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-left: 4px solid var(--blue-dark);
+    }
+    .point-card.myth {
+      border-left-color: #c0392b;
+    }
+    .point-card.truth {
+      border-left-color: var(--accent);
+    }
+    .point-card .tag {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .point-card .tag.myth-tag { color: #c0392b; }
+    .point-card .tag.truth-tag { color: var(--accent); }
+    .point-card h3 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      line-height: 1.3;
+    }
+    .point-card p {
+      font-size: 18px;
+      color: var(--fg);
+      line-height: 1.6;
+      opacity: 0.9;
+    }
+
+    /* 两列 + 图标布局 */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      flex: 1;
+      align-content: center;
+    }
+    .col-item {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .col-item .icon-placeholder {
+      font-size: 40px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .col-item h4 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--blue-dark);
+    }
+    .col-item p {
+      font-size: 19px;
+      line-height: 1.7;
+      color: var(--fg);
+      opacity: 0.85;
+    }
+
+    /* 底部橙色装饰线 */
+    .bottom-accent {
+      width: 100%;
+      height: 6px;
+      background: var(--accent);
+      position: absolute;
+      bottom: 0;
+      left: 0;
+    }
+
+    /* 封面专用 */
+    .cover {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: linear-gradient(135deg, #0f2b44 0%, #1a3a5c 100%);
+      color: #fff;
+      padding: 80px;
+    }
+    .cover .logo-area {
+      justify-content: center;
+      margin-bottom: 60px;
+    }
+    .cover .logo-text { color: #fff; }
+    .cover .slide-number { color: rgba(255,255,255,0.5); }
+    .cover .slide-title {
+      color: #fff;
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+    .cover .slide-title .highlight { color: var(--accent); }
+    .cover .slide-subtitle { color: rgba(255,255,255,0.7); font-size: 24px; }
+
+    /* 结语页 */
+    .closing {
+      background: var(--blue-dark);
+      color: #fff;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px;
+    }
+    .closing .logo-area { justify-content: center; margin-bottom: 40px; }
+    .closing .logo-text { color: #fff; }
+    .closing .slide-title { color: #fff; font-size: 52px; margin-bottom: 16px; }
+    .closing .slide-title .highlight { color: var(--accent); }
+    .closing p { color: rgba(255,255,255,0.7); font-size: 22px; line-height: 1.7; max-width: 65%; }
+
+    /* 咨询建议页 */
+    .advice-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+      justify-content: center;
+      max-width: 85%;
+    }
+    .advice-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px 28px;
+      background: var(--blue-light);
+      border-radius: 10px;
+    }
+    .advice-item .num {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 44px;
+    }
+    .advice-item .advice-text {
+      font-size: 22px;
+      line-height: 1.6;
+      color: var(--fg);
+    }
+    .advice-item .advice-text strong { color: var(--blue-dark); }
+
+    /* 双栏对比样式 */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      flex: 1;
+      align-content: center;
+    }
+    .compare-card {
+      padding: 40px 32px;
+      border-radius: 12px;
+    }
+    .compare-card.myth-side {
+      background: #fdf2f1;
+      border-left: 4px solid #c0392b;
+    }
+    .compare-card.truth-side {
+      background: #fef6ed;
+      border-left: 4px solid var(--accent);
+    }
+    .compare-card .label {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+    }
+    .compare-card .label.myth-label { color: #c0392b; }
+    .compare-card .label.truth-label { color: var(--accent); }
+    .compare-card .big-quote {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--blue-dark);
+      margin-bottom: 16px;
+    }
+    .compare-card p {
+      font-size: 19px;
+      line-height: 1.7;
+      color: var(--fg);
+      opacity: 0.85;
+    }
+
+    /* 右箭头 */
+    .arrow-between {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: var(--accent);
+      font-weight: 300;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck-shell">
+    <div class="deck-stage" id="deck-stage">
+
+      <!-- ============================== -->
+      <!-- SLIDE 1 — 封面               -->
+      <!-- ============================== -->
+      <section class="slide active cover" data-screen-label="01 封面">
+        <div class="logo-area" style="position: absolute; top: 40px; left: 60px;">
+          <div class="logo-mark">
+            <span class="lm-1"></span><span class="lm-2"></span><span class="lm-3"></span><span class="lm-4"></span>
+          </div>
+          <span class="logo-text" style="color:#fff;">麦哲思科技</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+          <div class="slide-number" style="color:rgba(255,255,255,0.4);">MAGUS · 2025</div>
+          <div class="slide-title">
+            AI编程的<span class="highlight">正确理念</span>
+          </div>
+          <div class="slide-subtitle">
+            重新理解人机协作时代的软件开发
+          </div>
+        </div>
+        <div class="bottom-accent"></div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 2 — 现状               -->
+      <!-- ============================== -->
+      <section class="slide" data-screen-label="02 现状">
+        <div class="s-content has-bar">
+          <div class="brand-bar">
+            <div class="brand-bar-inner">麦哲思科技</div>
+          </div>
+          <div class="slide-number">02 / 10</div>
+          <div class="slide-title">AI编程工具正在改变<span class="highlight">效率曲线</span></div>
+          <div class="slide-subtitle">企业面对的已不是"要不要用"，而是"怎么用"</div>
+          <div class="two-col" style="margin-top:20px;">
+            <div class="col-item">
+              <div class="icon-placeholder">⚡</div>
+              <h4>代码生成跃升</h4>
+              <p>AI辅助下，基础代码编写效率提升 40%~60%，重复劳动大幅减少。</p>
+            </div>
+            <div class="col-item">
+              <div class="icon-placeholder">🔄</div>
+              <h4>能力重心转移</h4>
+              <p>从"手写每一行"转向"阅读、审查、决策"——工程师的角色在升级。</p>
+            </div>
+          </div>
+          <div class="bottom-accent"></div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 3 — 误区1 vs 真相1       -->
+      <!-- ============================== -->
+      <section class="slide" data-screen-label="03 误区一">
+        <div class="s-content has-bar">
+          <div class="brand-bar">
+            <div class="brand-bar-inner">麦哲思科技</div>
+          </div>
+          <div class="slide-number">03 / 10</div>
+          <div class="slide-title">误区一：<span class="highlight">有AI就不需要程序员了</span></div>
+          <div class="compare-grid">
+            <div class="compare-card myth-side">
+              <div class="label myth-label">❌ 误区</div>
+              <div class="big-quote">"AI能写代码，程序员可以裁了"</div>
+              <p>把AI当作替代者，本质上是在忽略"理解业务、设计架构、保证质量"这些AI做不到的事。</p>
+            </div>
+            <div class="compare-card truth-side">
+              <div class="label truth-label">✅ 真相</div>
+              <div class="big-quote">AI是协作者，不是替代者</div>
+              <p>优秀的工程师借助AI把精力从"怎么写"解放到"写什么"——架构决策、质量保障、业务洞察才是新壁垒。</p>
+            </div>
+          </div>
+          <div class="bottom-accent"></div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 4 — 协作者定位深入       -->
+      <!-- ============================== -->
+      <section class="slide" data-screen-label="04 协作者定位">
+        <div class="s-content has-bar">
+          <div class="brand-bar">
+            <div class="brand-bar-inner">麦哲思科技</div>
+          </div>
+          <div class="slide-number">04 / 10</div>
+          <div class="slide-title">AI是<span class="highlight">协作者</span>，不是替代者</div>
+          <div class="point-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="point-card">
+              <h3>🧠 架构设计</h3>
+              <p>系统边界、模块划分、技术选型——这些决策需要对人类业务上下文的理解，AI提供参考，人做决策。</p>
+            </div>
+            <div class="point-card">
+              <h3>🔍 代码审查</h3>
+              <p>AI生成的代码必须经过人工审查。安全漏洞、业务逻辑错误、性能隐患——最终责任在工程师。</p>
+            </div>
+            <div class="point-card">
+              <h3>🎯 质量兜底</h3>
+              <p>测试策略、CI/CD、生产监控。AI可以提速，但"软件交付质量"这个命题从未改变。</p>
+            </div>
+          </div>
+          <div class="bottom-accent"></div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 5 — 误区2 vs 真相2       -->
+      <!-- ============================== -->
+      <section class="slide" data-screen-label="05 误区二">
+        <div class="s-content has-bar">
+          <div class="brand-bar">
+            <div class="brand-bar-inner">麦哲思科技</div>
+          </div>
+          <div class="slide-number">05 / 10</div>
+          <div class="slide-title">误区二：<span class="highlight">Prompt越细，代码质量越高</span></div>
+          <div class="compare-grid">
+            <div class="compare-card myth-side">
+              <div class="label myth-label">❌ 误区</div>
+              <div class="big-quote">"写Prompt就像编程一样精确"</div>
+              <p>花了大量时间调教提示词，期望一次生成完美代码——这其实是把AI当成了搜索引擎或编译器。</p>
+            </div>
+            <div class="compare-card truth-side">
+              <div class="label truth-label">✅ 真相</div>
+              <div class="big-quote">理解与审查能力才是新壁垒</div>
+              <p>核心生产力不在于"写Prompt的技巧"，而在于快速理解AI输出、定位问题、调整方向的能力。</p>
+            </div>
+          </div>
+          <div class="bottom-accent"></div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 6 — 新能力框架           -->
+      <!-- ============================== -->
+      <section class="slide" data-screen-label="06 新能力">
+        <div class="s-content has-bar">
+          <div class="brand-bar">
+            <div class="brand-bar-inner">麦哲思科技</div>
+          </div>
+          <div class="slide-number">06 / 10</div>
+          <div class="slide-title">工程师需要升级的<span class="highlight">三种能力</span></div>
+          <div class="point-grid">
+            <div class="point-card">
+              <h3>📖 阅读能力</h3>
+              <p>快速理解AI生成的代码意图，识别潜在风险。读得越快，迭代越快。</p>
+            </div>
+            <div class="point-card">
+              <h3>🧪 审查能力</h3>
+              <p>知道"什么是对的"——安全规范、性能边界、业务正确性，审查比写作更难。</p>
+            </div>
+            <div class="point-card">
+              <h3>🎯 决策能力</h3>
+              <p>"这段代码用还是改？"——在AI提供的多个方案中做出工程最优解。</p>
+            </div>
+          </div>
+          <div class="bottom-accent"></div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 7 — 误区3 vs 真相3       -->
+      <!-- ============================== -->
+      <section class="slide" data-screen-label="07 误区三">
+        <div class="s-content has-bar">
+          <div class="brand-bar">
+            <div class="brand-bar-inner">麦哲思科技</div>
+          </div>
+          <div class="slide-number">07 / 10</div>
+          <div class="slide-title">误区三：<span class="highlight">AI编程工具都一样</span></div>
+          <div class="compare-grid">
+            <div class="compare-card myth-side">
+              <div class="label myth-label">❌ 误区</div>
+              <div class="big-quote">"都是ChatGPT套个壳"</div>
+              <p>只看表面功能，忽略了工具在上下文理解、工程整合、企业级安全等方面的深层差异。</p>
+            </div>
+            <div class="compare-card truth-side">
+              <div class="label truth-label">✅ 真相</div>
+              <div class="big-quote">差异在于上下文与工程深度</div>
+              <p>好的工具理解项目结构、代码库上下文、团队规范；差的工具只处理一个文件片段。</p>
+            </div>
+          </div>
+          <div class="bottom-accent"></div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 8 — 工具选择维度         -->
+      <!-- ============================== -->
+      <section class="slide" data-screen-label="08 选型维度">
+        <div class="s-content has-bar">
+          <div class="brand-bar">
+            <div class="brand-bar-inner">麦哲思科技</div>
+          </div>
+          <div class="slide-number">08 / 10</div>
+          <div class="slide-title">选型：关注<span class="highlight">四个核心维度</span></div>
+          <div class="point-grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div class="point-card" style="border-left-color: var(--blue-dark);">
+              <h3>🔗 上下文理解</h3>
+              <p>能否感知整个项目结构？跨文件引用？还是仅关注当前打开的文件？</p>
+            </div>
+            <div class="point-card" style="border-left-color: var(--blue-dark);">
+              <h3>🛡️ 安全与企业合规</h3>
+              <p>代码是否上传到第三方？是否有私有化部署选项？数据隔离策略如何？</p>
+            </div>
+            <div class="point-card" style="border-left-color: var(--blue-dark);">
+              <h3>⚙️ 工程整合度</h3>
+              <p>与Git、CI/CD、代码审查流程的集成深度，而非独立工具。</p>
+            </div>
+            <div class="point-card" style="border-left-color: var(--blue-dark);">
+              <h3>📊 团队适配成本</h3>
+              <p>学习曲线、团队规范对接、代码风格一致性——工具适配团队，而非反过来。</p>
+            </div>
+          </div>
+          <div class="bottom-accent"></div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 9 — 咨询建议             -->
+      <!-- ============================== -->
+      <section class="slide" data-screen-label="09 咨询建议">
+        <div class="s-content has-bar">
+          <div class="brand-bar">
+            <div class="brand-bar-inner">麦哲思科技</div>
+          </div>
+          <div class="slide-number">09 / 10</div>
+          <div class="slide-title">企业引入AI编程的<span class="highlight">正确姿势</span></div>
+          <div class="advice-list">
+            <div class="advice-item">
+              <span class="num">01</span>
+              <span class="advice-text"><strong>明确边界</strong> — 先确定AI能做什么、不能做什么，建立使用规范而非开放使用。</span>
+            </div>
+            <div class="advice-item">
+              <span class="num">02</span>
+              <span class="advice-text"><strong>投资于人</strong> — 培训团队的阅读、审查、决策能力，而非只采购工具License。</span>
+            </div>
+            <div class="advice-item">
+              <span class="num">03</span>
+              <span class="advice-text"><strong>渐进引入</strong> — 从低风险场景（单元测试、文档生成）开始，积累经验后再扩展到核心业务代码。</span>
+            </div>
+            <div class="advice-item">
+              <span class="num">04</span>
+              <span class="advice-text"><strong>建立度量</strong> — 追踪代码质量变化、缺陷率、交付速度，用数据驱动决策而非跟风。</span>
+            </div>
+          </div>
+          <div class="bottom-accent"></div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- SLIDE 10 — 结语               -->
+      <!-- ============================== -->
+      <section class="slide closing" data-screen-label="10 结语">
+        <div class="logo-area" style="position: absolute; top: 40px; left: 60px;">
+          <div class="logo-mark">
+            <span class="lm-1"></span><span class="lm-2"></span><span class="lm-3"></span><span class="lm-4"></span>
+          </div>
+          <span class="logo-text" style="color:#fff;">麦哲思科技</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+          <div class="slide-title">
+            从<span class="highlight">写代码</span><br>到<span class="highlight">设计解决方案</span>
+          </div>
+          <p>AI不会取代工程师，但会用AI的工程师会取代不会用的。<br>关键在于：不是让AI做你的工作，而是让你做更有价值的工作。</p>
+        </div>
+        <div class="bottom-accent"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Framework chrome — DO NOT EDIT -->
+  <nav class="deck-counter" role="navigation" aria-label="Deck navigation">
+    <button type="button" id="deck-prev" aria-label="Previous slide">‹</button>
+    <span class="deck-count"><span id="deck-cur">01</span> <span class="total">/ <span id="deck-total">10</span></span></span>
+    <button type="button" id="deck-next" aria-label="Next slide">›</button>
+  </nav>
+  <div class="deck-hint">← · → · space</div>
+
+  <script>
+    (function () {
+      var stage = document.getElementById('deck-stage');
+      var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+      var prev = document.getElementById('deck-prev');
+      var next = document.getElementById('deck-next');
+      var cur = document.getElementById('deck-cur');
+      var total = document.getElementById('deck-total');
+      var STORE = 'deck:idx:' + (location.pathname || '/');
+      var idx = 0;
+      function fit() {
+        var sw = window.innerWidth;
+        var sh = window.innerHeight;
+        var pad = 32;
+        var s = Math.min((sw - pad) / 1920, (sh - pad) / 1080);
+        if (!isFinite(s) || s <= 0) s = 1;
+        var tx = (sw - 1920 * s) / 2;
+        var ty = (sh - 1080 * s) / 2;
+        stage.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+      }
+      function pad2(n) { return (n < 10 ? '0' : '') + n; }
+      function paint() {
+        slides.forEach(function (el, i) { el.classList.toggle('active', i === idx); });
+        if (cur) cur.textContent = pad2(idx + 1);
+        if (total) total.textContent = pad2(slides.length);
+        if (prev) prev.toggleAttribute('disabled', idx <= 0);
+        if (next) next.toggleAttribute('disabled', idx >= slides.length - 1);
+      }
+      function go(i) {
+        idx = Math.max(0, Math.min(slides.length - 1, i));
+        paint();
+        try { localStorage.setItem(STORE, String(idx)); } catch (_) {}
+      }
+      function onKey(e) {
+        var t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(idx + 1); }
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(idx - 1); }
+        else if (e.key === 'Home') { e.preventDefault(); go(0); }
+        else if (e.key === 'End') { e.preventDefault(); go(slides.length - 1); }
+      }
+      window.addEventListener('keydown', onKey, true);
+      document.addEventListener('keydown', onKey, true);
+      if (prev) prev.addEventListener('click', function () { go(idx - 1); });
+      if (next) next.addEventListener('click', function () { go(idx + 1); });
+      document.body.setAttribute('tabindex', '-1');
+      document.body.style.outline = 'none';
+      function focusDeck() { try { window.focus(); document.body.focus({ preventScroll: true }); } catch (_) {} }
+      document.addEventListener('mousedown', focusDeck);
+      window.addEventListener('load', focusDeck);
+      try {
+        var saved = parseInt(localStorage.getItem(STORE) || '0', 10);
+        if (!isNaN(saved) && saved >= 0 && saved < slides.length) idx = saved;
+      } catch (_) {}
+      window.addEventListener('resize', fit);
+      fit();
+      paint();
+      focusDeck();
+    })();
+  </script>
+</body>
+</html>

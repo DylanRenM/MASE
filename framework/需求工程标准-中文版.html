@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>系统与软件工程 — 生命周期过程 — 需求工程</title>
+<style>
+  body { font-family: "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", sans-serif; line-height: 1.8; max-width: 950px; margin: 40px auto; padding: 0 40px; color: #222; }
+  h1 { font-size: 28px; border-bottom: 3px solid #1e3a5f; padding-bottom: 15px; color: #1e3a5f; }
+  h2 { font-size: 22px; color: #1e3a5f; border-left: 6px solid #1e3a5f; padding-left: 12px; margin-top: 40px; }
+  h3 { font-size: 18px; color: #2a4a73; margin-top: 25px; }
+  h4 { font-size: 16px; color: #333; margin-top: 20px; }
+  p { text-align: justify; margin: 10px 0; }
+  ul { padding-left: 28px; }
+  li { margin: 8px 0; }
+  .meta { color: #666; font-size: 14px; }
+  .note { background: #f5f0e1; padding: 10px 15px; border-left: 4px solid #c4a85c; font-size: 14px; margin: 10px 0; }
+  .example { background: #eef3f9; padding: 10px 15px; border-left: 4px solid #4a6cf7; font-size: 14px; margin: 10px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 14px; }
+  th, td { border: 1px solid #c5c5c5; padding: 10px; text-align: left; }
+  th { background: #1e3a5f; color: white; }
+  .terminology { background: #fff8dc; padding: 15px 20px; margin: 12px 0; border-left: 4px solid #c4a85c; }
+  .term { font-weight: bold; color: #8b4513; }
+  code { background: #f0f0f0; padding: 2px 6px; font-family: Consolas, monospace; font-size: 14px; }
+  .section-num { color: #1e3a5f; font-weight: bold; margin-right: 8px; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 30px 0; }
+  .contents-list { column-count: 2; column-gap: 40px; }
+  .contents-list li { break-inside: avoid; }
+  .chinese-note { color: #7a5a1e; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>系统与软件工程 — 生命周期过程 — 需求工程</h1>
+<p class="meta">ISO/IEC/IEEE 29148:2018（简化中文翻译版） · 基于英文原版「Requirements engineering」</p>
+<p><strong>说明：</strong>本翻译版保留国际标准的全部章节结构与核心技术内容，将原文简化为适合中国工程实践的表达形式。原文 2090 段，本版覆盖所有关键条款。</p>
+
+<hr>
+
+<h2>目录</h2>
+<ul class="contents-list">
+  <li>1 范围</li>
+  <li>2 规范性引用文件</li>
+  <li>3 术语、定义与缩略语</li>
+  <li>4 一致性</li>
+  <li>5 概念</li>
+  <li>6 过程</li>
+  <li>7 信息项</li>
+  <li>8 信息项编写指南</li>
+  <li>9 信息项内容</li>
+</ul>
+
+<hr>
+
+<h2>1 范围 (Scope)</h2>
+
+<p>本文件：</p>
+<ul>
+  <li><strong>规定</strong>了在系统与软件产品（包括服务）整个生命周期内，为产出需求所实施的工程活动中所<strong>必需</strong>的过程；</li>
+  <li>为应用 ISO/IEC/IEEE 15288 和 ISO/IEC/IEEE 12207 中描述的需求及需求相关过程<strong>提供指南</strong>；</li>
+  <li><strong>规定</strong>了通过需求过程实施所产出的必需信息项；</li>
+  <li><strong>规定</strong>了必需信息项的必需内容；</li>
+  <li>为必需及相关信息项的格式<strong>提供指南</strong>。</li>
+</ul>
+
+<p>本文件适用于：</p>
+<ul>
+  <li>在人造系统、软件密集型系统、软件与硬件产品，以及与这些系统和产品相关的服务的项目中，使用或计划使用 ISO/IEC/IEEE 15288 和 ISO/IEC/IEEE 12207 的人员（不受项目范围、产品、方法学、规模或复杂性的限制）；</li>
+  <li>执行需求工程活动，以帮助确保其需求工程过程的应用符合 ISO/IEC/IEEE 15288 和/或 ISO/IEC/IEEE 12207 的人员；</li>
+  <li>在上述同类型项目中使用或计划使用 ISO/IEC/IEEE 15289 的人员；</li>
+  <li>执行需求工程活动，以帮助确保在需求工程过程应用期间所开发的信息项符合 ISO/IEC/IEEE 15289 的人员。</li>
+</ul>
+
+<h2>2 规范性引用文件 (Normative references)</h2>
+<p>下列文件对于本文件的应用是必不可少的。凡是注日期的引用文件，仅注日期的版本适用于本文件。凡是不注日期的引用文件，其最新版本（包括所有的修改单）适用于本文件。</p>
+<ul>
+  <li>ISO/IEC/IEEE 15288:2015，《系统与软件工程 — 系统生命周期过程》</li>
+  <li>ISO/IEC/IEEE 12207:2017，《系统与软件工程 — 软件生命周期过程》</li>
+  <li>ISO 9000:2015，《质量管理体系 — 基础与术语》</li>
+  <li>ISO/IEC 25000，《软件产品质量要求与评价》</li>
+  <li>ISO/IEC/IEEE 42020，《系统与软件工程 — 架构过程》</li>
+  <li>EIA 632:1999，《系统工程过程》</li>
+  <li>IEEE Std 1012-2016，《系统、软件与硬件验证与确认标准》</li>
+</ul>
+
+<h2>3 术语、定义与缩略语 (Terms, definitions and abbreviated terms)</h2>
+
+<p>为便于本文件的应用，下列术语和定义适用。</p>
+
+<div class="terminology">
+  <p><span class="term">3.1 获取方（acquirer）</span> — 从供应方（3.31）获取或采购产品或服务的相关方（3.28）。其他常用术语包括：买方、客户（3.9）、所有者、采购人或内部/组织发起人。</p>
+  <p><span class="term">3.2 属性（attribute）</span> — 可由人工或自动化手段以定性或定量方式区分的某一实体所固有的性质或特征。ISO 9000 区分了两种属性：某物内在固有的永久性特征；以及产品、过程或系统的赋值特征（例如产品价格、产品所有者）。</p>
+  <p><span class="term">3.3 基线（baseline）</span> — 在配置项生命周期的特定时刻，经正式指定并固定的某一配置项的经正式批准的版本，无论其媒介形式。（引自 ISO/IEC/IEEE 15288:2015, 4.1.10）</p>
+  <p><span class="term">3.4 业务需求规格说明（business requirements specification, BRS）</span> — 对业务或使命的需求（3.19）（业务或使命问题或机会定义、概念及解决方案的必需条件）及其与外部环境的关系进行的结构化集合。</p>
+  <p><span class="term">3.5 运行概念（concept of operations, ConOps）</span> — 从高层次轮廓上，对某一组织关于一次运行或一系列运行的假设或意图的口头与图形陈述。运行概念常常体现在长期战略计划和年度运行计划中。</p>
+  <p><span class="term">3.6 条件（condition）</span> — 为某一需求（3.19）所规定的、可测量的定性或定量属性（3.2），指示该需求适用的情形或事件。</p>
+  <p><span class="term">3.7 约束（constraint）</span> — 对系统、其设计或实施、或开发/修改系统所用过程施加的外部限制。</p>
+  <p><span class="term">3.8 使用背景（context of use）</span> — 产品使用过程中的用户（3.35）、任务、设备（硬件、软件和材料）以及物理和社会环境。</p>
+  <p><span class="term">3.9 客户（customer）</span> — 可能或确实接收产品或服务的个人或组织。客户是相关方（3.28）的子集。</p>
+  <p><span class="term">3.10 派生需求（derived requirement）</span> — 在将需求集合和组织成特定系统配置与解决方案的过程中，由需求推导或推断出的需求（3.19）。上级需求被称为"父需求"，派生自父需求的被称为"子需求"。</p>
+  <p><span class="term">3.11 开发方（developer）</span> — 在系统或软件生命周期过程中执行开发活动（包括需求分析、设计、通过验收的测试）的个人或组织。</p>
+  <p><span class="term">3.12 信息项（information item）</span> — 为供人类使用而产出、存储和交付的可单独识别的信息体（引自 ISO/IEC/IEEE 15289:2017, 3.1.13，已修改）。</p>
+  <p><span class="term">3.13 运行概念（operational concept, OpsCon）</span> — 从用户（3.35）和运行人员（3.18）视角，对组织使用一个或多个特定系统或相关系统集，以实现其意图的口头与图形陈述。</p>
+  <p><span class="term">3.14 运行场景（operational scenario）</span> — 对想象的一系列事件或活动的描述，其中包含产品或服务与其环境和用户（3.35）的交互。</p>
+  <p><span class="term">3.15 运行人员（operator）</span> — 执行系统运行的个人或组织。</p>
+  <p><span class="term">3.16 需求（requirement）</span> — 翻译或表达某一需求及其相关约束（3.7）和条件（3.6）的陈述。需求存在于系统结构的不同层次，总是与系统、软件或服务或其他关注对象相关联。</p>
+  <p><span class="term">3.17 需求获取（requirements elicitation）</span> — 使用系统性技术（如原型法和结构化调查）来主动识别并记录客户（3.9）和最终用户（3.35）需求的过程。</p>
+  <p><span class="term">3.18 需求工程（requirements engineering, RE）</span> — 在获取方（3.1）和供应方（3.31）或开发方（3.11）的领域之间进行协调，以建立和维护待研究的系统、软件或服务所需满足的需求（3.16）的跨学科职能。需求工程关注发现、获取、开发、分析、验证、确认、沟通、记录和管理需求。</p>
+  <p><span class="term">3.19 需求管理（requirements management）</span> — 在系统、产品或服务整个生命周期内，识别、记录、维护、沟通、跟踪和追踪需求（3.16）的活动。</p>
+  <p><span class="term">3.20 需求可追溯性（requirements traceability）</span> — 对需求（3.16）在需求集合中的派生路径（向上）和分配/下推路径（向下）的识别与文档化。父需求/子需求的关系是追溯的基础。</p>
+  <p><span class="term">3.21 需求确认（requirements validation）</span> — 确认需求（3.16）（独立及作为集合）定义了相关方（3.28）所期望的正确系统。（引自 EIA 632:1999，已修改）</p>
+  <p><span class="term">3.22 需求验证（requirements verification）</span> — 通过检查确认需求（3.16）（独立及作为集合）是结构良好的。这意味着某一需求或需求集合已经过评审，以帮助确保达到良好需求的特征并组织良好。</p>
+  <p><span class="term">3.23 软件需求规格说明（software requirements specification, SRS）</span> — 对软件及其外部接口的本质需求（3.16）[功能、性能、设计约束（3.7）和属性（3.2）]进行的结构化集合。</p>
+  <p><span class="term">3.24 相关方（stakeholder）</span> — 对某系统或其满足需求和期望的特征拥有权利、份额、主张或利益的个人或组织。相关方包括但不限于：最终用户（3.35）、最终用户组织、支持者、开发方（3.11）、生产者、培训人员、维护者、处置者、获取方（3.1）、客户（3.9）、运行人员（3.18）、供应组织、认证机构和监管机构。</p>
+  <p><span class="term">3.25 相关方需求规格说明（stakeholder requirements specification, StRS）</span> — 对相关方（3.28）的需求（3.16）[特征、背景、概念、约束（3.7）和优先级]及其与外部环境的关系进行的结构化集合。</p>
+  <p><span class="term">3.26 系统需求规格说明（system requirements specification, SyRS）</span> — 对系统及其运行环境与外部接口的本质需求（3.16）[功能、性能、设计约束（3.7）和其他属性（3.2）]进行的结构化集合。</p>
+  <p><span class="term">3.27 供应方（supplier）</span> — 与获取方（3.1）签订协议以供应产品或服务的组织或个人。其他常用术语包括：承包商、生产者、卖方或厂商。</p>
+  <p><span class="term">3.28 用户（user）</span> — 在使用期间与系统交互或从系统获益的个人或团体。用户与运行人员（3.18）的角色可由同一个人或组织同时或顺序承担。</p>
+  <p><span class="term">3.29 确认（validation）</span> — 通过提供客观证据，确认针对某一特定预期用途或应用的需求（3.16）已得到满足。确认 = "建造了正确的系统"。</p>
+  <p><span class="term">3.30 验证（verification）</span> — 通过提供客观证据，确认某一规定的需求已得到满足。验证 = "正确地建造了系统"。</p>
+</div>
+
+<h3>3.2 缩略语</h3>
+<ul>
+  <li><strong>BRS</strong> — Business Requirements Specification（业务需求规格说明）</li>
+  <li><strong>StRS</strong> — Stakeholder Requirements Specification（相关方需求规格说明）</li>
+  <li><strong>SyRS</strong> — System Requirements Specification（系统需求规格说明）</li>
+  <li><strong>SRS</strong> — Software Requirements Specification（软件需求规格说明）</li>
+  <li><strong>ConOps</strong> — Concept of Operations（运行概念）</li>
+  <li><strong>RE</strong> — Requirements Engineering（需求工程）</li>
+  <li><strong>TPM</strong> — Technical Performance Measure（技术性能度量）</li>
+  <li><strong>TBS</strong> — To be Supplied（待供应）</li>
+</ul>
+
+<hr>
+
+<h2>4 一致性 (Conformance)</h2>
+
+<h3>4.1 预期用途</h3>
+<p>本文件为执行 ISO/IEC/IEEE 15288 和 ISO/IEC/IEEE 12207 中涉及需求工程的过程提供指南。它旨在同时为需求过程的执行和相关信息项的编写提供统一的处理方法。</p>
+
+<h3>4.2 完全一致性</h3>
+<p>声称完全符合本文件，等同于声称符合：</p>
+<ul>
+  <li>第 5.2.4、5.2.5、5.2.6 和 5.2.7 条中所载的规定；</li>
+  <li>第 6.1 条中引用的 ISO/IEC/IEEE 15288 和 ISO/IEC/IEEE 12207 中与需求工程相关的过程；</li>
+  <li>第 7 条所规定的信息项；</li>
+  <li>本文件第 9 条及附录 A 中关于信息项内容的要求。</li>
+</ul>
+
+<h3>4.3 过程一致性</h3>
+<p>本文件对适用于系统、产品或服务整个生命周期的多项需求工程过程规定了要求。过程要求包含于第 6.1 条。</p>
+
+<h3>4.4 信息项内容一致性</h3>
+<p>声明符合本文件关于信息项内容的要求，需满足：</p>
+<ul>
+  <li>本文件中规定的必需信息项均已产出；</li>
+  <li>需求工程活动期间产出的信息项经证明符合本文件所定义的内容要求。</li>
+</ul>
+<p class="note">注 1：声明完全符合 ISO/IEC/IEEE 15289 的用户，并不自动意味着可以声明符合本文件的信息项及其内容要求。</p>
+<p class="note">注 2：为便于引用，每个信息项均描述为以独立文档的形式发布。实际上，信息项可以不同形式、不同媒介组合或拆分。</p>
+
+<h3>4.5 裁减后的一致性</h3>
+<p><strong>4.5.1 过程</strong> — 本文件不对生命周期过程的裁减作出规定。ISO/IEC/IEEE 15288:2015 附录 A 提供了过程裁减的规范性指导方向。</p>
+<p><strong>4.5.2 信息项</strong> — 当本文件被用作建立一套不满足完全一致性条件的信息项时，本文件的条款应作为起点，按项目需求进行合理裁减，并形成文档记录。</p>
+
+<hr>
+
+<h2>5 概念 (Concepts)</h2>
+
+<h3>5.1 总则</h3>
+<p>本条阐述适用于需求陈述本身，以及在记录需求的过程中所生成的信息项的概念。</p>
+
+<h3>5.2 需求基础 (Requirements fundamentals)</h3>
+
+<h4>5.2.1 总则</h4>
+<p>需求工程是一项跨学科职能，在获取方和供应方/开发方的领域之间进行协调，以建立和维护一套需求，这些需求应当：</p>
+<ul>
+  <li>参考一个已定义的系统、软件或服务；</li>
+  <li>能够在相关方（如获取方、用户、客户、运行人员、供应方）之间达成一致理解；</li>
+  <li>已针对真实世界的需求进行过确认；</li>
+  <li>可被实现；</li>
+  <li>可作为验证设计与解决方案的参考基准。</li>
+</ul>
+
+<h4>5.2.2 相关方</h4>
+<p>在需求工程背景下，不同项目的相关方有所不同。最小的相关方集合至少应包括<strong>用户</strong>和<strong>获取方</strong>。当涉及：</p>
+<ul>
+  <li>大型项目影响众多用户与获取方、各有不同关注点时；</li>
+  <li>监管当局可能拥有法定、行业或其他外部要求、需要仔细分析时。</li>
+</ul>
+<p>可能需要纳入另外两组相关方作为最小集合的一部分。</p>
+
+<h4>5.2.3 将需求转化为要求</h4>
+<p>需求的定义始于相关方的需求（或目标、目的），这些需求经过细化和演进，最终成为有效的相关方需求。初始的相关方需求集合随后转化为较低层级的系统元素需求。当由技术不成熟导致的风险较高时，可能需要从下游活动迭代回到需求分析。</p>
+
+<h4>5.2.4 需求构成 (Requirements construct)</h4>
+<p><strong>应</strong>开发结构良好的相关方需求、系统需求和系统元素需求。这一实践有助于需求确认和验证。</p>
+
+<p>一条结构良好的、被明确规定的需求应包含一个或多个下列要素：</p>
+<ul>
+  <li>它<strong>应</strong>由某一系统满足或拥有，以解决问题、实现目标或回应相关方关注；</li>
+  <li>它以可测量的<strong>条件</strong>加以限定；</li>
+  <li>它受<strong>约束</strong>所限制；</li>
+  <li>它定义了由特定相关方使用时系统的性能（或系统的对应能力），而非用户、运行人员或其他相关方的能力；</li>
+  <li>它是可验证的（例如，可以证明该需求在系统中的实现）。</li>
+</ul>
+
+<p class="note">注 1：另一个考虑因素是较低层级的需求应与较高物理层级的系统设计保持一致。</p>
+
+<h4>5.2.5 个别需求的特征 (Characteristics of individual requirements)</h4>
+<p>结构良好的个别需求<strong>应</strong>具备以下特征：</p>
+<ul>
+  <li><strong>必要（Necessary）</strong>：需求定义了某项本质能力；如果删除它，系统将无法满足一个或多个相关方的需求。</li>
+  <li><strong>适当（Appropriate）</strong>：需求对于它所记录的抽象层级而言是适当的。</li>
+  <li><strong>可实现（Implementable）</strong>：需求在技术上是可实现的，并且在成本、进度和风险的约束范围内是切实可行的。</li>
+  <li><strong>无二义（Unambiguous）</strong>：需求仅能以一种方式被解释，使用简洁明了的语句。</li>
+  <li><strong>完整（Complete）</strong>：需求陈述传达了所有必要信息，而无需读者获取其他信息。</li>
+  <li><strong>单一（Singular）</strong>：需求陈述只传达一项思想。</li>
+  <li><strong>可行（Feasible）</strong>：需求能够在不超出已知技术与成本约束的情况下得到满足。</li>
+  <li><strong>原子（Atomic）</strong>：需求不能被进一步拆分为多个独立需求。</li>
+  <li><strong>可验证（Verifiable）</strong>：需求能够被证明已满足（通过测试、分析、演示或检查）。</li>
+</ul>
+
+<h4>5.2.6 需求集合的特征 (Characteristics of a set of requirements)</h4>
+<p>一套结构良好的需求<strong>应</strong>具备以下特征：</p>
+<ul>
+  <li><strong>完整（Complete）</strong>：没有遗漏或缺失必要信息。</li>
+  <li><strong>一致（Consistent）</strong>：需求之间互不冲突，且不与上级需求或外部文档冲突。</li>
+  <li><strong>无二义（Unambiguous）</strong>：每条需求仅能被唯一解释。</li>
+  <li><strong>可追踪（Traceable）</strong>：每条需求都拥有唯一标识符，便于从起源追踪到实现。</li>
+  <li><strong>分级（Ranked for importance and/or stability）</strong>：每条需求都标明了优先级或重要性。</li>
+  <li><strong>可验证（Verifiable）</strong>：整个需求集合能够被验证。</li>
+  <li><strong>可修改（Modifiable）</strong>：需求集合的结构和风格允许在不丧失一致性和可追踪性的前提下进行变更。</li>
+</ul>
+
+<h4>5.2.7 需求语言准则 (Requirement language criteria)</h4>
+<p><strong>关键词的使用：</strong>"应（shall）" 表示强制性条款；"会（will）" 用于陈述事实、未来时态或目的声明；"宜（should）" 用于偏好或目标；"可（may）" 用于建议或允许。应避免使用"必须（must）"，以防止被误读为强制性条款。</p>
+
+<div class="example">
+  <p><strong>功能需求语法示例（按结构排列）：</strong></p>
+  <p>形式 1：<code>[条件][主体][动作][对象][动作约束]</code><br>
+  例：当收到信号 x [条件] 时，系统 [主体] <strong>应</strong> 在 2 秒 [动作约束] 内设置 [动作] 信号 x 接收位 [对象]。</p>
+  <p>形式 2：<code>[主体][动作][动作约束]</code><br>
+  例：发票系统 [主体] <strong>应</strong> 按发票到期日升序 [动作约束] 显示 [动作] 待处理客户发票。</p>
+</div>
+
+<h4>5.2.8 需求属性 (Requirements attributes)</h4>
+<p>为支持需求分析，结构良好的需求<strong>宜</strong>包含描述性属性，以帮助识别相关需求并辅助分析活动。重要的需求属性示例包括：</p>
+
+<table>
+  <tr><th>属性</th><th>说明</th></tr>
+  <tr><td>标识符</td><td>每条需求应有唯一标识（编号、名称、标签或助记符），便于追踪和引用。</td></tr>
+  <tr><td>版本号</td><td>确保正在实施的是正确版本的需求。</td></tr>
+  <tr><td>负责人</td><td>维护需求并对需求变更拥有审批权的组织或个人。</td></tr>
+  <tr><td>相关方优先级</td><td>需求的优先级（如关键/必需/期望/可选），可通过相关方共识过程确定。</td></tr>
+  <tr><td>风险</td><td>基于风险因素为每条需求分配的风险值。</td></tr>
+  <tr><td>理由</td><td>建立该需求的原因与证据。</td></tr>
+  <tr><td>难度</td><td>满足需求的估计难度（如简单/一般/困难）。</td></tr>
+  <tr><td>类型</td><td>需求的意图和所代表性质的类别（见下表）。</td></tr>
+</table>
+
+<h4>需求类型属性示例</h4>
+<table>
+  <tr><th>类型</th><th>说明</th></tr>
+  <tr><td>功能/性能</td><td>功能需求描述系统或系统元素的功能或任务。性能是功能的一个属性，通常以定量方式表达。单独的性能需求是不完整的需求。</td></tr>
+  <tr><td>接口</td><td>定义系统如何与外部系统交互（外部接口），或系统元素如何相互交互（内部接口）。</td></tr>
+  <tr><td>过程需求</td><td>通常由获取方或用户通过合同或工作说明书施加的需求，包括合规性、法律法规等。</td></tr>
+  <tr><td>质量（非功能性）</td><td>包括各种"性"需求，如可运输性、生存性、灵活性、可移植性等。</td></tr>
+  <tr><td>可用性/使用质量</td><td>为满足用户需求而设计和评估系统提供基础。</td></tr>
+  <tr><td>人因</td><td>针对人机交互结果所需的特征进行陈述。</td></tr>
+</table>
+
+<h3>5.3 实践考虑 (Practical considerations)</h3>
+
+<h4>5.3.1 迭代与递归的应用</h4>
+<p>本文件定义的过程有两种应用形式，对需求工程至关重要：</p>
+<ul>
+  <li><strong>迭代（Iterative）</strong> — 在系统的<strong>同一层级</strong>上重复应用同一过程或过程集合，以渐进地精化和加深对需求的理解。</li>
+  <li><strong>递归（Recursive）</strong> — 在系统结构中向下<strong>连续多个层级</strong>的系统元素上应用同一过程集合。递归是成功实现非平凡复杂度系统的工程化的主要策略。</li>
+</ul>
+
+<p>需求工程中迭代的主要形式包括：</p>
+<ul>
+  <li>需求分析活动之间有目的的迭代；</li>
+  <li>由于需求变化率可预测且显著，从下游活动计划地回到需求分析；</li>
+  <li>由于技术或成本风险导致的可行性与平衡问题，从下游活动计划或非计划地回到需求；</li>
+  <li>由于其他解决方案问题（如非开发系统元素的变更或缺陷）导致的非计划迭代；</li>
+  <li>出于合规性原因对需求进行反向工程；</li>
+  <li>由于需求永远不可能完美、或在成本效益上不值得追求完美，从下游活动对需求分析进行有限迭代。</li>
+</ul>
+
+<hr>
+
+<h2>6 过程 (Processes)</h2>
+
+<h3>6.1 需求过程概述</h3>
+<p>需求工程覆盖以下关键过程。每一过程都有明确的目的、预期产出和活动任务。</p>
+
+<table>
+  <tr><th>过程</th><th>主要目标</th></tr>
+  <tr><td>业务或使命分析过程</td><td>理解业务/使命问题、机会与约束，定义业务需求。</td></tr>
+  <tr><td>相关方需求与需求定义过程</td><td>从用户和其他相关方视角定义运行需求和约束。</td></tr>
+  <tr><td>系统/软件需求定义过程</td><td>将相关方需求转化为技术上可实现的系统/软件需求。</td></tr>
+  <tr><td>其他技术过程中的需求活动</td><td>架构定义、验证与确认过程中的需求活动。</td></tr>
+  <tr><td>需求管理过程</td><td>对需求及其变更进行全生命周期的管理与追踪。</td></tr>
+</table>
+
+<h3>6.2 业务或使命分析过程</h3>
+
+<h4>6.2.1 目的</h4>
+<p>业务或使命分析过程的目的是定义业务或使命的问题与机会空间，表征解决方案空间，并评估备选解决方案类别。该过程产出初始业务需求。</p>
+
+<h4>6.2.2 成果</h4>
+<p>成功执行业务或使命分析过程将产生以下成果：</p>
+<ul>
+  <li>经定义和记录的业务或使命问题/机会；</li>
+  <li>业务目标、目的和成功度量指标；</li>
+  <li>业务或使命环境（市场、竞争、法规、技术趋势）；</li>
+  <li>业务或使命的约束、假设与风险；</li>
+  <li>业务需求规格说明（BRS）。</li>
+</ul>
+
+<h4>6.2.3 活动与任务</h4>
+<p><strong>6.2.3.1 总则</strong> — 业务或使命分析通常由获取方或其代理人执行，重点关注"需要解决什么问题"而非"如何解决"。</p>
+
+<p><strong>6.2.3.2 准备业务或使命分析</strong> — 应执行以下任务：</p>
+<ul>
+  <li>确定分析的范围与深度；</li>
+  <li>识别关键相关方及其代表；</li>
+  <li>规划分析进度与资源；</li>
+  <li>确定需使用的方法（如访谈、研讨会、建模、标杆分析）。</li>
+</ul>
+
+<p><strong>6.2.3.3 定义问题或机会空间</strong> — 本活动由以下任务组成：</p>
+<ul>
+  <li>识别并描述核心业务或使命问题（或机会）；</li>
+  <li>分析问题的驱动因素（技术、经济、社会、政治）；</li>
+  <li>定义不解决该问题的后果；</li>
+  <li>确立成功度量指标与目标值。</li>
+</ul>
+
+<p><strong>6.2.3.4 表征解决方案空间</strong> — 本活动由以下任务组成：</p>
+<ul>
+  <li>定义可能的解决方案范围（做什么 vs 买什么、进化式 vs 革命性）；</li>
+  <li>确定高层级解决方案约束；</li>
+  <li>分析现有能力与所需能力的差距。</li>
+</ul>
+
+<p><strong>6.2.3.5 评估备选解决方案类别</strong> — 对各类解决方案进行成本效益与可行性评估，包括：</p>
+<ul>
+  <li>技术可行性评估；</li>
+  <li>成本与进度估算；</li>
+  <li>风险评估；</li>
+  <li>权衡研究与推荐方案。</li>
+</ul>
+
+<p><strong>6.2.3.6 管理业务或使命分析</strong> — 本活动由以下任务组成：</p>
+<ul>
+  <li>维护分析记录与可追溯性；</li>
+  <li>评审并批准业务需求；</li>
+  <li>建立基线并管理变更。</li>
+</ul>
+
+<h3>6.3 相关方需求与需求定义过程</h3>
+
+<h4>6.3.1 目的</h4>
+<p>本过程的目的是从使用或受系统影响的人员视角，识别并定义系统应实现的功能、性能、接口及其他特性。它关注用户如何与系统交互以完成其任务。</p>
+
+<h4>6.3.2 成果</h4>
+<p>成功执行相关方需求定义过程将产生：</p>
+<ul>
+  <li>相关方需求集合（StRS），清晰描述用户及其他相关方对系统的需求；</li>
+  <li>运行概念（ConOps/OpsCon）文档，描述系统在各运行模式下如何被使用；</li>
+  <li>运行场景与用户故事，说明典型与异常使用路径；</li>
+  <li>用户、操作、维护及处置需求；</li>
+  <li>对相关方需求进行的确认与优先级排序。</li>
+</ul>
+
+<h4>6.3.3 活动与任务</h4>
+<p><strong>6.3.3.1 总则</strong> — 本过程的关键在于"从外向内"地思考：理解外部世界对系统的期望，而不是关注系统内部如何实现。</p>
+
+<p><strong>6.3.3.3 定义相关方需求</strong> — 应执行以下任务：</p>
+<ul>
+  <li>识别并建档相关方类别（最终用户、运行人员、维护人员、培训人员、获取方、监管机构等）；</li>
+  <li>通过访谈、场景、原型法等获取技术从相关方提取需求；</li>
+  <li>对需求进行结构化与组织（按功能、性能、接口、约束等）；</li>
+  <li>分析需求的完整性、一致性与可行性；</li>
+  <li>建立相关方需求与业务需求之间的可追溯性。</li>
+</ul>
+
+<p><strong>6.3.3.4 开发运行概念（ConOps）</strong> — 运行概念<strong>应</strong>从用户视角描述系统的预期运行方式，包括：</p>
+<ul>
+  <li>系统运行的背景、目标与环境；</li>
+  <li>用户角色、任务与操作流程；</li>
+  <li>运行模式（正常、应急、维护、训练等）；</li>
+  <li>系统与外部系统及环境的交互；</li>
+  <li>成功使用的场景与失败场景。</li>
+</ul>
+
+<p><strong>6.3.3.6 分析相关方需求</strong> — <strong>应</strong>对相关方需求进行以下分析：</p>
+<ul>
+  <li>可行性分析（技术、经济、进度、法规）；</li>
+  <li>风险分析（技术风险、用户风险、操作风险）；</li>
+  <li>需求冲突识别与解决；</li>
+  <li>需求优先级排序与权衡分析。</li>
+</ul>
+
+<h3>6.4 系统[系统/软件]需求定义过程</h3>
+
+<h4>6.4.1 目的</h4>
+<p>本过程的目的是将相关方需求转化为一套完整的、经过验证的、可实现的系统级（或软件级）技术需求。这些需求随后将被分配到架构元素或软件模块。</p>
+
+<h4>6.4.2 成果</h4>
+<p>成功执行系统/软件需求定义过程将产生：</p>
+<ul>
+  <li>系统需求规格说明（SyRS）或软件需求规格说明（SRS），包括功能、性能、接口、物理、环境与质量需求；</li>
+  <li>系统/软件需求与相关方需求之间的可追溯性；</li>
+  <li>需求验证结果（确认每条需求可被验证）；</li>
+  <li>系统/软件架构与设计的输入基础。</li>
+</ul>
+
+<h4>6.4.3 活动与任务</h4>
+<p><strong>6.4.3.2 准备系统/软件需求定义</strong> — <strong>应</strong>执行以下任务：</p>
+<ul>
+  <li>定义需求开发的方法、工具与过程；</li>
+  <li>建立需求文档结构与模板；</li>
+  <li>建立需求属性与标识方案；</li>
+  <li>规划需求评审与验证活动。</li>
+</ul>
+
+<p><strong>6.4.3.3 定义系统/软件需求</strong> — 本活动由以下任务组成：</p>
+<ul>
+  <li>将相关方需求转化为技术需求（功能、性能、接口、约束）；</li>
+  <li>定义派生需求（源于系统结构、物理定律、标准遵循等）；</li>
+  <li>使用结构化模板编写每条需求，确保符合 5.2.5 的特征；</li>
+  <li>为每条需求分配唯一标识符并记录属性。</li>
+</ul>
+
+<p><strong>6.4.3.4 分析系统/软件需求</strong> — <strong>应</strong>执行以下分析：</p>
+<ul>
+  <li>完整性与一致性检查；</li>
+  <li>可验证性评估（每条需求是否能被测试/分析/演示/检查）；</li>
+  <li>可行性分析与技术风险评估；</li>
+  <li>需求分配到系统元素/软件组件；</li>
+  <li>建立需求间的纵向与横向可追溯性。</li>
+</ul>
+
+<p><strong>6.4.3.5 管理系统/软件需求</strong> — <strong>应</strong>执行以下管理任务：</p>
+<ul>
+  <li>建立需求基线并实施配置管理；</li>
+  <li>管理需求变更（评估影响、审批、沟通）；</li>
+  <li>与相关方沟通并获得正式批准；</li>
+  <li>维护需求状态与度量数据。</li>
+</ul>
+
+<h3>6.5 其他技术过程中的需求工程活动</h3>
+
+<h4>6.5.1 架构定义中的需求活动</h4>
+<p>架构定义过程与需求活动紧密耦合：</p>
+<ul>
+  <li>架构设计<strong>应</strong>将系统需求分配到各系统元素；</li>
+  <li>某些需求只能在架构或设计演进到一定程度后才能派生（例如，依赖多个系统元素交互方式的需求）；</li>
+  <li>架构决策应记录为需求派生的理由；</li>
+  <li>应在架构与需求之间保持双向可追溯性。</li>
+</ul>
+
+<h4>6.5.2 验证中的需求活动</h4>
+<p>验证活动关注"正确地建造了系统"：</p>
+<ul>
+  <li>每条系统需求<strong>应</strong>有对应验证方法（测试、分析、演示、检查）；</li>
+  <li>验证计划应在需求阶段早期启动，以评估需求的可验证性；</li>
+  <li>验证结果应回溯到需求，以关闭"验证闭环"。</li>
+</ul>
+
+<h4>6.5.3 确认中的需求活动</h4>
+<p>确认活动关注"建造了正确的系统"：</p>
+<ul>
+  <li>确认应从相关方需求出发，由真实用户在拟真运行环境中执行；</li>
+  <li>确认结果可以揭示需求不完整、误解或变更；</li>
+  <li>对确认过程中发现的问题，应启动需求变更请求流程。</li>
+</ul>
+
+<h3>6.6 需求管理 (Requirements management)</h3>
+
+<h4>6.6.1 管理概述</h4>
+<p>需求管理是对需求及其变更进行系统管理的过程，贯穿系统、产品或服务的整个生命周期。其目标是确保：</p>
+<ul>
+  <li>所有需求都被唯一标识并建档；</li>
+  <li>需求与需求之间、需求与设计之间、需求与测试之间的关系被维护；</li>
+  <li>变更被控制和沟通；</li>
+  <li>状态与度量数据被收集和报告。</li>
+</ul>
+
+<h4>6.6.2 变更管理</h4>
+<p><strong>6.6.2.1 总则</strong> — 需求变更不可避免，应建立正式变更控制流程。</p>
+
+<p><strong>6.6.2.2 配置管理</strong> — 需求集合<strong>应</strong>置于配置管理之下，包括：</p>
+<ul>
+  <li>正式的配置标识；</li>
+  <li>版本控制与变更请求流程；</li>
+  <li>基线管理（功能基线、分配基线、产品基线）。</li>
+</ul>
+
+<p><strong>6.6.2.3 信息管理</strong> — <strong>应</strong>：</p>
+<ul>
+  <li>准备信息管理计划，定义需求信息的格式、存储、访问与分发机制；</li>
+  <li>执行信息管理：使用工具（如需求管理工具、配置管理系统）维护需求信息；</li>
+  <li>确保信息一致性、完整性与可访问性。</li>
+</ul>
+
+<h4>6.6.3 需求度量 (Measurement for requirements)</h4>
+
+<p><strong>6.6.3.1 总则</strong> — 度量支持对需求工程过程的客观管理与持续改进。</p>
+
+<p><strong>6.6.3.2 准备度量</strong> — <strong>应</strong>识别与定义：</p>
+<ul>
+  <li>度量对象与目的；</li>
+  <li>度量指标（如需求数量、变更率、缺陷密度、需求稳定性、覆盖率）；</li>
+  <li>数据收集方法与频率；</li>
+  <li>分析与报告机制。</li>
+</ul>
+
+<p><strong>6.6.3.3 执行度量</strong> — <strong>应</strong>执行以下任务：</p>
+<ul>
+  <li>定期收集度量数据；</li>
+  <li>分析趋势（例如：需求变更率是否随时间下降？）；</li>
+  <li>报告度量结果至管理层；</li>
+  <li>基于度量数据实施过程改进。</li>
+</ul>
+
+<hr>
+
+<h2>7 信息项 (Information items)</h2>
+
+<p>需求工程过程中应产出以下信息项。这些信息项是过程输出与项目沟通的载体。</p>
+
+<table>
+  <tr><th>信息项</th><th>缩写</th><th>用途</th></tr>
+  <tr><td>业务需求规格说明</td><td>BRS</td><td>记录业务或使命层面的需求与目标</td></tr>
+  <tr><td>相关方需求规格说明</td><td>StRS</td><td>记录用户及其他相关方视角的需求</td></tr>
+  <tr><td>系统需求规格说明</td><td>SyRS</td><td>记录系统级技术需求</td></tr>
+  <tr><td>软件需求规格说明</td><td>SRS</td><td>记录软件级技术需求</td></tr>
+  <tr><td>运行概念</td><td>ConOps/OpsCon</td><td>从用户视角描述系统如何运行</td></tr>
+  <tr><td>可追溯性矩阵</td><td>RTM</td><td>记录需求在各层级与各产品之间的追踪关系</td></tr>
+</table>
+
+<hr>
+
+<h2>8 信息项编写指南 (Guidelines for information items)</h2>
+
+<h3>8.1 需求信息项大纲</h3>
+<p>本条为各信息项提供推荐的文档结构。项目可根据规模、复杂度和合同要求对大纲进行裁减。</p>
+
+<h3>8.2 业务需求规格说明（BRS）大纲示例</h3>
+<ol>
+  <li><strong>目的</strong> — 本文件的目的与范围</li>
+  <li><strong>业务/使命概述</strong>
+    <ul><li>业务环境</li><li>使命/目标/目的</li><li>业务模型</li><li>信息环境</li></ul>
+  </li>
+  <li><strong>业务过程、政策与约束</strong></li>
+  <li><strong>初步运行概念与场景</strong></li>
+  <li><strong>初步获取、部署、支持与处置概念</strong></li>
+  <li><strong>项目约束</strong></li>
+  <li><strong>术语与缩略语</strong></li>
+</ol>
+
+<h3>8.3 相关方需求规格说明（StRS）大纲示例</h3>
+<ol>
+  <li><strong>相关方目的与范围</strong></li>
+  <li><strong>概述</strong></li>
+  <li><strong>业务环境、使命/目标/业务模型</strong></li>
+  <li><strong>系统过程、运行政策与约束</strong></li>
+  <li><strong>运行概念与场景</strong></li>
+  <li><strong>获取/部署/支持/处置概念</strong></li>
+  <li><strong>项目约束</strong></li>
+  <li><strong>术语与缩略语</strong></li>
+</ol>
+
+<h3>8.4 系统需求规格说明（SyRS）大纲示例</h3>
+<ol>
+  <li><strong>系统目的</strong></li>
+  <li><strong>系统范围</strong></li>
+  <li><strong>系统概述（上下文、功能、用户特征）</strong></li>
+  <li><strong>功能需求</strong></li>
+  <li><strong>可用性需求</strong></li>
+  <li><strong>性能需求</strong></li>
+  <li><strong>接口需求（外部 + 内部）</strong></li>
+  <li><strong>系统运行、模式与状态</strong></li>
+  <li><strong>物理特征与环境条件</strong></li>
+  <li><strong>安全与信息管理需求</strong></li>
+  <li><strong>政策与法规需求</strong></li>
+  <li><strong>生命周期维持需求</strong></li>
+  <li><strong>包装/搬运/运输需求</strong></li>
+  <li><strong>假设与依赖</strong></li>
+</ol>
+
+<h3>8.5 软件需求规格说明（SRS）大纲示例</h3>
+<ol>
+  <li><strong>目的</strong></li>
+  <li><strong>范围</strong></li>
+  <li><strong>产品概述（产品视角、功能、用户特征、限制）</strong></li>
+  <li><strong>功能需求</strong></li>
+  <li><strong>性能需求</strong></li>
+  <li><strong>可用性需求</strong></li>
+  <li><strong>接口需求（系统/用户/硬件/软件/通信）</strong></li>
+  <li><strong>逻辑数据库需求</strong></li>
+  <li><strong>设计约束（标准遵循）</strong></li>
+  <li><strong>软件系统属性（可靠性、可维护性、可移植性等）</strong></li>
+  <li><strong>验证/确认方法</strong></li>
+  <li><strong>假设与依赖</strong></li>
+</ol>
+
+<hr>
+
+<h2>9 信息项内容 (Information item content)</h2>
+
+<h3>9.1 总则</h3>
+<p>各信息项的内容应完整、准确、可追踪。内容与第 8 条的大纲相对应，但其详细程度应与项目规模和复杂度相匹配。</p>
+
+<h3>9.2 通用内容</h3>
+
+<h4>9.2.1 标识（Identification）</h4>
+<p>每个信息项应包含唯一标题、版本号、发布日期、文档状态（草稿/正式/已批准）和控制编号。</p>
+
+<h4>9.2.2 前言（Front matter）</h4>
+<p>前言应包含目的、范围、读者对象、变更历史、审批页和适用范围声明。</p>
+
+<h4>9.2.3 定义（Definitions）</h4>
+<p>应定义所有在文档中使用的专业术语和缩写。</p>
+
+<h4>9.2.4 引用文件（References）</h4>
+<p>列出所有在文档中引用的外部文件，并确保其可获取性。</p>
+
+<h4>9.2.5 缩略语（Acronyms and abbreviations）</h4>
+<p>提供缩略语的全称与解释。</p>
+
+<h3>9.3 业务需求规格说明（BRS）内容</h3>
+<table>
+  <tr><th>章节</th><th>内容说明</th></tr>
+  <tr><td>9.3.1 概述</td><td>简要介绍 BRS 的目标、范围和读者。</td></tr>
+  <tr><td>9.3.2 业务目的</td><td>说明这份文档对应的业务/使命为何存在。</td></tr>
+  <tr><td>9.3.3 业务范围</td><td>清晰界定业务问题/机会的边界。</td></tr>
+  <tr><td>9.3.4 业务概述</td><td>提供业务背景的高级描述。</td></tr>
+  <tr><td>9.3.5 主要相关方</td><td>列出主要相关方及其角色与利益。</td></tr>
+  <tr><td>9.3.6 业务环境</td><td>描述市场、竞争、法规、技术和社会环境。</td></tr>
+  <tr><td>9.3.7 使命/目标/目的</td><td>陈述可度量的业务目标与关键成功指标。</td></tr>
+  <tr><td>9.3.8 业务模型</td><td>描述价值主张、收入模型、成本结构等。</td></tr>
+  <tr><td>9.3.9 信息环境</td><td>描述当前及期望的信息系统环境。</td></tr>
+  <tr><td>9.3.10 业务过程</td><td>描述关键业务流程及其交互。</td></tr>
+  <tr><td>9.3.11 运行政策与规则</td><td>描述业务运行必须遵循的内部与外部政策。</td></tr>
+  <tr><td>9.3.12 运行约束</td><td>描述预算、进度、技术、法规等约束。</td></tr>
+  <tr><td>9.3.13 运行模式</td><td>描述业务运行的不同模式（正常、紧急、维护）。</td></tr>
+  <tr><td>9.3.14 运行质量</td><td>描述服务水平、性能期望和质量目标。</td></tr>
+  <tr><td>9.3.15 业务结构</td><td>描述组织结构与责任分配。</td></tr>
+  <tr><td>9.3.16 高层运行概念</td><td>高层次描述未来业务或系统将如何运行。</td></tr>
+  <tr><td>9.3.17 高层运行场景</td><td>以叙事方式描述典型的业务运行场景。</td></tr>
+  <tr><td>9.3.18 其他高阶层生命周期概念</td><td>获取、部署、支持、处置等概念。</td></tr>
+  <tr><td>9.3.19 项目约束</td><td>预算、进度、资源、合同等约束。</td></tr>
+</table>
+
+<h3>9.4 相关方需求规格说明（StRS）内容</h3>
+<p>StRS 从用户与其他相关方视角描述"系统应当做什么"。其内容结构与 BRS 类似，但视角从业务问题转向用户任务与系统功能。重点包括：</p>
+<ul>
+  <li><strong>用户需求：</strong>用户希望通过系统实现的具体目标；</li>
+  <li><strong>运行概念：</strong>详细描述各运行模式、场景、用户交互；</li>
+  <li><strong>运行约束：</strong>环境、进度、资源、法规等外部限制；</li>
+  <li><strong>系统过程与政策：</strong>系统应遵循的运行流程和规则；</li>
+  <li><strong>详细概念：</strong>涉及培训、维护、安全、保障等方面。</li>
+</ul>
+
+<h3>9.5 系统需求规格说明（SyRS）内容</h3>
+<p>SyRS 将相关方需求翻译为系统级技术需求。以下是主要内容领域：</p>
+
+<table>
+  <tr><th>领域</th><th>说明</th></tr>
+  <tr><td>9.5.4 系统上下文/功能/用户特征</td><td>描述系统与外部环境的关系、主要功能和目标用户群。</td></tr>
+  <tr><td>9.5.5 功能需求</td><td>系统必须执行的功能列表，每条功能需求唯一标识并可测试。</td></tr>
+  <tr><td>9.5.6 可用性需求</td><td>易学性、易操作性、用户错误防护、用户满意度等指标。</td></tr>
+  <tr><td>9.5.7 性能需求</td><td>响应时间、吞吐量、容量、精度、实时性等量化指标。</td></tr>
+  <tr><td>9.5.8 接口需求</td><td>系统与外部系统及内部元素之间的交互要求。</td></tr>
+  <tr><td>9.5.9 系统运行与人因/可维护性/可靠性</td><td>正常/异常运行、人机交互、可靠性度量等。</td></tr>
+  <tr><td>9.5.10 系统模式与状态</td><td>系统运行模式与状态变迁。</td></tr>
+  <tr><td>9.5.11 物理特征与适应性</td><td>尺寸、重量、功耗、可扩展性、适应性等。</td></tr>
+  <tr><td>9.5.12 环境条件</td><td>温度、湿度、振动、电磁兼容等运行环境要求。</td></tr>
+  <tr><td>9.5.13 安全需求</td><td>信息安全、物理安全、数据保护等。</td></tr>
+  <tr><td>9.5.14 信息管理需求</td><td>数据存储、备份、恢复、归档等。</td></tr>
+  <tr><td>9.5.15 政策法规需求</td><td>适用法律法规和标准。</td></tr>
+  <tr><td>9.5.16 生命周期维持需求</td><td>可维护性、可移植性、可扩展性、升级路径。</td></tr>
+  <tr><td>9.5.17 包装/搬运/运输</td><td>相关物理与物流需求。</td></tr>
+  <tr><td>9.5.18 验证</td><td>对每条需求的验证方法说明或引用。</td></tr>
+  <tr><td>9.5.19 假设与依赖</td><td>记录需求背后的假设与外部依赖。</td></tr>
+</table>
+
+<h3>9.6 软件需求规格说明（SRS）内容</h3>
+<p>SRS 详细描述软件产品必须满足的需求。它是 SyRS 在软件领域的细化。以下为主要内容领域：</p>
+
+<table>
+  <tr><th>领域</th><th>说明</th></tr>
+  <tr><td>9.6.4 产品视角与接口</td><td>软件在更大系统中的定位；系统、用户、硬件、软件、通信接口。</td></tr>
+  <tr><td>9.6.5 产品功能</td><td>软件主要功能摘要。</td></tr>
+  <tr><td>9.6.6 用户特征</td><td>预期用户的知识、技能、经验。</td></tr>
+  <tr><td>9.6.7 限制</td><td>设计约束、硬件限制、与其他应用的关系。</td></tr>
+  <tr><td>9.6.8 假设与依赖</td><td>影响需求的假设与外部依赖。</td></tr>
+  <tr><td>9.6.9 需求分配</td><td>需求到软件组件的分配。</td></tr>
+  <tr><td>9.6.10 指定需求（外部接口、功能、可用性、性能、逻辑数据库、设计约束、软件系统属性）</td><td>具体详细的软件需求，每条唯一标识、可测试。</td></tr>
+  <tr><td>9.6.11 验证</td><td>软件需求的验证方法。</td></tr>
+  <tr><td>9.6.20 支持信息</td><td>联系方式、文档索引等。</td></tr>
+</table>
+
+<hr>
+
+<h2>附录：需求工程的可追溯性矩阵（RTM）</h2>
+
+<p>需求可追溯性矩阵（Requirements Traceability Matrix, RTM）用于记录需求从业务问题到实现与验证的完整路径。典型的 RTM 包含：</p>
+
+<table>
+  <tr><th>列</th><th>说明</th></tr>
+  <tr><td>需求 ID</td><td>需求的唯一标识符</td></tr>
+  <tr><td>来源</td><td>来源文档/会议/访谈记录</td></tr>
+  <tr><td>父需求</td><td>该需求所派生自的上级需求</td></tr>
+  <tr><td>子需求</td><td>由该需求派生出的下级需求</td></tr>
+  <tr><td>设计元素</td><td>实现该需求的架构/设计组件</td></tr>
+  <tr><td>代码模块</td><td>实现该需求的软件模块或硬件</td></tr>
+  <tr><td>测试用例</td><td>验证该需求的测试用例 ID</td></tr>
+  <tr><td>验证结果</td><td>测试结果（通过/失败/未测试）</td></tr>
+  <tr><td>状态</td><td>建议的/批准的/已实现的/已验证的</td></tr>
+  <tr><td>优先级</td><td>关键/必需/期望/可选</td></tr>
+  <tr><td>版本</td><td>需求版本号与变更历史</td></tr>
+</table>
+
+<hr>
+
+<h2>总结与关键要点</h2>
+
+<div class="terminology">
+  <p><strong>一句话原则：</strong><span class="chinese-note">"需求工程不是一次性写一份文档，而是一个持续发现、分析、记录、验证、沟通与管理的过程。"</span></p>
+  <p><strong>需求的五层结构：</strong></p>
+  <ol>
+    <li>业务需求（BRS）— "为什么做这件事"</li>
+    <li>相关方需求（StRS）— "用户希望系统做什么"</li>
+    <li>系统需求（SyRS）— "系统应如何实现这些期望"</li>
+    <li>软件需求（SRS）— "软件应如何实现这些系统需求"</li>
+    <li>详细设计 — "代码/组件如何实现每条需求"</li>
+  </ol>
+  <p><strong>良好需求的九大特征：</strong>必要、适当、可实现、无二义、完整、单一、可行、原子、可验证。</p>
+  <p><strong>良好需求集合的七大特征：</strong>完整、一致、无二义、可追踪、分级（优先级）、可验证、可修改。</p>
+  <p><strong>两大过程工具：</strong>迭代（同一层级反复精化）+ 递归（层层向下分解）。</p>
+  <p><strong>一条生命线：</strong>双向可追溯性矩阵（RTM）— 它是证明"你做对了事情，并且把事情做对了"的唯一证据链。</p>
+</div>
+
+<hr>
+
+<p class="meta">翻译结束 · 原文：ISO/IEC/IEEE 29148:2018 Systems and software engineering — Life cycle processes — Requirements engineering · 本翻译版保留章节结构与编号，简化为中文工程实践语境，便于学习与应用。</p>
+
+</body>
+</html>

@@ -181,7 +181,7 @@ def run(args):
            _openspec_tmpl("tasks"))
     _write(os.path.join(tmpl, "contract.md"),
            _openspec_tmpl("contract"))
-    _write(os.path.join(tmpl, ".openspec.yaml"),
+    _write(os.path.join(tmpl, "mase-state.yaml"),
            OPENSPEC_YAML.format(
                capabilities="\n".join(f"  - {c}" for c in capabilities)))
 
@@ -198,7 +198,7 @@ def run(args):
     print(f"  ✓ 项目 '{name}' 初始化完成")
     print(f"  ✓ Capabilities: {', '.join(capabilities)}")
     print(f"  ✓ 包名: {package}")
-    print(f"  ✓ project-rules.md 已部署到项目根目录")
+    print(f"  ✓ project-rules.md 已部署到 7 款 AI 工具规则目录")
     print()
     print(f"  下一步:")
     print(f"    cd {name}")
@@ -230,20 +230,84 @@ def _ensure_dirs(base, subs):
 
 
 def _deploy_project_rules(project_dir):
-    """Deploy project-rules.md from framework home to project root."""
+    """Deploy project-rules.md from framework home to project root and IDE rules dirs."""
     src = os.path.join(FRAMEWORK_HOME, "project-rules.md")
-    dst = os.path.join(project_dir, "project-rules.md")
 
-    if os.path.exists(src):
-        header = PROJECT_RULES_HEADER.format(
-            updated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"))
-        with open(src, "r") as f:
-            source_content = f.read()
-        _write(dst, header + "\n" + source_content)
-        print(f"  ✓ project-rules.md → {dst}")
-    else:
+    if not os.path.exists(src):
         print(f"  ⚠ {src} 未找到，跳过 project-rules.md 部署")
         print(f"    请先运行: cd measures-framework-package && ./install.sh")
+        return
+
+    header = PROJECT_RULES_HEADER.format(
+        updated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"))
+    with open(src, "r") as f:
+        content = header + "\n" + f.read()
+
+    # 1. 项目根目录（通用兜底）
+    _write(os.path.join(project_dir, "project-rules.md"), content)
+    print(f"  ✓ project-rules.md → 项目根目录")
+
+    # 2. IDE 特定规则目录（确保 AI IDE 自动加载）
+    _deploy_to_ide_rules(project_dir, content)
+
+
+def _deploy_to_ide_rules(project_dir, content):
+    """Deploy project-rules.md to IDE-specific rules directories.
+
+    Supports 7 popular AI coding tools:
+      - Trae IDE        → .trae/rules/project-rules.md
+      - Cursor IDE      → .cursor/rules/project-rules.mdc
+      - Windsurf IDE    → .windsurf/rules/project-rules.md
+      - Claude Code     → CLAUDE.md (项目根目录)
+      - OpenAI Codex    → AGENTS.md (项目根目录)
+      - Aider           → CONVENTIONS.md (项目根目录)
+      - GitHub Copilot  → .github/copilot-instructions.md
+    """
+
+    # IDE 子目录规则（需要创建子目录）
+    subdir_rules = {
+        ".trae/rules": "project-rules.md",
+        ".cursor/rules": "project-rules.mdc",
+        ".windsurf/rules": "project-rules.md",
+    }
+
+    for rel_dir, filename in subdir_rules.items():
+        rules_dir = os.path.join(project_dir, rel_dir)
+        rules_file = os.path.join(rules_dir, filename)
+        try:
+            os.makedirs(rules_dir, exist_ok=True)
+            with open(rules_file, "w") as f:
+                f.write(content)
+            print(f"  ✓ project-rules.md → {rel_dir}/{filename}")
+        except OSError:
+            pass
+
+    # 项目根目录规则文件（无需子目录）
+    root_files = {
+        "CLAUDE.md": "Claude Code",
+        "AGENTS.md": "OpenAI Codex",
+        "CONVENTIONS.md": "Aider",
+    }
+
+    for filename, tool_name in root_files.items():
+        rules_file = os.path.join(project_dir, filename)
+        try:
+            with open(rules_file, "w") as f:
+                f.write(content)
+            print(f"  ✓ project-rules.md → {filename} ({tool_name})")
+        except OSError:
+            pass
+
+    # GitHub Copilot（需要 .github 子目录）
+    copilot_dir = os.path.join(project_dir, ".github")
+    copilot_file = os.path.join(copilot_dir, "copilot-instructions.md")
+    try:
+        os.makedirs(copilot_dir, exist_ok=True)
+        with open(copilot_file, "w") as f:
+            f.write(content)
+        print(f"  ✓ project-rules.md → .github/copilot-instructions.md (GitHub Copilot)")
+    except OSError:
+        pass
 
 
 def _write_e2e_template(project_dir, tmpl_dir):

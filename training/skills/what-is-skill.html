@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>白话Skill之 什么是 Skills？</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', 'Noto Serif SC', sans-serif; }
+    
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      display: flex;
+      background: #f5f5f7;
+    }
+    
+    .slide {
+      flex: 0 0 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      padding: 5vw 7vw;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Hero Cover */
+    .hero-cover {
+      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      color: white;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .h-hero {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 5vw;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 2vw;
+    }
+    
+    .h-sub {
+      font-size: 1.5vw;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Content Slides */
+    .content-slide {
+      background: white;
+    }
+    
+    .slide-header {
+      margin-bottom: 3vw;
+    }
+    
+    .h-md {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 2.5vw;
+      font-weight: 600;
+      color: #1a202c;
+      line-height: 1.3;
+    }
+    
+    .lead {
+      font-size: 1.3vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 2vw;
+    }
+    
+    .text-block {
+      font-size: 1.2vw;
+      line-height: 1.9;
+      color: #4a5568;
+      margin-bottom: 1.5vw;
+    }
+    
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2vw;
+      margin-top: 3vw;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2vw;
+      border-radius: 8px;
+      text-align: center;
+      color: white;
+    }
+    
+    .stat-number {
+      font-size: 3vw;
+      font-weight: 700;
+      margin-bottom: 0.5vw;
+    }
+    
+    .stat-label {
+      font-size: 0.9vw;
+      opacity: 0.9;
+    }
+    
+    /* Compare */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5vw;
+      margin-top: 3vw;
+    }
+    
+    .compare-card {
+      background: #f7fafc;
+      padding: 2.5vw;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+    
+    .compare-card.traditional { border-color: #e53e3e; }
+    .compare-card.skill { border-color: #48bb78; }
+    
+    .compare-title {
+      font-size: 1.4vw;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 1vw;
+    }
+    
+    .compare-desc {
+      font-size: 1.1vw;
+      line-height: 1.7;
+      color: #4a5568;
+    }
+    
+    /* Steps */
+    .steps-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5vw;
+      margin-top: 2vw;
+    }
+    
+    .step {
+      display: flex;
+      gap: 1.5vw;
+      padding: 1.5vw;
+      background: #f7fafc;
+      border-radius: 8px;
+    }
+    
+    .step-number {
+      width: 3vw;
+      height: 3vw;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2vw;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    
+    .step-content {
+      flex: 1;
+    }
+    
+    .step-title {
+      font-size: 1.3vw;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 0.5vw;
+    }
+    
+    .step-desc {
+      font-size: 1.1vw;
+      color: #4a5568;
+      line-height: 1.6;
+    }
+    
+    /* Quote */
+    .quote-slide {
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+      color: white;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .big-quote {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 2.5vw;
+      font-style: italic;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.9);
+      max-width: 70%;
+      margin: 0 auto;
+    }
+    
+    .quote-author {
+      font-size: 1.1vw;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 2.5vw;
+    }
+    
+    /* List */
+    .list {
+      list-style: none;
+      max-width: 800px;
+    }
+    
+    .list li {
+      font-size: 1.2vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 1.2vw;
+      padding-left: 2vw;
+      position: relative;
+    }
+    
+    .list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-size: 1.2vw;
+    }
+    
+    /* Navigation */
+    #nav {
+      position: fixed;
+      bottom: 3vw;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.8vw;
+      z-index: 100;
+    }
+    
+    .nav-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-dot.active {
+      background: #667eea;
+      transform: scale(1.3);
+    }
+    
+    .foot {
+      position: fixed;
+      bottom: 3vw;
+      right: 7vw;
+      font-size: 0.8vw;
+      color: rgba(0, 0, 0, 0.3);
+      font-family: monospace;
+    }
+    
+    .highlight {
+      color: #667eea;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <!-- 01 Cover -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">白话 Skill</h1>
+      <h2 class="h-sub">第一讲：什么是 Skills？</h2>
+    </section>
+
+    <!-- 02 Introduction -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">什么是 Skills？</h2>
+      </div>
+      <p class="lead">Skills 是一种将 AI 能力封装为可复用模块的方式，让复杂的 AI 操作变得简单易用。</p>
+      <div class="text-block">简单来说，<span class="highlight">Skill 就是给 AI 的一份详细作业说明书</span>。它定义了：</div>
+      <ul class="list">
+        <li>要完成什么任务</li>
+        <li>需要哪些步骤</li>
+        <li>遵循什么规则</li>
+        <li>输出什么格式</li>
+      </ul>
+    </section>
+
+    <!-- 03 Analogy -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">一个生动的比喻</h2>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-card traditional">
+          <div class="compare-title">传统方式</div>
+          <div class="compare-desc">每次都要详细描述："请帮我分析这份报告，提取关键数据，生成图表，然后写成总结..."</div>
+        </div>
+        <div class="compare-card skill">
+          <div class="compare-title">使用 Skill</div>
+          <div class="compare-desc">只需说："分析这份报告"，Skill 会自动完成所有步骤。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 Core Value -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">Skills 的核心价值</h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">效率</div>
+          <div class="stat-label">提升 10 倍</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">复用</div>
+          <div class="stat-label">一次编写，多次使用</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">规范</div>
+          <div class="stat-label">统一的输出格式</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">协作</div>
+          <div class="stat-label">团队知识沉淀</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 Characteristics -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">Skill 的特点</h2>
+      </div>
+      <div class="steps-container">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">结构化</div>
+            <div class="step-desc">清晰的步骤定义，不是零散的指令</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">可复用</div>
+            <div class="step-desc">一次创建，团队共享使用</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">可维护</div>
+            <div class="step-desc">易于修改和扩展</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-title">标准化</div>
+            <div class="step-desc">统一的输入输出格式</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 Quote -->
+    <section class="slide quote-slide">
+      <blockquote class="big-quote">
+        "Skill 让 AI 从 '问答助手' 变成 '高效执行者'"
+      </blockquote>
+      <div class="quote-author">— 白话 Skill 系列</div>
+    </section>
+
+    <!-- 07 Use Cases -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">常见应用场景</h2>
+      </div>
+      <ul class="list">
+        <li><span class="highlight">会议纪要整理：</span>自动提取参会人员、任务、阻塞项</li>
+        <li><span class="highlight">报告生成：</span>从数据自动生成分析报告</li>
+        <li><span class="highlight">代码审查：</span>自动检查代码质量和安全问题</li>
+        <li><span class="highlight">文档处理：</span>格式转换、内容提取、摘要生成</li>
+        <li><span class="highlight">数据可视化：</span>根据数据自动生成图表</li>
+      </ul>
+    </section>
+
+    <!-- 08 Summary -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">核心要点总结</h2>
+      </div>
+      <ul class="list">
+        <li>① Skill 是给 AI 的结构化指令集</li>
+        <li>② 一次配置，多次复用</li>
+        <li>③ 提升效率，降低认知负担</li>
+        <li>④ 促进团队协作和知识沉淀</li>
+      </ul>
+    </section>
+
+    <!-- 09 End -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">谢谢观看</h1>
+      <h2 class="h-sub">白话 Skill 系列 · 第一讲</h2>
+    </section>
+  </div>
+
+  <div id="nav"></div>
+  <div class="foot" id="foot">01/09</div>
+
+  <script>
+    const deck = document.getElementById('deck');
+    const nav = document.getElementById('nav');
+    const foot = document.getElementById('foot');
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      nav.appendChild(dot);
+    });
+
+    function updateNav(current) {
+      document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+      foot.textContent = String(current + 1).padStart(2, '0') + '/' + String(totalSlides).padStart(2, '0');
+    }
+
+    function goToSlide(index) {
+      deck.scrollTo({ left: index * window.innerWidth, behavior: 'smooth' });
+    }
+
+    deck.addEventListener('scroll', () => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      updateNav(current);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      if (e.key === 'ArrowLeft' && current > 0) goToSlide(current - 1);
+      if (e.key === 'ArrowRight' && current < totalSlides - 1) goToSlide(current + 1);
+    });
+  </script>
+</body>
+</html>

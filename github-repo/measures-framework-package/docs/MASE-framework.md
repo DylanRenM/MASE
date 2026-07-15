@@ -4,16 +4,23 @@
 
 ## 1. 概述
 
-将 OpenSpec、Superpower 及现有 Skills 整合为一个统一的开发框架，采用「一拖三」Agent 架构，实现小步快跑、增量开发、并行开发的工程目标。
+将 AI 辅助开发的各阶段整合为一个统一的开发框架，采用「一拖三」Agent 架构，实现小步快跑、增量开发、并行开发的工程目标。
 
 ### 核心原则
 
-1. 设计先行，方向确认再实现
-2. TDD 内外双循环（spec 驱动测试，测试驱动代码）
-3. 系统性解决问题，不做临时补丁
-4. 需求澄清优先，原型确认优先
-5. 根因分析，不盲目修改
-6. 经验沉淀，每次都要学一次
+> 与 [project-rules.md](../project-rules.md) 完全对齐，共 9 条。
+
+| 编号 | 原则 | 简释 |
+|------|------|------|
+| R01 | 需求澄清确认 | 先确认真实需求，使用原型确认，不确认不推进 |
+| R02 | 设计预研，消除风险 | POC 验证所有外部依赖，预研报告通过再架构设计 |
+| R03 | 契约式约束 | Design 阶段产出三层契约（API/模块/函数），硬性必做 API 级 |
+| R04 | TDD 驱动 | 内外双循环 — 先写测试再写代码，E2E 测试同步编写 |
+| R05 | 验证与确认检查 | 关键节点验证，功能确认后再推进 |
+| R06 | 根因分析 | BUG 根因定位，避免盲目修改（inverse 逆向分析） |
+| R07 | 系统化解决 | 不做临时补丁，A/B 双修 + 横向扫描同类风险 |
+| R08 | 固定节奏提交 | 每 20 次对话或每个 Capability 完成时 git commit |
+| R09 | 及时备份 | 删除代码或回退前做备份 |
 
 ---
 
@@ -56,7 +63,8 @@
 | Agent 1 (计划与统管) | 接收需求、任务分解调度、门禁管理、Release | `project-planning-expert`, `git-commit` |
 | Agent 2 (需求) | 需求探索澄清、生成交互原型、编写操作流程、定义测试用例 | `brainstorming`, `frontend-skill` |
 | Agent 3 (开发) | 技术预研+POC、架构设计、契约推导、Specs 编写、TDD 构建 | `test-driven-development`, `webapp-testing` |
-| Agent 4 (质量) | 设计评审、代码评审+合规检查、安全扫描、端到端验证+Bug修复 | `code-quality-controller`, `frontend-design`, `code-review`, `security-review`, `bug-fixer` |
+| Agent 4 (质量) | 设计评审、代码评审+合规检查、安全扫描、端到端验证+Bug修复、复盘分析 | `code-quality-controller`, `frontend-design`, `code-review`, `security-review`, `bug-fixer` |
+| | 可选工具 | `flowchart-review` 🔧 |
 
 ---
 
@@ -75,10 +83,7 @@
 
 **工具**: `brainstorming`（需求澄清）、`frontend-skill`（原型生成）
 
-**门禁** (Agent 1 执行):
-- [ ] 人工确认 Proposal 文档
-- [ ] Checklist 逐项检查（所有 Success Criteria 有对应测试用例、原型覆盖全部操作流程）
-- [ ] 原型走查演示
+**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Proposal DoD
 
 ---
 
@@ -97,7 +102,7 @@
 
 **工具**: `WebSearch`（联网调研）、`RunCommand`（POC 验证）
 
-**门禁**: Checklist + 人工确认 + POC 结果演示
+**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Design L1 DoD
 
 #### Layer 2: 架构设计
 
@@ -112,10 +117,10 @@
 **节奏**: 分层审批（architecture → detailed-design → specs+contract），capability 可并行
 
 **设计评审** (Agent 4 执行):
-- [ ] `code-quality-controller`: 架构合规性（SOLID/GRASP）、需求一致性、技术可行性一致性、文档一致性
+- [ ] `code-quality-controller`: 架构合规性（对照 [设计原则](docs/design-principles.md) — SOLID/GRASP/KISS/DRY/YAGNI/分层原则）、需求一致性、技术可行性一致性、文档一致性
 - [ ] `frontend-design`: 视觉设计原则、交互设计原则、响应式策略、无障碍性、前端性能策略
 
-**门禁**: Checklist + 人工确认 + 设计走查
+**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Design L2 DoD
 
 ---
 
@@ -127,7 +132,7 @@
 1. **复用检查** — 对照 Layer 1 产出的可复用构件清单
 2. **契约翻译 → 测试** — contract.md → TDD RED
 3. **写行为测试** — Spec → TDD RED（pytest 单元测试 + 集成测试）
-4. **写实现代码** — 含运行时断言 require/ensure/invariant_check
+4. **写实现代码** — 含运行时断言 require/ensure/invariant_check，遵循 [编码规范](docs/coding-standards.md)
 5. **跑测试** — 单元测试 + 集成测试 + 契约测试
 6. **E2E 测试** — has_ui: true 时，webapp-testing
 7. **功能测试** — `webapp-testing`（如有 UI）
@@ -137,7 +142,7 @@
 
 **工具**: `test-driven-development`、`webapp-testing`、`code-review`、`security-review`
 
-**Capability 门禁**: 该 Capability 所有 Scenario 测试通过 + 代码评审通过
+**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Build DoD
 
 ---
 
@@ -159,7 +164,9 @@
 
 **工具**: `bug-fixer`（含合并的 TRAE-debugger 运行时调试能力）
 
-**门禁**: 全部 BUG 关闭
+**可选工具**: `flowchart-review` 🔧（逻辑流一致性检查，对照设计文档验证代码实现是否偏离设计）
+
+**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Verify DoD
 
 ---
 
@@ -198,13 +205,13 @@
 
 **产出**: `docs/lessons/YYYY-MM-DD-{project}-retro.md`（复盘报告）
 
-**门禁**: 复盘报告确认 + 改进措施执行完毕
+**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Retro DoD
 
 ---
 
 ### 3.6 阶段6: 发布 (Release) — Agent 1 执行
 
-1. **最终合规审查** — 对照全部 spec + design 全量检查
+1. **最终合规审查** — 对照全部 spec.md + 项目的设计文档（architecture.md + detailed-design.md + contract.md）全量检查
 2. **自动编写使用手册** — `docs/user-guide.md`
 3. **git commit** — `git-commit` Skill, Conventional Commit + 变更摘要
 4. **归档 OpenSpec Change**
@@ -227,11 +234,14 @@
 | `code-review` | | | ✅ | | ✅ |
 | `security-review` | | | ✅ | | |
 | `bug-fixer` | | | | ✅ | |
+| `flowchart-review` 🔧 | | | | 🔧 | |
 | `git-commit` | | | | | ✅ |
+
+> ✅ = 必做（门禁依赖） | 🔧 = 可选（辅助工具，按需调用）
 
 ---
 
-## 5. 需变更的 Skills
+## 5. Skills 变更记录
 
 | Skill | 变更内容 | 状态 |
 |-------|---------|------|
@@ -251,7 +261,7 @@
 openspec/
   changes/
     {change-name}/
-      .openspec.yaml
+      mase-state.yaml
       proposal.md            # Agent 2 产出
       tech-feasibility.md     # Agent 3 Layer 1 产出
       architecture.md         # Agent 3 Layer 2 产出
@@ -332,9 +342,9 @@ README.md
 
 - [x] 无 TBD/TODO 占位符
 - [x] 6 阶段逻辑自洽，阶段间输入输出明确
-- [x] Agent 职责边界清晰，无交叉和遗漏
+- [x] Agent 职责边界清晰（Agent 2 定义测试用例为 E2E 验收场景 → Agent 3 编写具体 E2E 测试脚本）
 - [x] 每个阶段明确了使用的 Skill/Subagent
-- [x] 门禁机制完整（每阶段 Checklist + 人工确认 + 走查）
+- [x] 门禁机制完整（DoD 清单统一定义在 Agent 1，各阶段引用）
 - [x] TDD 内外双循环明确定义（10步微循环）
-- [x] Skills 变更计划已全部执行
-- [x] 文档引用路径已统一为相对路径
+- [x] 核心原则与 project-rules.md 完全对齐（R01-R09）
+- [x] Skills 变更记录全部标注状态

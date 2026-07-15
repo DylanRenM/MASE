@@ -63,6 +63,11 @@ Agent 1 门禁确认 → 进入 L2
 产出 tasks.md（project-planning-expert 编排）
   │
   ▼
+产出 coding-standards.md — 基于通用规范 + 语言特定规范（技术栈确定后）
+  ├── 读取 docs/coding-standards.md（跨语言通用 9 章）
+  └── 追加语言特定规范（Python/TypeScript/... 按技术栈选）
+  │
+  ▼
 Agent 4 设计评审 → Agent 1 门禁确认
 ```
 
@@ -71,7 +76,11 @@ Agent 4 设计评审 → Agent 1 门禁确认
 ```
 逐个 Capability, 逐个 Scenario:
 
-1. 复用检查
+1. 复用检查 — 对照 tech-feasibility.md 中的「可复用构件清单」：
+   a. 该 Scenario 涉及的能力是否已有现成构件？（内置库 / 框架能力 / 已封装组件）
+   b. 若有可用构件：验证 API 是否满足 spec 要求，满足则直接复用以减少新增代码
+   c. 若部分满足：评估是扩展已有构件还是新建，优先扩展
+   d. 若无可用构件：标记为「待新建」，进入 Step 2
 2. 契约翻译 → 测试（contract.md → TDD RED）
 3. 写行为测试（Spec → TDD RED）
 4. 写实现代码（含运行时断言 require/ensure/invariant_check）
@@ -93,6 +102,7 @@ Agent 4 设计评审 → Agent 1 门禁确认
 | spec.md | Design L2 | `openspec/changes/{name}/specs/{capability}/` |
 | contract.md | Design L2 | `openspec/changes/{name}/` |
 | tasks.md | Design L2 | `openspec/changes/{name}/` |
+| coding-standards.md | Design L2 | `openspec/changes/{name}/` |
 | 源代码 + 测试 | Build | `src/` + `tests/` + `e2e/` |
 
 ## 关键原则

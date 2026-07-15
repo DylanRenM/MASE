@@ -49,8 +49,18 @@ def run():
             r.failed += 1
             r.items.append(f"✗ {d}/ 目录缺失")
             status_ok = False
-    # Check project-rules.md
-    if os.path.exists("project-rules.md"):
+    # Check project-rules.md (any IDE location — 7 tools supported)
+    found_rules = (
+        os.path.exists("project-rules.md")
+        or os.path.exists(".trae/rules/project-rules.md")
+        or os.path.exists(".cursor/rules/project-rules.mdc")
+        or os.path.exists(".windsurf/rules/project-rules.md")
+        or os.path.exists("CLAUDE.md")
+        or os.path.exists("AGENTS.md")
+        or os.path.exists("CONVENTIONS.md")
+        or os.path.exists(".github/copilot-instructions.md")
+    )
+    if found_rules:
         r.passed += 1
         r.items.append("✓ project-rules.md (AI IDE 可自动加载)")
     else:
@@ -164,7 +174,7 @@ def run():
     if os.path.isdir("openspec/changes/_template"):
         for f in ["proposal.md", "architecture.md", "detailed-design.md",
                   "tech-feasibility.md", "tasks.md", "contract.md",
-                  ".openspec.yaml"]:
+                  "mase-state.yaml"]:
             fp = os.path.join("openspec", "changes", "_template", f)
             if os.path.exists(fp):
                 r.passed += 1
@@ -181,9 +191,9 @@ def run():
             r.items.append("✗ specs/_capability_/ 缺失")
             status_ok = False
 
-        # ── Content check: .openspec.yaml ──
+        # ── Content check: mase-state.yaml ──
         openspec_path = os.path.join("openspec", "changes", "_template",
-                                      ".openspec.yaml")
+                                      "mase-state.yaml")
         content_results = _check_openspec_content(openspec_path)
         for item in content_results:
             if item.startswith("✓"):
@@ -239,19 +249,19 @@ def run():
 
 
 def _check_openspec_content(path: str) -> List[str]:
-    """Check .openspec.yaml content for MASE compliance."""
+    """Check mase-state.yaml content for MASE compliance."""
     items = []
     if not os.path.exists(path):
-        return ["✗ .openspec.yaml 不存在"]
+        return ["✗ mase-state.yaml 不存在"]
 
     try:
         with open(path, "r") as f:
             data = yaml.safe_load(f)
     except Exception:
-        return ["✗ .openspec.yaml 格式无效"]
+        return ["✗ mase-state.yaml 格式无效"]
 
     if data is None:
-        return ["✗ .openspec.yaml 为空"]
+        return ["✗ mase-state.yaml 为空"]
 
     # Check schema
     if "schema" in data:
@@ -290,9 +300,9 @@ def _check_openspec_content(path: str) -> List[str]:
 
 
 def _read_phase() -> Optional[dict]:
-    """Read current phase from .openspec.yaml."""
+    """Read current phase from mase-state.yaml."""
     openspec_path = os.path.join("openspec", "changes", "_template",
-                                  ".openspec.yaml")
+                                  "mase-state.yaml")
     if not os.path.exists(openspec_path):
         return None
 

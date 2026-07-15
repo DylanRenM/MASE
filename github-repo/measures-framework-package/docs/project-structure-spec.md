@@ -79,7 +79,7 @@ project-root/
 ├── openspec/                     # ④ 规范文档（只读，由 Agent 产出）
 │   └── changes/
 │       └── {change-name}/
-│           ├── .openspec.yaml
+│           ├── mase-state.yaml
 │           ├── proposal.md
 │           ├── tech-feasibility.md
 │           ├── architecture.md

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>白话Skill之 什么是 Skills？</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', 'Noto Serif SC', sans-serif; }
+    
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      display: flex;
+      background: #f5f5f7;
+    }
+    
+    .slide {
+      flex: 0 0 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      padding: 5vw 7vw;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Hero Cover */
+    .hero-cover {
+      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      color: white;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .h-hero {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 5vw;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 2vw;
+    }
+    
+    .h-sub {
+      font-size: 1.5vw;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Content Slides */
+    .content-slide {
+      background: white;
+    }
+    
+    .slide-header {
+      margin-bottom: 3vw;
+    }
+    
+    .h-md {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 2.5vw;
+      font-weight: 600;
+      color: #1a202c;
+      line-height: 1.3;
+    }
+    
+    .lead {
+      font-size: 1.3vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 2vw;
+    }
+    
+    /* Code Block */
+    .code-block { 
+      background: #2c2416; 
+      padding: 2vw; 
+      border-radius: 8px; 
+      font-family: monospace; 
+      font-size: 0.95vw; 
+      color: #e8e4dc; 
+      overflow-x: auto;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    
+    /* Compare */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5vw;
+      margin-top: 2vw;
+    }
+    
+    .compare-card {
+      background: #f7fafc;
+      padding: 2vw;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+    
+    .compare-card.traditional { border-color: #e53e3e; }
+    .compare-card.skill { border-color: #48bb78; }
+    
+    .compare-title {
+      font-size: 1.2vw;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 0.8vw;
+    }
+    
+    .compare-desc {
+      font-size: 1vw;
+      line-height: 1.6;
+      color: #4a5568;
+    }
+    
+    /* List */
+    .list {
+      list-style: none;
+      max-width: 900px;
+      margin-top: 1.5vw;
+    }
+    
+    .list li {
+      font-size: 1.1vw;
+      line-height: 1.7;
+      color: #4a5568;
+      margin-bottom: 1vw;
+      padding-left: 1.8vw;
+      position: relative;
+    }
+    
+    .list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-size: 1.1vw;
+    }
+    
+    /* Four Parts */
+    .four-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5vw;
+      margin-top: 2vw;
+    }
+    
+    .part-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 1.8vw;
+      border-radius: 8px;
+      color: white;
+    }
+    
+    .part-title {
+      font-size: 1.2vw;
+      font-weight: 600;
+      margin-bottom: 0.5vw;
+    }
+    
+    .part-desc {
+      font-size: 0.95vw;
+      opacity: 0.9;
+    }
+    
+    /* Navigation */
+    #nav {
+      position: fixed;
+      bottom: 3vw;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.6vw;
+      z-index: 100;
+    }
+    
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-dot.active {
+      background: #667eea;
+      transform: scale(1.4);
+    }
+    
+    .foot {
+      position: fixed;
+      bottom: 3vw;
+      right: 7vw;
+      font-size: 0.8vw;
+      color: rgba(0, 0, 0, 0.3);
+      font-family: monospace;
+    }
+    
+    .highlight {
+      color: #667eea;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <!-- 01 Cover -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">白话 Skill</h1>
+      <h2 class="h-sub">第一讲：什么是 Skills？</h2>
+    </section>
+
+    <!-- 02 Definition -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">什么是 Skills？</h2>
+      </div>
+      <p class="lead"><span class="highlight">Skills 是一套指令集</span>，用以指挥 Agent 与 LLM 达成特定的目的。</p>
+      <ul class="list">
+        <li>不是零散的指令，而是一套完整的操作流程</li>
+        <li>下达对象是执行者，不仅仅是思考者</li>
+        <li>为解决某一类具体问题而设计</li>
+      </ul>
+    </section>
+
+    <!-- 03 Real Scenario -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">从一个真实场景谈起</h2>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-card traditional">
+          <div class="compare-title">Before：每天 200 字的详细指令</div>
+          <div class="compare-desc">"扮演会议纪要专家，提取参会人员、昨日完成、今日计划、阻塞项，用 Markdown 格式输出..."</div>
+        </div>
+        <div class="compare-card skill">
+          <div class="compare-title">After：只需一句话</div>
+          <div class="compare-desc">"整理站会纪要。"<br><br>AI 自动完成所有步骤，保存文件。</div>
+        </div>
+      </div>
+      <p class="lead" style="margin-top: 2vw;">发生了什么变化？不是 AI 变聪明了，而是你给了它一份<span class="highlight">"作业说明书"</span>。</p>
+    </section>
+
+    <!-- 04 Analogy -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">一个类比</h2>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-card traditional">
+          <div class="compare-title">Prompt = 给实习生的口头指导</div>
+          <div class="compare-desc">每天重复，实习生每次按当天理解执行，结果可能偏差。离职后新来的又要从头教起。</div>
+        </div>
+        <div class="compare-card skill">
+          <div class="compare-title">Skill = 给员工的 SOP</div>
+          <div class="compare-desc">入职时学习 SOP，以后每天只需说："做一下站会纪要。"员工学会了流程，换人了 SOP 还在。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 What It Looks Like -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">Skill 长什么样？</h2>
+      </div>
+      <p class="lead">一个 Skill 通常是结构化的文件（如 YAML 格式）：</p>
+      <div class="code-block">id: daily-standup-summarizer
+name: 每日站会纪要整理
+version: 1.0.0
+
+inputs:
+  - name: transcript
+    type: string
+    required: true
+
+workflow:
+  - id: extract_attendees
+    actor: llm
+    prompt: "提取所有参会人员"
+  - id: extract_yesterday
+    actor: llm
+    prompt: "提取每个人的昨日完成"
+
+constraints:
+  forbid:
+    - send_email
+    - delete_files</div>
+    </section>
+
+    <!-- 06 Four Parts -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">Skill 的四个核心部分</h2>
+      </div>
+      <div class="four-grid">
+        <div class="part-card">
+          <div class="part-title">Inputs（输入）</div>
+          <div class="part-desc">定义用户需要提供什么</div>
+        </div>
+        <div class="part-card">
+          <div class="part-title">Workflow（工作流）</div>
+          <div class="part-desc">定义核心执行步骤</div>
+        </div>
+        <div class="part-card">
+          <div class="part-title">Constraints（约束）</div>
+          <div class="part-desc">明确不能做什么</div>
+        </div>
+        <div class="part-card">
+          <div class="part-title">Output（输出）</div>
+          <div class="part-desc">定义标准化的输出格式</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 Next Steps -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">接下来</h2>
+      </div>
+      <ul class="list">
+        <li><span class="highlight">什么时候该写 Skill？</span> → 用 RISD 框架判断</li>
+        <li><span class="highlight">具体怎么写？</span> → 用 PROCESS 七步法</li>
+        <li><span class="highlight">怎么写出好 Skill？</span> → 遵循成功原则</li>
+      </ul>
+      <p class="lead" style="margin-top: 3vw; text-align: center; color: #667eea; font-size: 1.4vw;">这些会在系列后续文章中逐一展开</p>
+    </section>
+
+    <!-- 08 End -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">谢谢观看</h1>
+      <h2 class="h-sub">白话 Skill 系列 · 第一讲</h2>
+    </section>
+  </div>
+
+  <div id="nav"></div>
+  <div class="foot" id="foot">01/08</div>
+
+  <script>
+    const deck = document.getElementById('deck');
+    const nav = document.getElementById('nav');
+    const foot = document.getElementById('foot');
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      nav.appendChild(dot);
+    });
+
+    function updateNav(current) {
+      document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+      foot.textContent = String(current + 1).padStart(2, '0') + '/' + String(totalSlides).padStart(2, '0');
+    }
+
+    function goToSlide(index) {
+      deck.scrollTo({ left: index * window.innerWidth, behavior: 'smooth' });
+    }
+
+    deck.addEventListener('scroll', () => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      updateNav(current);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      if (e.key === 'ArrowLeft' && current > 0) goToSlide(current - 1);
+      if (e.key === 'ArrowRight' && current < totalSlides - 1) goToSlide(current + 1);
+    });
+  </script>
+</body>
+</html>

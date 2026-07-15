@@ -129,7 +129,7 @@ mase --help                                # 完整帮助
 
 ## 相关文档
 
-- [框架设计文档](docs/design.md)
+- [框架设计文档](docs/MASE-framework.md)
 - [使用手册](docs/user-guide.md)
 - [项目目录结构规范](docs/project-structure-spec.md)
 - [培训讲义（浏览器打开）](training/measures-training.html)

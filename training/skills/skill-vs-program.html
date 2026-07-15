@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>白话Skill之3 Skill vs 程序</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', 'Noto Serif SC', sans-serif; }
+    
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      display: flex;
+      background: #f5f5f7;
+    }
+    
+    .slide {
+      flex: 0 0 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      padding: 5vw 7vw;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Hero Cover */
+    .hero-cover {
+      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      color: white;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .h-hero {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 4.5vw;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 2vw;
+    }
+    
+    .h-sub {
+      font-size: 1.4vw;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Content Slides */
+    .content-slide {
+      background: white;
+    }
+    
+    .slide-header {
+      margin-bottom: 3vw;
+    }
+    
+    .h-md {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 2.5vw;
+      font-weight: 600;
+      color: #1a202c;
+      line-height: 1.3;
+    }
+    
+    .lead {
+      font-size: 1.3vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 2vw;
+    }
+    
+    /* Compare */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5vw;
+      margin-top: 2vw;
+    }
+    
+    .compare-card {
+      background: #f7fafc;
+      padding: 2vw;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+    
+    .compare-card.program { border-color: #e53e3e; }
+    .compare-card.skill { border-color: #48bb78; }
+    
+    .compare-title {
+      font-size: 1.3vw;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 1vw;
+    }
+    
+    .compare-desc {
+      font-size: 1.1vw;
+      line-height: 1.7;
+      color: #4a5568;
+    }
+    
+    /* Code Block */
+    .code-block { 
+      background: #2c2416; 
+      padding: 1.8vw; 
+      border-radius: 8px; 
+      font-family: monospace; 
+      font-size: 0.9vw; 
+      color: #e8e4dc; 
+      overflow-x: auto;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    
+    /* List */
+    .list {
+      list-style: none;
+      max-width: 900px;
+      margin-top: 1.5vw;
+    }
+    
+    .list li {
+      font-size: 1.15vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 1.2vw;
+      padding-left: 2vw;
+      position: relative;
+    }
+    
+    .list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-size: 1.2vw;
+    }
+    
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2vw;
+      font-size: 1vw;
+    }
+    
+    .data-table th, .data-table td {
+      padding: 1.2vw 1.5vw;
+      text-align: left;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .data-table th {
+      background: #f7fafc;
+      font-weight: 600;
+      color: #667eea;
+    }
+    
+    .data-table td {
+      color: #4a5568;
+    }
+    
+    /* Two Column List */
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2vw;
+      margin-top: 2vw;
+    }
+    
+    .col-list {
+      list-style: none;
+    }
+    
+    .col-list li {
+      font-size: 1.1vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 1vw;
+      padding-left: 1.5vw;
+      position: relative;
+    }
+    
+    .col-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #48bb78;
+      font-size: 1vw;
+    }
+    
+    .col-list.bad li::before {
+      color: #e53e3e;
+    }
+    
+    /* Navigation */
+    #nav {
+      position: fixed;
+      bottom: 3vw;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.6vw;
+      z-index: 100;
+    }
+    
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-dot.active {
+      background: #667eea;
+      transform: scale(1.4);
+    }
+    
+    .foot {
+      position: fixed;
+      bottom: 3vw;
+      right: 7vw;
+      font-size: 0.8vw;
+      color: rgba(0, 0, 0, 0.3);
+      font-family: monospace;
+    }
+    
+    .highlight {
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    .red-highlight {
+      color: #e53e3e;
+      font-weight: 600;
+    }
+    
+    .green-highlight {
+      color: #48bb78;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <!-- 01 Cover -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">白话 Skill</h1>
+      <h2 class="h-sub">第三讲：Skill vs 程序 —— 一场关于"智能"与"服从"的对话</h2>
+    </section>
+
+    <!-- 02 Definition -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">一句话说清区别</h2>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-card program">
+          <div class="compare-title">程序 = 告诉机器怎么做</div>
+          <div class="compare-desc">你把每一步都写清楚，它机械执行。做对了，是你写得好；做错了，是你写错了。<br><br><span style="color: #e53e3e;">命令式的，强调精确</span></div>
+        </div>
+        <div class="compare-card skill">
+          <div class="compare-title">Skill = 告诉AI要什么</div>
+          <div class="compare-desc">你描述目标，AI自己想办法。它会做你没说但合理的事，也会做你没禁止但不一定对的事。<br><br><span style="color: #48bb78;">声明式的，强调意图</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 Code Example -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">具体对比：从"整理纪要"看本质</h2>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-card program">
+          <div class="compare-title">用程序实现（伪代码）</div>
+          <div class="code-block">def extract_tasks(transcript):
+    lines = transcript.split('\n')
+    tasks = {}
+    for line in lines:
+        if '张三' in line and '昨日' in line:
+            tasks['张三'] = line.split('昨日')[1]
+    return tasks</div>
+        </div>
+        <div class="compare-card skill">
+          <div class="compare-title">用Skill实现（YAML）</div>
+          <div class="code-block">id: daily-standup-summarizer
+workflow:
+  - actor: llm
+    prompt: "从会议记录中提取每个人的昨日完成、今日计划和阻塞项"</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 Ability Boundary -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">能力边界的差异</h2>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-card program">
+          <div class="compare-title">程序的边界</div>
+          <div class="compare-desc">你写了什么，它就能做什么。你写的代码就是它的全部世界。<br><br>特点：<br>• 需要硬编码人名<br>• 假设固定句子结构<br>• 无法处理变体表达<br>• 不会主动做任何你没写的事</div>
+        </div>
+        <div class="compare-card skill">
+          <div class="compare-title">Skill的边界</div>
+          <div class="compare-desc">你描述了目标，AI会用它的世界知识去理解、补全、执行。它的能力远超出你写的这几行字。<br><br>特点：<br>• 自动识别人名<br>• 理解各种表达方式<br>• 自动补全多步任务<br>• 主动询问缺失信息</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 Good vs Bad -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">"会做你没说的事"是好是坏？</h2>
+      </div>
+      <div class="two-column">
+        <div>
+          <h3 style="font-size: 1.3vw; color: #48bb78; margin-bottom: 1vw;">✨ 好的方面：智能补全</h3>
+          <ul class="col-list">
+            <li>识别说话人</li>
+            <li>区分昨日/今日</li>
+            <li>提取阻塞项</li>
+            <li>格式化输出</li>
+            <li>保存文件</li>
+          </ul>
+          <p style="font-size: 1vw; color: #4a5568; margin-top: 1.5vw;">你少写了50行代码，它多做了5件合理的事。</p>
+        </div>
+        <div>
+          <h3 style="font-size: 1.3vw; color: #e53e3e; margin-bottom: 1vw;">⚠️ 坏的方面：过度执行</h3>
+          <ul class="col-list bad">
+            <li>自动发邮件给全组</li>
+            <li>自动创建Jira任务</li>
+            <li>自动删除原始文件</li>
+            <li>自动@相关人</li>
+          </ul>
+          <p style="font-size: 1vw; color: #4a5568; margin-top: 1.5vw;">从AI角度看合理，但可能完全不是你想要的。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 Constraints -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">如何驯服Skill：显式禁止清单</h2>
+      </div>
+      <div class="code-block" style="text-align: left;">constraints:
+  forbid: ["send_email", "create_jira_ticket", "delete_files"]
+  require_approval: ["share_external", "modify_original"]</div>
+      <p class="lead">这是与编程完全相反的思维模式：</p>
+      <ul class="list">
+        <li><span class="red-highlight">编程：</span>默认不做任何事，你写什么它就做什么</li>
+        <li><span class="green-highlight">Skill：</span>默认能做很多事，你需要明确禁止不想要的</li>
+      </ul>
+    </section>
+
+    <!-- 07 Collaboration -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">最佳关系：不是替代，是协作</h2>
+      </div>
+      <div class="code-block">workflow:
+  # Skill层面：理解用户意图
+  - actor: llm
+    prompt: "理解用户想算什么统计"
+  
+  # 程序层面：精确计算
+  - actor: agent
+    type: execute_program
+    cmd: "python stats.py --data {{ file }}"
+  
+  # Skill层面：解释结果
+  - actor: llm
+    prompt: "用通俗语言解释计算结果"</div>
+    </section>
+
+    <!-- 08 Analogy -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">一个发人深省的类比</h2>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-card program">
+          <div class="compare-title">程序 = 算盘</div>
+          <div class="compare-desc">你知道每一颗珠子怎么拨，结果100%可预测。你不会怪算盘自作主张，它也不会。</div>
+        </div>
+        <div class="compare-card skill">
+          <div class="compare-title">Skill = 实习生</div>
+          <div class="compare-desc">你告诉他"整理一下这份文件"，他会自己判断什么是重要的、什么格式更好、要不要抄送给谁。可能做超出预期的好事，也可能做你没预料到的蠢事。</div>
+        </div>
+      </div>
+      <p class="lead" style="text-align: center; margin-top: 3vw;">这个转变，是从"<span class="red-highlight">程序员</span>"到"<span class="green-highlight">AI编排师</span>"的转变。</p>
+    </section>
+
+    <!-- 09 End -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">谢谢观看</h1>
+      <h2 class="h-sub">白话 Skill 系列 · 第三讲</h2>
+    </section>
+  </div>
+
+  <div id="nav"></div>
+  <div class="foot" id="foot">01/09</div>
+
+  <script>
+    const deck = document.getElementById('deck');
+    const nav = document.getElementById('nav');
+    const foot = document.getElementById('foot');
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      nav.appendChild(dot);
+    });
+
+    function updateNav(current) {
+      document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+      foot.textContent = String(current + 1).padStart(2, '0') + '/' + String(totalSlides).padStart(2, '0');
+    }
+
+    function goToSlide(index) {
+      deck.scrollTo({ left: index * window.innerWidth, behavior: 'smooth' });
+    }
+
+    deck.addEventListener('scroll', () => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      updateNav(current);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      if (e.key === 'ArrowLeft' && current > 0) goToSlide(current - 1);
+      if (e.key === 'ArrowRight' && current < totalSlides - 1) goToSlide(current + 1);
+    });
+  </script>
+</body>
+</html>

@@ -74,7 +74,7 @@ project-root/
 │   │   └── pitfalls/           # 踩坑记录
 │   └── superpowers/specs/
 ├── openspec/changes/{name}/
-│   ├── .openspec.yaml
+│   ├── mase-state.yaml
 │   ├── proposal.md
 │   ├── tech-feasibility.md
 │   ├── architecture.md

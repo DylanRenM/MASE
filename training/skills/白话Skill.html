@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>白话Skill：从零到一掌握AI技能开发</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;0,8..60,900;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Winson_PPT_SKILL — 麦哲思PPT模版2025 适配
+   主题色: 香槟金 #CEB966
+   字体: Helvetica / Arial
+   圆角是妥协，直线是立场
+   ============================================================ */
+
+:root {
+  /* ── 铁幕色彩系统 ── */
+  --level-1:#1a202c;
+  --level-1-rgb:26,32,44;
+  --level-2:#4a5568;
+  --level-2-rgb:74,85,104;
+  --level-3:#a0aec0;
+  --level-3-rgb:160,174,192;
+  --bg-white:#ffffff;
+  --bg-white-rgb:255,255,255;
+  --bg-light:#f5f3ef;
+  --bg-light-rgb:245,243,239;
+  --border:#d4cfc7;
+  --border-rgb:212,207,199;
+  --border-dark:#8a8078;
+  --border-dark-rgb:138,128,120;
+
+  /* ── 麦哲思深蓝 — 主题色（高可读性） ── */
+  --theme:#002060;
+  --theme-rgb:0,32,96;
+  --theme-light:#e6ecf5;
+  --theme-light-rgb:230,236,245;
+  --theme-mid:#1a3a6a;
+  --theme-mid-rgb:26,58,106;
+  /* ── 麦哲思金 — 点缀色 ── */
+  --gold:#CEB966;
+  --gold-rgb:206,185,102;
+  --gold-light:#f7f2e0;
+  --gold-light-rgb:247,242,224;
+
+  /* ── 强调色 — 只用于标注 ── */
+  --accent-positive:#059669;
+  --accent-positive-rgb:5,150,105;
+  --accent-negative:#dc2626;
+  --accent-negative-rgb:220,38,38;
+  --accent-warning:#d97706;
+  --accent-warning-rgb:217,119,6;
+  --accent-highlight:#6585CF;
+  --accent-highlight-rgb:101,133,207;
+
+  /* ── 铁幕阴影 — 实色偏移，不模糊 ── */
+  --shadow-sm:2px 2px 0px #c4b898;
+  --shadow-md:4px 4px 0px #c4b898;
+
+  /* ── 麦哲思字体系统 — Helvetica/Arial 主导 ── */
+  --serif-en:'Helvetica','Playfair Display','Source Serif 4',Georgia,serif;
+  --serif-zh:'Helvetica','Noto Serif SC','KaiTi','STKaiti',serif;
+  --sans-zh:'Arial','Noto Sans SC',sans-serif;
+  --mono:'JetBrains Mono','IBM Plex Mono',Consolas,monospace;
+
+  /* ── 裁决式宽字距 ── */
+  --ls-hero:0.12em;
+  --ls-heading:0.08em;
+  --ls-body:0.04em;
+  --ls-mono:0.06em;
+
+  --slide-w:100vw;
+  --slide-h:100vh;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+html{font-size:16px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+body{
+  font-family:var(--serif-zh),var(--sans-zh),sans-serif;
+  background:var(--bg-light);
+  overflow:hidden;
+  color:var(--level-1);
+  letter-spacing:var(--ls-body);
+}
+
+#deck{
+  position:relative;
+  width:var(--slide-w);
+  height:var(--slide-h);
+}
+
+.slide{
+  position:absolute;
+  inset:0;
+  width:var(--slide-w);
+  height:var(--slide-h);
+  overflow:hidden;
+  display:none;
+  flex-direction:column;
+  padding:0;
+}
+
+.slide.active{display:flex}
+
+.slide.light{
+  background:var(--bg-white);
+  color:var(--level-1);
+}
+
+.slide.dark{
+  background:var(--level-1);
+  color:var(--bg-white);
+}
+
+/* ── Chrome & Foot — 页眉页脚 ── */
+.chrome{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1.5vw;
+  padding:2vh 3vw;
+  font-family:var(--mono);
+  font-size:max(11px,.75vw);
+  letter-spacing:var(--ls-mono);
+  text-transform:uppercase;
+  opacity:.5;
+  flex-shrink:0;
+}
+
+.chrome .chrome-logo{
+  height:4vh;
+  width:auto;
+  opacity:.85;
+  flex-shrink:0;
+}
+
+.chrome .chrome-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex:1;
+}
+
+.slide.dark .chrome{opacity:.4}
+.slide.dark .chrome .chrome-logo{opacity:.7;filter:invert(1) brightness(2)}
+
+.foot{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:1.5vh 3vw;
+  font-family:var(--mono);
+  font-size:max(10px,.7vw);
+  letter-spacing:var(--ls-mono);
+  opacity:.4;
+  flex-shrink:0;
+}
+
+/* ── Frame — 主内容容器 ── */
+.frame{
+  flex:1;
+  padding:0 3vw;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── Kicker — 标题上方引导句 ── */
+.kicker{
+  font-family:var(--mono);
+  font-size:max(11px,.8vw);
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--level-3);
+  margin-bottom:1.5vh;
+}
+
+.slide.dark .kicker{color:rgba(255,255,255,.35)}
+
+/* ── 标题层级 — 衬线为主 ── */
+.h-hero{
+  font-family:var(--serif-en),var(--serif-zh),serif;
+  font-weight:900;
+  font-size:5.5vw;
+  line-height:1.08;
+  letter-spacing:var(--ls-hero);
+}
+
+.h-xl{
+  font-family:var(--serif-en),var(--serif-zh),serif;
+  font-weight:700;
+  font-size:3.2vw;
+  line-height:1.2;
+  letter-spacing:var(--ls-heading);
+}
+
+.h-sub{
+  font-family:var(--serif-en),var(--serif-zh),serif;
+  font-weight:500;
+  font-size:1.8vw;
+  line-height:1.35;
+  letter-spacing:0.06em;
+  opacity:.7;
+}
+
+.slide.dark .h-sub{opacity:.5}
+
+.slide-title{
+  font-family:var(--serif-en),var(--serif-zh),serif;
+  font-weight:700;
+  font-size:3.2vw;
+  line-height:1.25;
+  letter-spacing:var(--ls-heading);
+}
+
+.slide-subtitle{
+  font-family:var(--sans-zh);
+  font-weight:400;
+  font-size:1.3vw;
+  line-height:1.5;
+  color:var(--level-2);
+  margin-top:1vh;
+  letter-spacing:var(--ls-body);
+}
+
+.slide.dark .slide-subtitle{color:rgba(255,255,255,.5)}
+
+/* ── Meta Row — 底部元数据 ── */
+.meta-row{
+  display:flex;
+  align-items:center;
+  gap:1vw;
+  font-family:var(--mono);
+  font-size:max(11px,.8vw);
+  color:var(--level-3);
+  margin-top:1.5vh;
+  letter-spacing:var(--ls-mono);
+}
+
+.slide.dark .meta-row{color:rgba(255,255,255,.3)}
+
+/* ── Callout — 引用/洞察框 ── */
+.callout{
+  font-family:var(--serif-en),var(--serif-zh),serif;
+  font-size:1.4vw;
+  line-height:1.6;
+  padding:2vh 0;
+  border-left:3px solid var(--theme);
+  padding-left:1.5vw;
+  color:var(--level-1);
+  letter-spacing:0.02em;
+}
+
+.slide.dark .callout{
+  border-left-color:rgba(255,255,255,.25);
+  color:rgba(255,255,255,.8);
+}
+
+.callout-src{
+  font-family:var(--mono);
+  font-size:max(10px,.75vw);
+  color:var(--level-3);
+  margin-top:1vh;
+  letter-spacing:var(--ls-mono);
+}
+
+.slide.dark .callout-src{color:rgba(255,255,255,.3)}
+
+/* ── Grid 系统 ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2vw}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1.5vw}
+/* ⚠ grid-6: 名称中的6指6个卡片，实际为3列布局（2行×3列） */
+.grid-6{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2vw}
+
+/* ── Cover 封面专用 ── */
+.cover-client{
+  font-family:var(--mono);
+  font-size:max(11px,.8vw);
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+  margin-bottom:2vh;
+}
+
+.cover-rule{
+  width:4vw;
+  height:2px;
+  background:var(--gold);
+  margin:2vh 0 3vh;
+}
+
+/* ── Stat Card — 数据卡片 ── */
+.stat-card{
+  padding:2.5vh 1.5vw;
+  background:var(--bg-light);
+  border-radius:0;
+}
+
+.slide.dark .stat-card{background:rgba(255,255,255,.05)}
+
+.stat-label{
+  font-family:var(--mono);
+  font-size:max(10px,.7vw);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--level-3);
+  margin-bottom:1vh;
+}
+
+.slide.dark .stat-label{color:rgba(255,255,255,.3)}
+
+.stat-nb{
+  font-family:var(--mono);
+  font-weight:600;
+  font-size:3vw;
+  line-height:1;
+  color:var(--level-1);
+  letter-spacing:-0.02em;
+  font-feature-settings:"tnum";
+}
+
+.slide.dark .stat-nb{color:var(--bg-white)}
+
+.stat-unit{
+  font-size:.4em;
+  font-weight:500;
+  opacity:.5;
+  font-style:normal;
+  letter-spacing:0;
+}
+
+.stat-note{
+  font-family:var(--sans-zh);
+  font-size:max(11px,.85vw);
+  color:var(--level-2);
+  margin-top:1vh;
+  letter-spacing:var(--ls-body);
+}
+
+.slide.dark .stat-note{color:rgba(255,255,255,.4)}
+
+/* ── Data Table — 数据表格 ── */
+.data-table{
+  width:100%;
+  border-top:2px solid var(--level-1);
+  border-bottom:1px solid var(--border);
+}
+
+.slide.dark .data-table{
+  border-top-color:rgba(255,255,255,.25);
+  border-bottom-color:rgba(255,255,255,.08);
+}
+
+.data-row{
+  display:grid;
+  grid-template-columns:var(--data-cols,1fr 1fr);
+  gap:0;
+  padding:1.2vh 0;
+  border-bottom:1px solid var(--border);
+  align-items:center;
+}
+
+.slide.dark .data-row{border-bottom-color:rgba(255,255,255,.06)}
+
+.data-header{
+  font-family:var(--mono);
+  font-size:max(10px,.72vw);
+  font-weight:500;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--level-3);
+  background:var(--bg-light);
+  padding:1.5vh 1vw;
+  border-bottom:2px solid var(--level-1);
+}
+
+.slide.dark .data-header{
+  background:rgba(255,255,255,.03);
+  color:rgba(255,255,255,.35);
+  border-bottom-color:rgba(255,255,255,.15);
+}
+
+.data-cell{
+  font-family:var(--sans-zh);
+  font-size:max(12px,.9vw);
+  padding:0 1vw;
+  color:var(--level-2);
+  letter-spacing:var(--ls-body);
+}
+
+.slide.dark .data-cell{color:rgba(255,255,255,.55)}
+
+/* ── Pipeline — 流程/结构 ── */
+.pipeline-section{margin-bottom:1vh}
+
+.pipeline-label{
+  font-family:var(--mono);
+  font-size:max(10px,.72vw);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--level-3);
+  margin-bottom:1.5vh;
+  padding-bottom:.8vh;
+  border-bottom:1px solid var(--border);
+}
+
+.slide.dark .pipeline-label{
+  color:rgba(255,255,255,.3);
+  border-bottom-color:rgba(255,255,255,.08);
+}
+
+.pipeline{display:flex;gap:1vw}
+
+.step{
+  flex:1;
+  padding:2vh 1.2vw;
+  background:var(--bg-light);
+  border-radius:0;
+  border-left:3px solid var(--border);
+}
+
+.slide.dark .step{
+  background:rgba(255,255,255,.03);
+  border-left-color:rgba(255,255,255,.08);
+}
+
+.step-nb{
+  font-family:var(--mono);
+  font-size:max(10px,.7vw);
+  color:var(--level-3);
+  margin-bottom:.8vh;
+  letter-spacing:0.1em;
+}
+
+.slide.dark .step-nb{color:rgba(255,255,255,.25)}
+
+.step-title{
+  font-family:var(--serif-en),var(--serif-zh),serif;
+  font-weight:600;
+  font-size:1.2vw;
+  margin-bottom:.5vh;
+  letter-spacing:0.04em;
+}
+
+.step-desc{
+  font-family:var(--sans-zh);
+  font-size:max(11px,.82vw);
+  color:var(--level-2);
+  line-height:1.5;
+  letter-spacing:var(--ls-body);
+}
+
+.slide.dark .step-desc{color:rgba(255,255,255,.4)}
+
+/* ── VS Block — 二元对立 ── */
+.vs-block{flex:1}
+
+.vs-label{
+  font-family:var(--mono);
+  font-size:max(10px,.72vw);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  font-weight:500;
+  margin-bottom:1vh;
+}
+
+/* ── Logic Flow — 逻辑推导 ── */
+.logic-flow{display:flex;align-items:stretch}
+
+.logic-step{flex:1}
+
+.logic-arrow{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2vw;
+  color:var(--level-3);
+  padding:0 .5vw;
+  flex-shrink:0;
+}
+
+.slide.dark .logic-arrow{color:rgba(255,255,255,.2)}
+
+/* ── Figure / Image — 图片框 ── */
+.frame-img{
+  border-radius:0;
+  overflow:hidden;
+  background:var(--bg-light);
+}
+
+.frame-img img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:top center;
+  display:block;
+}
+
+.img-cap{
+  font-family:var(--mono);
+  font-size:max(10px,.7vw);
+  color:var(--level-3);
+  margin-top:.8vh;
+  letter-spacing:0.06em;
+}
+
+.slide.dark .img-cap{color:rgba(255,255,255,.25)}
+
+/* ── 铁幕强调标记 ── */
+.hi{
+  position:relative;
+  display:inline;
+}
+
+.slide.light .hi::after{
+  content:"";
+  position:absolute;
+  left:-.05em;
+  right:-.05em;
+  bottom:0;
+  height:.25em;
+  background:rgba(var(--theme-rgb),.12);
+  z-index:-1;
+}
+
+.slide.dark .hi::after{
+  content:"";
+  position:absolute;
+  left:-.05em;
+  right:-.05em;
+  bottom:0;
+  height:.25em;
+  background:rgba(var(--accent-highlight-rgb),.18);
+  z-index:-1;
+}
+
+/* ── Bar Chart — 竖向柱状图 ── */
+.bar-chart{
+  display:flex;
+  align-items:flex-end;
+  gap:1.5vw;
+  height:22vh;
+  padding-top:2vh;
+}
+
+.bar-group{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  height:100%;
+  justify-content:flex-end;
+}
+
+.bar{
+  width:100%;
+  max-width:3vw;
+  background:var(--level-3);
+  border-radius:0;
+}
+
+.bar.bar-theme{background:var(--theme)}
+.bar.bar-accent{background:var(--accent-highlight)}
+
+.bar-value{
+  font-family:var(--mono);
+  font-size:max(10px,.72vw);
+  color:var(--level-2);
+  margin-top:.8vh;
+  letter-spacing:var(--ls-mono);
+}
+
+.bar-label{
+  font-family:var(--sans-zh);
+  font-size:max(10px,.72vw);
+  color:var(--level-3);
+  margin-top:.5vh;
+  letter-spacing:var(--ls-body);
+}
+
+.slide.dark .bar{background:rgba(255,255,255,.15)}
+.slide.dark .bar.bar-theme{background:var(--theme-light)}
+.slide.dark .bar.bar-accent{background:rgba(var(--accent-highlight-rgb),.6)}
+.slide.dark .bar-value{color:rgba(255,255,255,.5)}
+.slide.dark .bar-label{color:rgba(255,255,255,.3)}
+
+/* ── Horizontal Bar — 横向条形图 ── */
+.hbar-chart{
+  display:flex;
+  flex-direction:column;
+  gap:1.5vh;
+}
+
+.hbar-row{
+  display:flex;
+  align-items:center;
+  gap:1vw;
+}
+
+.hbar-label{
+  font-family:var(--sans-zh);
+  font-size:max(11px,.82vw);
+  color:var(--level-2);
+  width:8vw;
+  text-align:right;
+  flex-shrink:0;
+  letter-spacing:var(--ls-body);
+}
+
+.slide.dark .hbar-label{color:rgba(255,255,255,.5)}
+
+.hbar-track{
+  flex:1;
+  height:2vh;
+  background:var(--bg-light);
+  border-radius:0;
+  overflow:hidden;
+}
+
+.slide.dark .hbar-track{background:rgba(255,255,255,.06)}
+
+.hbar{
+  height:100%;
+  background:var(--theme);
+  border-radius:0;
+}
+
+.hbar.hbar-positive{background:var(--accent-positive)}
+.hbar.hbar-negative{background:var(--accent-negative)}
+.hbar.hbar-warning{background:var(--accent-warning)}
+
+.hbar-value{
+  font-family:var(--mono);
+  font-size:max(10px,.72vw);
+  color:var(--level-2);
+  width:4vw;
+  flex-shrink:0;
+  letter-spacing:var(--ls-mono);
+}
+
+.slide.dark .hbar-value{color:rgba(255,255,255,.5)}
+
+/* ── Donut Chart — 环形图/饼图 ── */
+.donut-chart{
+  display:flex;
+  align-items:center;
+  gap:4vw;
+  margin-top:3vh;
+}
+.donut-svg{width:22vh;height:22vh;flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:1.5vh}
+.donut-legend-item{display:flex;align-items:center;gap:1vw}
+.donut-legend-dot{width:1.2vh;height:1.2vh;flex-shrink:0}
+.donut-legend-label{font-family:var(--sans-zh);font-size:max(11px,.85vw);color:var(--level-2);letter-spacing:var(--ls-body)}
+.donut-legend-value{font-family:var(--mono);font-size:max(11px,.8vw);color:var(--level-1);font-weight:600;letter-spacing:var(--ls-mono);margin-left:auto}
+.slide.dark .donut-legend-label{color:rgba(255,255,255,.5)}
+.slide.dark .donut-legend-value{color:var(--bg-white)}
+
+/* ── Timeline — 时间轴 ── */
+.timeline{display:flex;flex-direction:column;gap:0;position:relative;margin-top:3vh;padding-left:3vw}
+.timeline::before{content:"";position:absolute;left:1.2vw;top:0;bottom:0;width:2px;background:var(--border)}
+.slide.dark .timeline::before{background:rgba(255,255,255,.1)}
+.tl-item{display:flex;gap:2vw;padding:2vh 0;position:relative}
+.tl-dot{width:10px;height:10px;flex-shrink:0;margin-top:.6vh;position:relative;z-index:1}
+.tl-dot-inner{width:10px;height:10px;border-radius:0;background:var(--theme)}
+.tl-dot-ghost{width:10px;height:10px;border-radius:0;background:var(--border)}
+.slide.dark .tl-dot-ghost{background:rgba(255,255,255,.15)}
+.tl-content{flex:1}
+.tl-date{font-family:var(--mono);font-size:max(10px,.72vw);color:var(--level-3);letter-spacing:var(--ls-mono);margin-bottom:.5vh}
+.slide.dark .tl-date{color:rgba(255,255,255,.3)}
+.tl-title{font-family:var(--serif-en),var(--serif-zh),serif;font-weight:600;font-size:1.1vw;letter-spacing:0.04em;margin-bottom:.3vh}
+.tl-desc{font-family:var(--sans-zh);font-size:max(11px,.82vw);color:var(--level-2);line-height:1.5;letter-spacing:var(--ls-body)}
+.slide.dark .tl-desc{color:rgba(255,255,255,.4)}
+
+/* ── Full Bleed Image — 全幅图片 ── */
+.bleed-img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+}
+.bleed-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top,rgba(26,32,44,.85) 0%,rgba(26,32,44,.3) 50%,transparent 100%);
+  z-index:1;
+}
+.bleed-content{
+  position:relative;
+  z-index:2;
+  display:grid;
+  gap:2vh;
+  align-content:end;
+  min-height:80vh;
+  padding-bottom:8vh;
+}
+
+/* ── 导航圆点 ── */
+#nav{
+  position:fixed;
+  bottom:2.5vh;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:8px;
+  z-index:100;
+}
+
+#nav .dot{
+  width:8px;
+  height:8px;
+  border-radius:0;
+  background:rgba(0,0,0,.12);
+  cursor:pointer;
+  transition:all .25s;
+  border:none;
+  padding:0;
+}
+
+#nav .dot.active{
+  background:var(--level-1);
+  transform:scaleX(2.2);
+}
+
+body.dark-bg #nav .dot{background:rgba(255,255,255,.15)}
+body.dark-bg #nav .dot.active{background:var(--bg-white)}
+
+/* ── 响应式 ── */
+@media(max-width:768px){
+  .h-hero{font-size:8vw}
+  .h-xl,.slide-title{font-size:5vw}
+  .slide-subtitle{font-size:2.5vw}
+  .stat-nb{font-size:5vw}
+  .grid-2,.grid-3,.grid-4,.grid-6{grid-template-columns:1fr 1fr;gap:3vw}
+  .pipeline{flex-wrap:wrap}
+  .step{min-width:40%}
+  .logic-flow{flex-direction:column}
+  .logic-arrow{transform:rotate(90deg);padding:1vh 0}
+  .data-row{grid-template-columns:var(--data-cols,1fr 1fr)}
+}
+</style>
+</head>
+<body>
+
+<main id="deck">
+
+<!-- ═══════════════ Slide 01 - Cover ═══════════════ -->
+<section class="slide dark active">
+  <div class="chrome">
+    <div>SKL-2026-001 · 麦哲思</div>
+    <div>01 / 23</div>
+  </div>
+  <div class="frame" style="display:grid;gap:0;align-content:end;min-height:80vh;padding-bottom:8vh">
+    <div class="cover-client">白话Skill系列 · 网络直播</div>
+    <div class="cover-rule"></div>
+    <h1 class="h-hero" style="font-size:3.6vw" data-anim>白话Skill：从零到一<br>掌握AI技能开发</h1>
+    <h2 class="slide-subtitle" style="font-size:1.4vw;color:rgba(255,255,255,.45)" data-anim>把经验结构化，让AI学会你的工作方式</h2>
+    <div class="meta-row" style="margin-top:3vh" data-anim>
+      <span>网络直播分享</span><span>·</span><span>2026.06</span><span>·</span><span>V1.0</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>AI技能开发</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 02 - 为什么需要Skill ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>开场 · Opening</div>
+    <div>02 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Insight · 核心洞察</div>
+    <h2 class="h-xl" data-anim>为什么你需要了解Skill？</h2>
+    <p class="slide-subtitle" data-anim>AI时代的效率杠杆：从"每次教"到"一次教会"</p>
+    <div class="callout" data-anim style="margin-top:3vh">"Skill的终极价值不是让你跑得更快，而是让你不必亲自跑。"</div>
+    <div class="grid-4" style="margin-top:3vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">传统方式</div>
+        <div class="stat-nb" style="font-size:2.4vw">每次教</div>
+        <div class="stat-note">重复劳动</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Skill方式</div>
+        <div class="stat-nb" style="font-size:2.4vw">一次教会</div>
+        <div class="stat-note">永久复用</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">效率提升</div>
+        <div class="stat-nb">10<span class="stat-unit">×</span></div>
+        <div class="stat-note">至少10倍</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">关键收益</div>
+        <div class="stat-nb" style="font-size:2.4vw">结构化</div>
+        <div class="stat-note">经验可传承</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>开场引入</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 03 - Section Divider ═══════════════ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>SKL-2026-001</div>
+    <div>03 / 23</div>
+  </div>
+  <div class="frame" style="display:grid;gap:3vh;align-content:center;min-height:80vh">
+    <div class="kicker" data-anim>Phase 01 · Foundation</div>
+    <h1 class="h-hero" style="font-size:3.2vw" data-anim>理解Skill的本质，<br>是一切开发的前提</h1>
+    <p class="slide-subtitle" style="color:rgba(255,255,255,.4);max-width:55vw" data-anim>在动手写之前，先搞清楚Skill到底是什么、不是什么？</p>
+  </div>
+  <div class="foot">
+    <div>认知基础</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 04 - 什么是Skill ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>认知基础 · Foundation</div>
+    <div>04 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Definition · 定义</div>
+    <h2 class="slide-title" data-anim>什么是Skill？</h2>
+    <p class="slide-subtitle" data-anim>一套指挥Agent与LLM达成特定目标的指令集——岗位说明书，而非口头交代</p>
+    <div class="grid-3" style="margin-top:4vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">要素一</div>
+        <div class="stat-nb" style="font-size:2vw">名称</div>
+        <div class="stat-note">一句话触发入口<br>让AI精准识别意图<br>命名即定位</div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">要素二</div>
+        <div class="stat-nb" style="font-size:2vw">描述</div>
+        <div class="stat-note">AI判断是否加载<br>的唯一依据<br>精准胜过华丽</div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">要素三</div>
+        <div class="stat-nb" style="font-size:2vw">指令</div>
+        <div class="stat-note">精确的操作步骤<br>可拆分、可执行<br>步步有标准</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Skill定义</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 05 - Skill vs Prompt ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>认知基础 · Foundation</div>
+    <div>05 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Comparison · 二元对立</div>
+    <h2 class="slide-title" data-anim>Skill vs Prompt</h2>
+    <p class="slide-subtitle" data-anim>Prompt是口头交代，Skill是岗位说明书——从"教"到"指挥"的跃迁</p>
+    <div class="grid-2" style="margin-top:4vh">
+      <div class="vs-block" data-anim style="border-left:4px solid var(--level-3);padding:2.5vh 1.5vw">
+        <div class="vs-label" style="color:var(--level-3)">Prompt</div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">一次性<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">每用一次重新交代</span></div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">每次教<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">无法积累经验</span></div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">无上下文记忆<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">依赖用户表达</span></div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">单次对话有效<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">无法跨会话复用</span></div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">临时<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">即兴交互</span></div>
+      </div>
+      <div class="vs-block" data-anim style="border-left:4px solid var(--theme);padding:2.5vh 1.5vw">
+        <div class="vs-label" style="color:var(--theme)">Skill</div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">结构化</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">标准化流程</span></div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">一次教会</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">永久积累</span></div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">携带完整上下文</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">不依赖用户表达</span></div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">跨会话复用</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">无限次调用</span></div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">永久</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">持续进化</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Skill vs Prompt</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 06 - Skill vs 程序 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>认知基础 · Foundation</div>
+    <div>06 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Comparison · 二元对立</div>
+    <h2 class="slide-title" data-anim>Skill vs 程序</h2>
+    <p class="slide-subtitle" data-anim>程序求精确，Skill求智能——一场关于"智能"与"服从"的对话</p>
+    <div class="grid-2" style="margin-top:4vh">
+      <div class="vs-block" data-anim style="border-left:4px solid var(--level-3);padding:2.5vh 1.5vw">
+        <div class="vs-label" style="color:var(--level-3)">程序</div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">命令式<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">逐步指令</span></div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">精确执行<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">输入固定</span></div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">输出确定<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">结果可预测</span></div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">逻辑分支<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">if-else树</span></div>
+        <div style="font-size:1vw;line-height:2.6;color:var(--level-2);font-family:var(--sans-zh)">规则驱动<span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">确定性系统</span></div>
+      </div>
+      <div class="vs-block" data-anim style="border-left:4px solid var(--theme);padding:2.5vh 1.5vw">
+        <div class="vs-label" style="color:var(--theme)">Skill</div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">声明式</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">描述目标</span></div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">智能理解</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">输入灵活</span></div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">输出可变</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">按需生成</span></div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">AI推理</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">LLM自主决策</span></div>
+        <div style="font-size:1vw;line-height:2.6;font-family:var(--sans-zh)"><strong style="color:var(--theme)">目标驱动</strong><span style="padding-left:2vw;color:var(--level-3);font-size:.8vw">智能系统</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Skill vs 程序</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 07 - Section Divider ═══════════════ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>SKL-2026-001</div>
+    <div>07 / 23</div>
+  </div>
+  <div class="frame" style="display:grid;gap:3vh;align-content:center;min-height:80vh">
+    <div class="kicker" data-anim>Phase 02 · Decision & Method</div>
+    <h1 class="h-hero" style="font-size:3.2vw" data-anim>不是所有需求<br>都值得写成Skill</h1>
+    <p class="slide-subtitle" style="color:rgba(255,255,255,.4);max-width:55vw" data-anim>什么时候该写Skill？用什么流程来开发？</p>
+  </div>
+  <div class="foot">
+    <div>决策与方法论</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 08 - RISD决策框架 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>决策框架 · Decision</div>
+    <div>08 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Framework · 决策框架</div>
+    <h2 class="slide-title" data-anim>RISD决策框架：四问判断法</h2>
+    <p class="slide-subtitle" data-anim>四个问题，快速判断是否值得为某个需求编写Skill</p>
+    <div class="logic-flow" style="margin-top:3vh" data-anim>
+      <div class="logic-step" style="padding:2vh 1.2vw;background:var(--bg-light);border-radius:0">
+        <div class="step-nb">R</div>
+        <div class="step-title" style="font-size:1.1vw">重复性</div>
+        <div class="step-desc">这个任务会反复执行吗？<br><span style="color:var(--level-3);font-size:.75vw">一次性任务不值得写Skill</span></div>
+      </div>
+      <div class="logic-arrow">→</div>
+      <div class="logic-step" style="padding:2vh 1.2vw;background:var(--bg-light);border-radius:0">
+        <div class="step-nb">I</div>
+        <div class="step-title" style="font-size:1.1vw">信息充分性</div>
+        <div class="step-desc">所需信息是否完整可获取？<br><span style="color:var(--level-3);font-size:.75vw">信息不全则无法标准化</span></div>
+      </div>
+      <div class="logic-arrow">→</div>
+      <div class="logic-step" style="padding:2vh 1.2vw;background:var(--bg-light);border-radius:0">
+        <div class="step-nb">S</div>
+        <div class="step-title" style="font-size:1.1vw">可拆分性</div>
+        <div class="step-desc">能否拆分为清晰步骤？<br><span style="color:var(--level-3);font-size:.75vw">不可拆分的模糊任务不适合</span></div>
+      </div>
+      <div class="logic-arrow">→</div>
+      <div class="logic-step" style="padding:2vh 1.2vw;background:var(--theme-light);border-left:3px solid var(--theme);border-radius:0">
+        <div class="step-nb" style="color:var(--theme)">D</div>
+        <div class="step-title" style="font-size:1.1vw;color:var(--theme)">确定性</div>
+        <div class="step-desc">是否有明确的判断标准？<br><span style="color:var(--theme-mid);font-size:.75vw">标准模糊则质量不可控</span></div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh">RISD法则：重复且信息充分且可拆分且确定的任务，是Skill的最佳候选人。</div>
+  </div>
+  <div class="foot">
+    <div>RISD决策框架</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 09 - 6个场景 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>决策框架 · Decision</div>
+    <div>09 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Case Study · 案例应用</div>
+    <h2 class="slide-title" data-anim>6个场景：该不该写成Skill？</h2>
+    <p class="slide-subtitle" data-anim>用RISD框架逐一判断，建立你的"Skill直觉"</p>
+    <div class="grid-3" style="margin-top:2.5vh" data-anim>
+      <div class="stat-card" style="border-top:3px solid var(--accent-positive);padding:1.8vh 1.2vw">
+        <div class="stat-label" style="color:var(--accent-positive)">① 每日站会纪要</div>
+        <div class="stat-note" style="font-size:.85vw;line-height:1.5">R:每天 ✓<br>I:有模板 ✓<br>S:可拆分 ✓<br>D:有标准 ✓</div>
+        <div class="stat-nb" style="font-size:2.2vw;color:var(--accent-positive);margin-top:1vh">✅</div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-negative);padding:1.8vh 1.2vw">
+        <div class="stat-label" style="color:var(--accent-negative)">② 偶尔数据分析</div>
+        <div class="stat-note" style="font-size:.85vw;line-height:1.5">R:不重复 ✗<br><br><br></div>
+        <div class="stat-nb" style="font-size:2.2vw;color:var(--accent-negative);margin-top:1vh">❌</div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-positive);padding:1.8vh 1.2vw">
+        <div class="stat-label" style="color:var(--accent-positive)">③ Code Review</div>
+        <div class="stat-note" style="font-size:.85vw;line-height:1.5">R:高频 ✓<br>I:规范明确 ✓<br>S:可拆分 ✓<br>D:标准清晰 ✓</div>
+        <div class="stat-nb" style="font-size:2.2vw;color:var(--accent-positive);margin-top:1vh">✅</div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:2vh" data-anim>
+      <div class="stat-card" style="border-top:3px solid var(--accent-positive);padding:1.8vh 1.2vw">
+        <div class="stat-label" style="color:var(--accent-positive)">④ 周报撰写</div>
+        <div class="stat-note" style="font-size:.85vw;line-height:1.5">R:每周 ✓<br>I:数据源固定 ✓<br>S:步骤清晰 ✓<br>D:格式固定 ✓</div>
+        <div class="stat-nb" style="font-size:2.2vw;color:var(--accent-positive);margin-top:1vh">✅</div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-negative);padding:1.8vh 1.2vw">
+        <div class="stat-label" style="color:var(--accent-negative)">⑤ 一次性调研</div>
+        <div class="stat-note" style="font-size:.85vw;line-height:1.5">R:只做一次 ✗<br><br><br></div>
+        <div class="stat-nb" style="font-size:2.2vw;color:var(--accent-negative);margin-top:1vh">❌</div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-positive);padding:1.8vh 1.2vw">
+        <div class="stat-label" style="color:var(--accent-positive)">⑥ 邮件回复</div>
+        <div class="stat-note" style="font-size:.85vw;line-height:1.5">R:每天 ✓<br>I:信息充分 ✓<br>S:可拆分 ✓<br>D:话术标准化 ✓</div>
+        <div class="stat-nb" style="font-size:2.2vw;color:var(--accent-positive);margin-top:1vh">✅</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>RISD应用案例</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 10 - PROCESS七步法 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>开发方法 · Method</div>
+    <div>10 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Framework · 方法论</div>
+    <h2 class="slide-title" data-anim>PROCESS：七步成诗开发法</h2>
+    <p class="slide-subtitle" data-anim>从无从下手到按部就班——一个系统化的Skill开发流程</p>
+    <div class="grid-4" style="margin-top:3vh" data-anim>
+      <div class="step" style="border-left:3px solid var(--theme)">
+        <div class="step-nb">P</div>
+        <div class="step-title" style="font-size:1vw">Plan</div>
+        <div class="step-desc" style="font-size:.78vw">目标定位<br>一句话说清目标</div>
+      </div>
+      <div class="step" style="border-left:3px solid var(--theme)">
+        <div class="step-nb">R</div>
+        <div class="step-title" style="font-size:1vw">Requirements</div>
+        <div class="step-desc" style="font-size:.78vw">输入定义<br>明确输入边界</div>
+      </div>
+      <div class="step" style="border-left:3px solid var(--theme)">
+        <div class="step-nb">O</div>
+        <div class="step-title" style="font-size:1vw">Operations</div>
+        <div class="step-desc" style="font-size:.78vw">步骤拆解<br>分工协作</div>
+      </div>
+      <div class="step" style="border-left:3px solid var(--theme)">
+        <div class="step-nb">C</div>
+        <div class="step-title" style="font-size:1vw">Capabilities</div>
+        <div class="step-desc" style="font-size:.78vw">能力清单<br>权限与禁止</div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:1.5vh" data-anim>
+      <div class="step" style="border-left:3px solid var(--theme)">
+        <div class="step-nb">E</div>
+        <div class="step-title" style="font-size:1vw">Evaluation</div>
+        <div class="step-desc" style="font-size:.78vw">验收标准<br>定义检查点</div>
+      </div>
+      <div class="step" style="border-left:3px solid var(--theme)">
+        <div class="step-nb">S</div>
+        <div class="step-title" style="font-size:1vw">Script</div>
+        <div class="step-desc" style="font-size:.78vw">脚本编写<br>结构化代码</div>
+      </div>
+      <div class="step" style="border-left:3px solid var(--theme)">
+        <div class="step-nb">S</div>
+        <div class="step-title" style="font-size:1vw">Sanity</div>
+        <div class="step-desc" style="font-size:.78vw">测试调试<br>迭代打磨</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:2.5vh">记住PROCESS，就是记住从Plan到Sanity的每一步都不可或缺。</div>
+  </div>
+  <div class="foot">
+    <div>PROCESS七步法</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 11 - Step 1-2 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>开发方法 · Method</div>
+    <div>11 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Method · 步骤详解</div>
+    <h2 class="slide-title" data-anim>Step 1-2：目标锁定与输入边界</h2>
+    <p class="slide-subtitle" data-anim>先定边界再动手——最被低估的两步</p>
+    <div class="grid-2" style="margin-top:3vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw">
+        <div class="stat-label" style="font-size:.85vw">Step 1 · Plan</div>
+        <div style="font-family:var(--sans-zh);font-size:1vw;line-height:1.7;color:var(--level-2);margin-top:2vh">
+          用一句话说清目标：<br>
+          • 这个Skill要解决什么问题？<br>
+          • 成功的标准是什么？<br>
+          • 一句话总结核心价值
+        </div>
+        <div class="callout" style="font-size:1.1vw;margin-top:2vh;padding:1.5vh 1vw;border-left:3px solid var(--theme)" data-anim>"目标越清晰，Skill越锋利"</div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw">
+        <div class="stat-label" style="font-size:.85vw">Step 2 · Requirements</div>
+        <div style="font-family:var(--sans-zh);font-size:1vw;line-height:1.7;color:var(--level-2);margin-top:2vh">
+          明确输入边界：<br>
+          • 需要哪些输入信息？<br>
+          • 输入的格式和约束？<br>
+          • 缺失信息时的降级策略
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Plan & Requirements</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 12 - Step 3-4 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>开发方法 · Method</div>
+    <div>12 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Method · 步骤详解</div>
+    <h2 class="slide-title" data-anim>Step 3-4：步骤拆解与能力定义</h2>
+    <p class="slide-subtitle" data-anim>确定"做什么"和"能做什么"</p>
+    <div class="grid-2" style="margin-top:3vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw">
+        <div class="stat-label" style="font-size:.85vw">Step 3 · Operations</div>
+        <div style="font-family:var(--sans-zh);font-size:1vw;line-height:1.7;color:var(--level-2);margin-top:2vh">
+          把任务拆成原子步骤：<br>
+          • 每一步只做一件事<br>
+          • 步骤之间有明确衔接<br>
+          • Agent擅长什么交给Agent<br>
+          &nbsp;&nbsp;LLM擅长什么交给LLM
+        </div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw">
+        <div class="stat-label" style="font-size:.85vw">Step 4 · Capabilities</div>
+        <div style="font-family:var(--sans-zh);font-size:1vw;line-height:1.7;color:var(--level-2);margin-top:2vh">
+          定义能力边界：<br>
+          • 允许做什么（白名单）<br>
+          • 禁止做什么（黑名单）<br>
+          • 关键是"不做什么"<br>
+          • 禁止清单比许可清单更重要
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Operations & Capabilities</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 13 - Step 5-7 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>开发方法 · Method</div>
+    <div>13 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Method · 步骤详解</div>
+    <h2 class="slide-title" data-anim>Step 5-7：验收→编写→调试</h2>
+    <p class="slide-subtitle" data-anim>从标准到代码到验证——最后一公里</p>
+    <div class="grid-3" style="margin-top:4vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">Step 5 · Evaluation</div>
+        <div class="stat-note" style="font-size:.92vw;line-height:1.6">
+          定义验收标准：<br>
+          • 成功的输出长什么样<br>
+          • 失败的边界在哪里<br>
+          • 可量化的检查点
+        </div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">Step 6 · Script</div>
+        <div class="stat-note" style="font-size:.92vw;line-height:1.6">
+          编写结构化脚本：<br>
+          • 先搭骨架再填肉<br>
+          • 分步骤、带注释<br>
+          • 每一步有独立校验
+        </div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">Step 7 · Sanity</div>
+        <div class="stat-note" style="font-size:.92vw;line-height:1.6">
+          测试与迭代：<br>
+          • 正案例测试→正常输入<br>
+          • 负案例测试→异常输入<br>
+          • 边角案例测试→极端输入
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Evaluation · Script · Sanity</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 14 - Section Divider ═══════════════ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>SKL-2026-001</div>
+    <div>14 / 23</div>
+  </div>
+  <div class="frame" style="display:grid;gap:3vh;align-content:center;min-height:80vh">
+    <div class="kicker" data-anim>Phase 03 · Success Principles</div>
+    <h1 class="h-hero" style="font-size:3.2vw" data-anim>好的Skill不是写出来的，<br>是打磨出来的</h1>
+    <p class="slide-subtitle" style="color:rgba(255,255,255,.4);max-width:55vw" data-anim>16条核心原则，让你的Skill从"能用"到"好用"</p>
+  </div>
+  <div class="foot">
+    <div>成功原则</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 15 - 接口与容错原则 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>成功原则 · Principles</div>
+    <div>15 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Principle · 接口与容错</div>
+    <h2 class="slide-title" data-anim>接口与容错原则</h2>
+    <p class="slide-subtitle" data-anim>面向未来的设计——经得起变化、容得下错误</p>
+    <div class="grid-2" style="margin-top:3vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw">
+        <div style="font-family:var(--sans-zh);font-size:.95vw;line-height:2.2;color:var(--level-2)">
+          <div style="margin-bottom:1.2vh"><strong style="color:var(--theme);font-size:1vw">① 向前兼容</strong><br><span style="color:var(--level-3);font-size:.82vw">开放扩展，不破坏旧用法</span></div>
+          <div style="border-top:1px solid var(--border);padding-top:1.2vh;margin-bottom:1.2vh">
+            <strong style="color:var(--theme);font-size:1vw">② 默认即正确</strong><br><span style="color:var(--level-3);font-size:.82vw">零配置开箱即用</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:1.2vh;margin-bottom:1.2vh">
+            <strong style="color:var(--theme);font-size:1vw">③ 单一职责</strong><br><span style="color:var(--level-3);font-size:.82vw">一个Skill只做一件事</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:1.2vh">
+            <strong style="color:var(--theme);font-size:1vw">④ 版本稳定</strong><br><span style="color:var(--level-3);font-size:.82vw">接口不随意变更</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw;display:flex;align-items:center">
+        <div class="callout" style="font-size:1.3vw;line-height:1.6;padding:2vh 0;padding-left:1.5vw">"容错不是备选项，是基本功。一个不能容错的Skill，用户用一次就弃。"</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>接口与容错</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 16 - 测试与性能原则 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>成功原则 · Principles</div>
+    <div>16 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Principle · 测试与性能</div>
+    <h2 class="slide-title" data-anim>测试与性能原则</h2>
+    <p class="slide-subtitle" data-anim>可验证的质量——每一步都可以被检查</p>
+    <div class="grid-2" style="margin-top:3vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw">
+        <div style="font-family:var(--sans-zh);font-size:.95vw;line-height:2.2;color:var(--level-2)">
+          <div style="margin-bottom:1.2vh"><strong style="color:var(--theme);font-size:1vw">⑤ 用例先行</strong><br><span style="color:var(--level-3);font-size:.82vw">先写测试用例再写代码</span></div>
+          <div style="border-top:1px solid var(--border);padding-top:1.2vh;margin-bottom:1.2vh">
+            <strong style="color:var(--theme);font-size:1vw">⑥ 步步校验</strong><br><span style="color:var(--level-3);font-size:.82vw">每一步都有检查点，一错全停</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:1.2vh;margin-bottom:1.2vh">
+            <strong style="color:var(--theme);font-size:1vw">⑦ 固化责任</strong><br><span style="color:var(--level-3);font-size:.82vw">明确谁该做什么，不推诿</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:1.2vh">
+            <strong style="color:var(--theme);font-size:1vw">⑧ 控制流分离</strong><br><span style="color:var(--level-3);font-size:.82vw">逻辑与控制分开，方便调试</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw;display:flex;align-items:center">
+        <div class="callout" style="font-size:1.3vw;line-height:1.6;padding:2vh 0;padding-left:1.5vw">"Skill的质量不靠感觉，靠校验。每个步骤必须有可验证的输出标准。"</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>测试与性能</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 17 - AI调用稳定性原则 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>成功原则 · Principles</div>
+    <div>17 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Principle · AI调用稳定性</div>
+    <h2 class="slide-title" data-anim>AI调用稳定性原则</h2>
+    <p class="slide-subtitle" data-anim>让AI稳定输出——而不是"有时候好，有时候差"</p>
+    <div class="grid-2" style="margin-top:2.5vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:2.5vh 1.8vw">
+        <div style="font-family:var(--sans-zh);font-size:.9vw;line-height:2.1;color:var(--level-2)">
+          <div style="margin-bottom:1vh"><strong style="color:var(--theme);font-size:.95vw">⑨ 描述带攻击性</strong><br><span style="color:var(--level-3);font-size:.78vw">指令要强硬明确，不留解读空间</span></div>
+          <div style="border-top:1px solid var(--border);padding-top:1vh;margin-bottom:1vh">
+            <strong style="color:var(--theme);font-size:.95vw">⑩ 边界清晰</strong><br><span style="color:var(--level-3);font-size:.78vw">输入输出范围一目了然</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:1vh;margin-bottom:1vh">
+            <strong style="color:var(--theme);font-size:.95vw">⑪ 白名单策略</strong><br><span style="color:var(--level-3);font-size:.78vw">允许什么、禁止什么，清单化</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:1vh">
+            <strong style="color:var(--theme);font-size:.95vw">⑫ 样例驱动</strong><br><span style="color:var(--level-3);font-size:.78vw">提供好/坏样例，AI需要对比参照</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:2.5vh 1.8vw;display:flex;flex-direction:column;justify-content:center">
+        <div class="callout" style="font-size:1.2vw;line-height:1.5;padding:1.5vh 0;padding-left:1.2vw">"AI不是不听话，是你没说清楚。描述越有攻击性，输出越稳定。"</div>
+        <div style="border-top:1px solid var(--border);margin-top:2vh;padding-top:2vh">
+          <strong style="color:var(--theme);font-size:.95vw;font-family:var(--sans-zh)">⑬ 强制结构输出</strong>
+          <div style="font-family:var(--sans-zh);font-size:.82vw;color:var(--level-3);margin-top:.5vh">用格式约束内容，JSON/YAML结构化输出</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>AI调用稳定性</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 18 - 约束与迭代原则 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>成功原则 · Principles</div>
+    <div>18 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Principle · 约束与迭代</div>
+    <h2 class="slide-title" data-anim>约束与迭代原则</h2>
+    <p class="slide-subtitle" data-anim>Skill的生命力在于持续进化</p>
+    <div class="grid-2" style="margin-top:3vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw">
+        <div style="font-family:var(--sans-zh);font-size:.95vw;line-height:2.4;color:var(--level-2)">
+          <div style="margin-bottom:1.5vh"><strong style="color:var(--theme);font-size:1vw">⑭ 幻觉控制</strong><br><span style="color:var(--level-3);font-size:.82vw">关键步骤加校验，AI编造数据不可信</span></div>
+          <div style="border-top:1px solid var(--border);padding-top:1.5vh;margin-bottom:1.5vh">
+            <strong style="color:var(--theme);font-size:1vw">⑮ 反馈闭环</strong><br><span style="color:var(--level-3);font-size:.82vw">每次使用都是测试，收集失败案例</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:1.5vh">
+            <strong style="color:var(--theme);font-size:1vw">⑯ 迭代维护</strong><br><span style="color:var(--level-3);font-size:.82vw">Skill是活的，不是写完就完</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme);padding:3vh 1.8vw;display:flex;align-items:center">
+        <div class="callout" style="font-size:1.3vw;line-height:1.6;padding:2vh 0;padding-left:1.5vw">"一个Skill的生命周期：写→用→反馈→改→再写。循环越快，质量越高。"</div>
+      </div>
+    </div>
+    <div style="margin-top:2vh;font-family:var(--serif-en),var(--serif-zh),serif;font-size:1.2vw;font-weight:700;color:var(--theme);text-align:center" data-anim>核心心法：一句话 = 一个Skill，少即是多。</div>
+  </div>
+  <div class="foot">
+    <div>约束与迭代</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 19 - 行动号召 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>行动号召 · Action</div>
+    <div>19 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Takeaway · 立即行动</div>
+    <h2 class="h-xl" data-anim>你的第一个Skill：现在开始</h2>
+    <p class="slide-subtitle" data-anim>动手做，第一个Skill是最好的老师</p>
+    <div class="grid-3" style="margin-top:4vh">
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">第一步</div>
+        <div class="stat-nb" style="font-size:2vw;color:var(--theme)">选任务</div>
+        <div class="stat-note">找一个高频<br>重复做的事情<br>用RISD判断是否值得</div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">第二步</div>
+        <div class="stat-nb" style="font-size:2vw;color:var(--theme)">用PROCESS</div>
+        <div class="stat-note">Plan→Requirements<br>→Operations→...<br>按七步法走一遍</div>
+      </div>
+      <div class="stat-card" data-anim style="border-top:3px solid var(--theme)">
+        <div class="stat-label">第三步</div>
+        <div class="stat-nb" style="font-size:2vw;color:var(--theme)">打磨分享</div>
+        <div class="stat-note">测试→反馈→迭代<br>发布出去<br>让更多人用起来</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh">"最好的学习方法不是读文章，是动手做。闭上眼睛，想一个你每天做的事，把它写成Skill。"</div>
+  </div>
+  <div class="foot">
+    <div>行动号召</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+
+<!-- ═══════════════ Slide 20 - 案例幕封 ═══════════════ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>SKL-2026-001</div>
+    <div>20 / 23</div>
+  </div>
+  <div class="frame" style="display:grid;gap:3vh;align-content:center;min-height:80vh">
+    <div class="kicker" data-anim>Phase 04 · Case Study</div>
+    <h1 class="h-hero" style="font-size:3.2vw" data-anim>好的Skill不是理论，<br>是经得起检验的实践</h1>
+    <p class="slide-subtitle" style="color:rgba(255,255,255,.4);max-width:55vw" data-anim>以 bug-fixer 和 refactor-22 为例，看优秀Skill的共同特质</p>
+  </div>
+  <div class="foot">
+    <div>综合案例</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 21 - bug-fixer 案例 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>综合案例 · Case Study</div>
+    <div>21 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Case 01 · bug-fixer</div>
+    <h2 class="slide-title" data-anim>bug-fixer：系统性Bug修复专家 v2</h2>
+    <p class="slide-subtitle" data-anim>从"一刀切"到"分诊 + 7条专用路径 + 全局原则"的架构升级</p>
+
+    <div class="grid-2" style="margin-top:3vh;gap:2.5vw">
+      <div data-anim>
+        <div class="stat-card" style="border-top:3px solid var(--theme);padding:2.5vh 1.5vw;margin-bottom:2vh">
+          <div class="stat-label" style="color:var(--theme)">核心架构</div>
+          <div class="stat-note" style="margin-top:1.5vh;font-size:.9vw;line-height:1.7">
+            <b>分诊层</b>：问题类型自动分流<br>
+            <b>7条修复路径</b>：A崩溃 B数据 B+需求 D性能 E并发 F环境 G构建<br>
+            <b>5项全局能力</b>：三次法则、橡皮鸭复述、假设验证、结构化输入、经验沉淀
+          </div>
+        </div>
+      </div>
+      <div data-anim>
+        <div class="stat-card" style="border-top:3px solid var(--theme);padding:2.5vh 1.5vw;margin-bottom:2vh">
+          <div class="stat-label" style="color:var(--theme)">7条全局原则</div>
+          <div class="stat-note" style="margin-top:1.5vh;font-size:.9vw;line-height:1.7">
+            ① 不打补丁——A/B双重修复，现象+根因<br>
+            ② 先见红——无证据不修改，测试先行<br>
+            ③ 系统性——修一个、扫一类<br>
+            ④ 两方案——设计选择必须对比<br>
+            ⑤ 自我批判——每步检查是否过度工程<br>
+            ⑥ 先沟通——不确定时先问再动手<br>
+            ⑦ 经验沉淀——YAML格式结构化记录
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" data-anim style="margin-top:2.5vh">bug-fixer 完美体现了PROCESS方法论和16条成功原则的落地——分诊即Plan，路径即Operations，原则即Constraint。</div>
+  </div>
+  <div class="foot">
+    <div>案例：bug-fixer</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 22 - refactor-22 案例 ═══════════════ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>综合案例 · Case Study</div>
+    <div>22 / 23</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Case 02 · refactor-22</div>
+    <h2 class="slide-title" data-anim>refactor-22：22种代码坏味道自动识别与重构</h2>
+    <p class="slide-subtitle" data-anim>对标 Martin Fowler《重构》第二版，全库扫描 → 优先级排序 → 逐项修复</p>
+
+    <div class="grid-3" style="margin-top:3vh" data-anim>
+      <div class="stat-card" style="border-top:3px solid var(--accent-negative);padding:2vh 1.2vw">
+        <div class="stat-label" style="color:var(--accent-negative)">F1-F7 高优先级</div>
+        <div class="stat-note" style="margin-top:1vh;font-size:.82vw;line-height:1.6">
+          重复代码 → Extract Method<br>
+          过长函数 → Extract / Replace Temp<br>
+          过大的类 → Extract Class<br>
+          过长参数列 → Parameter Object<br>
+          霰弹式修改 → Move Method
+        </div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-warning);padding:2vh 1.2vw">
+        <div class="stat-label" style="color:var(--accent-warning)">F8-F15 中优先级</div>
+        <div class="stat-note" style="margin-top:1vh;font-size:.82vw;line-height:1.6">
+          数据泥团 → Extract Class<br>
+          基本类型偏执 → Replace with Object<br>
+          Switch语句 → 多态替换<br>
+          拒绝的遗赠 → Replace Subclass<br>
+          中间人 → Remove Middle Man
+        </div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--level-3);padding:2vh 1.2vw">
+        <div class="stat-label" style="color:var(--level-3)">F16-F22 低优先级</div>
+        <div class="stat-note" style="margin-top:1vh;font-size:.82vw;line-height:1.6">
+          全局数据 → Encapsulate Variable<br>
+          可变数据 → Split Variable<br>
+          循环语句 → Replace with Pipeline<br>
+          冗赘的元素 → Inline Class<br>
+          夸夸其谈通用性 → Collapse Hierarchy
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" data-anim style="margin-top:2.5vh">refactor-22 是一个典型的<b>知识密集型Skill</b>：22种坏味道 → 22条标准策略 → 3阶段执行流程。知识越结构化，AI执行越可靠。</div>
+  </div>
+  <div class="foot">
+    <div>案例：refactor-22</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+<!-- ═══════════════ Slide 20 - Key Quote ═══════════════ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>核心结论 · Key Takeaway</div>
+    <div>23 / 23</div>
+  </div>
+  <div class="frame" style="display:grid;gap:6vh;align-content:center;min-height:80vh">
+    <div class="kicker" data-anim>Conclusion · 核心结论</div>
+    <h1 class="h-hero" style="font-size:2.8vw;line-height:1.4" data-anim>
+      Skill不是高科技，<br>
+      是经验的结构化。
+    </h1>
+    <p class="slide-subtitle" style="color:rgba(255,255,255,.45);max-width:60vw" data-anim>
+      把你会做的事写下来，让AI替你执行。这，就是Skill的终极意义。
+    </p>
+  </div>
+  <div class="foot">
+    <div>核心结论</div>
+    <div>SKL-2026-001 · 2026.06</div>
+  </div>
+</section>
+
+</main>
+
+<nav id="nav"></nav>
+
+<!-- ═══════════════ Logo 注入 ═══════════════ -->
+<script>
+document.querySelectorAll('.slide .chrome').forEach(function(chrome){
+  var logo = document.createElement('img');
+  logo.src = 'image1.png';
+  logo.className = 'chrome-logo';
+  logo.alt = '麦哲思';
+  chrome.insertBefore(logo, chrome.firstChild);
+});
+</script>
+
+<!-- ═══════════════ Motion One 动效系统 ═══════════════ -->
+<script type="module">
+// ── 加载 Motion One（本地优先 → CDN → 降级） ──
+let motion;
+try{motion=await import('./motion.min.js')}
+catch(e1){
+  try{motion=await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm')}
+  catch(e2){
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+  }
+}
+
+// ── 翻页引擎 ──
+const deck=document.getElementById('deck');
+const nav=document.getElementById('nav');
+const slides=[...deck.querySelectorAll('.slide')];
+let cur=0;
+const total=slides.length;
+
+function buildNav(){
+  nav.innerHTML='';
+  for(let i=0;i<total;i++){
+    const d=document.createElement('button');
+    d.className='dot'+(i===cur?' active':'');
+    d.setAttribute('aria-label','Slide '+(i+1));
+    d.addEventListener('click',()=>go(i));
+    nav.appendChild(d);
+  }
+}
+
+function updateNav(){
+  const dots=[...nav.querySelectorAll('.dot')];
+  dots.forEach((d,i)=>d.classList.toggle('active',i===cur));
+}
+
+function updateBodyBg(){
+  document.body.classList.toggle('dark-bg',slides[cur].classList.contains('dark'));
+}
+
+// ── 铁幕入场：一页一个判决，快、冷、不容置疑 ──
+async function animateSlide(slideEl){
+  if(!motion||!motion.animate)return;
+  const targets=[...slideEl.querySelectorAll('[data-anim]')];
+  if(!targets.length)return;
+
+  targets.forEach(el=>{el.style.opacity='0';el.style.transform='translateY(12px)'});
+
+  const anims=targets.map((el,i)=>{
+    return motion.animate(
+      el,
+      {opacity:[0,1],transform:['translateY(12px)','translateY(0px)']},
+      {duration:.28,delay:i*.06,easing:[.22,.01,0,1]}
+    );
+  });
+
+  await Promise.all(anims);
+  targets.forEach(el=>{el.style.opacity='';el.style.transform=''});
+}
+
+function go(n){
+  if(n<0||n>=total)return;
+  slides[cur].classList.remove('active');
+  cur=n;
+  slides[cur].classList.add('active');
+  updateNav();
+  updateBodyBg();
+  animateSlide(slides[cur]);
+}
+
+// ── 键盘 ──
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();go(cur+1)}
+  else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(cur-1)}
+  else if(e.key==='Home'){e.preventDefault();go(0)}
+  else if(e.key==='End'){e.preventDefault();go(total-1)}
+});
+
+// ── 滚轮（600ms 防抖） ──
+let wheelTimer=null;
+deck.addEventListener('wheel',e=>{
+  e.preventDefault();
+  if(wheelTimer)return;
+  wheelTimer=setTimeout(()=>{wheelTimer=null},600);
+  if(e.deltaY>0)go(cur+1);
+  else if(e.deltaY<0)go(cur-1);
+},{passive:false});
+
+// ── 触屏 ──
+let touchX=0;
+deck.addEventListener('touchstart',e=>{touchX=e.touches[0].clientX},{passive:true});
+deck.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-touchX;
+  if(Math.abs(dx)>50){if(dx<0)go(cur+1);else go(cur-1)}
+},{passive:true});
+
+// ── 启动 ──
+buildNav();
+updateBodyBg();
+animateSlide(slides[cur]);
+</script>
+</body>
+</html>

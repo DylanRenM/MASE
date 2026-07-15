@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>白话Skill之7 refactor-22综合案例</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', 'Noto Serif SC', sans-serif; }
+    
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      display: flex;
+      background: #f5f5f7;
+    }
+    
+    .slide {
+      flex: 0 0 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      padding: 5vw 7vw;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Hero Cover */
+    .hero-cover {
+      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      color: white;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .h-hero {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 4.5vw;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 2vw;
+    }
+    
+    .h-sub {
+      font-size: 1.4vw;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Content Slides */
+    .content-slide {
+      background: white;
+    }
+    
+    .slide-header {
+      margin-bottom: 3vw;
+    }
+    
+    .h-md {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 2.5vw;
+      font-weight: 600;
+      color: #1a202c;
+      line-height: 1.3;
+    }
+    
+    .lead {
+      font-size: 1.3vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 2vw;
+    }
+    
+    /* Three Grid */
+    .three-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5vw;
+      margin-top: 2vw;
+    }
+    
+    .grid-card {
+      background: #f7fafc;
+      padding: 1.8vw;
+      border-radius: 8px;
+      border-top: 4px solid;
+    }
+    
+    .grid-card.high { border-color: #e53e3e; }
+    .grid-card.medium { border-color: #ed8936; }
+    .grid-card.low { border-color: #48bb78; }
+    
+    .grid-title {
+      font-size: 1.1vw;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 1vw;
+    }
+    
+    .grid-list {
+      list-style: none;
+    }
+    
+    .grid-list li {
+      font-size: 0.9vw;
+      line-height: 1.6;
+      color: #4a5568;
+      margin-bottom: 0.5vw;
+      padding-left: 1vw;
+      position: relative;
+    }
+    
+    .grid-list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      font-size: 0.8vw;
+    }
+    
+    /* Architecture */
+    .arch-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2vw;
+      border-radius: 12px;
+      color: white;
+      margin-bottom: 1.5vw;
+    }
+    
+    .arch-num {
+      font-size: 1.5vw;
+      font-weight: 700;
+      margin-bottom: 0.5vw;
+    }
+    
+    .arch-title {
+      font-size: 1.3vw;
+      font-weight: 600;
+      margin-bottom: 0.8vw;
+    }
+    
+    .arch-desc {
+      font-size: 1vw;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    
+    /* Framework Cards */
+    .framework-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2vw;
+      margin-top: 2vw;
+    }
+    
+    .fw-card {
+      background: #f7fafc;
+      padding: 2vw;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .fw-title {
+      font-size: 1.2vw;
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 1vw;
+    }
+    
+    .fw-desc {
+      font-size: 1vw;
+      line-height: 1.6;
+      color: #4a5568;
+    }
+    
+    /* List */
+    .list {
+      list-style: none;
+      max-width: 900px;
+      margin-top: 1.5vw;
+    }
+    
+    .list li {
+      font-size: 1.15vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 1.2vw;
+      padding-left: 2vw;
+      position: relative;
+    }
+    
+    .list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-size: 1.2vw;
+    }
+    
+    /* Navigation */
+    #nav {
+      position: fixed;
+      bottom: 3vw;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.6vw;
+      z-index: 100;
+    }
+    
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-dot.active {
+      background: #667eea;
+      transform: scale(1.4);
+    }
+    
+    .foot {
+      position: fixed;
+      bottom: 3vw;
+      right: 7vw;
+      font-size: 0.8vw;
+      color: rgba(0, 0, 0, 0.3);
+      font-family: monospace;
+    }
+    
+    .highlight {
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    .red-highlight {
+      color: #e53e3e;
+      font-weight: 600;
+    }
+    
+    .green-highlight {
+      color: #48bb78;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <!-- 01 Cover -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">白话 Skill</h1>
+      <h2 class="h-sub">第七讲：综合案例 —— refactor-22 代码重构专家</h2>
+    </section>
+
+    <!-- 02 Overview -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">refactor-22 是什么？</h2>
+      </div>
+      <p class="lead">对标 Martin Fowler《重构》第二版，自动识别并修复 22 种代码坏味道的智能重构工具。</p>
+      <div class="three-grid">
+        <div class="grid-card high">
+          <div class="grid-title">🔴 F1-F7 高优先级</div>
+          <ul class="grid-list">
+            <li>重复代码 → Extract Method</li>
+            <li>过长函数 → Extract</li>
+            <li>过大的类 → Extract Class</li>
+            <li>过长参数列 → Parameter Object</li>
+            <li>霰弹式修改 → Move Method</li>
+          </ul>
+        </div>
+        <div class="grid-card medium">
+          <div class="grid-title">🟠 F8-F15 中优先级</div>
+          <ul class="grid-list">
+            <li>数据泥团 → Extract Class</li>
+            <li>基本类型偏执 → Replace with Object</li>
+            <li>Switch语句 → 多态替换</li>
+            <li>拒绝的遗赠 → Replace Subclass</li>
+            <li>中间人 → Remove Middle Man</li>
+          </ul>
+        </div>
+        <div class="grid-card low">
+          <div class="grid-title">🟢 F16-F22 低优先级</div>
+          <ul class="grid-list">
+            <li>全局数据 → Encapsulate Variable</li>
+            <li>可变数据 → Split Variable</li>
+            <li>循环语句 → Replace with Pipeline</li>
+            <li>冗赘的元素 → Inline Class</li>
+            <li>夸夸其谈通用性 → Collapse Hierarchy</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 Architecture -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">三层架构设计</h2>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">01</div>
+        <div class="arch-title">检测层 | Detection Layer</div>
+        <div class="arch-desc">自动识别22种代码坏味道，基于静态分析和模式匹配，生成问题清单和优先级排序</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">02</div>
+        <div class="arch-title">策略层 | Strategy Layer</div>
+        <div class="arch-desc">每种坏味道对应一条标准修复策略，从 Martin Fowler《重构》中提炼的经典解决方案</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">03</div>
+        <div class="arch-title">执行层 | Execution Layer</div>
+        <div class="arch-desc">3阶段执行流程：分析 → 重构 → 验证，确保每一步都可追溯、可回滚</div>
+      </div>
+    </section>
+
+    <!-- 04 RISD Check -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">用 RISD 框架判断：值得写 Skill 吗？</h2>
+      </div>
+      <div class="framework-grid">
+        <div class="fw-card">
+          <div class="fw-title">✅ R - Repeatability（重复性）</div>
+          <div class="fw-desc">代码重构是日常开发的常规工作，每天都可能需要对代码进行质量检查和优化</div>
+        </div>
+        <div class="fw-card">
+          <div class="fw-title">✅ I - Information（信息充分性）</div>
+          <div class="fw-desc">输入是源代码文件，信息明确；22种坏味道有明确的检测规则</div>
+        </div>
+        <div class="fw-card">
+          <div class="fw-title">✅ S - Stability（稳定性）</div>
+          <div class="fw-desc">检测规则和修复策略是固定的，基于经典重构理论，不会频繁变化</div>
+        </div>
+        <div class="fw-card">
+          <div class="fw-title">✅ D - Divisibility（可拆分性）</div>
+          <div class="fw-desc">检测用脚本，策略用规则引擎，执行用Agent，可清晰分工</div>
+        </div>
+      </div>
+      <p class="lead" style="text-align: center; margin-top: 2vw; color: #48bb78;">结论：四个条件都满足 → 非常适合写成 Skill！</p>
+    </section>
+
+    <!-- 05 PROCESS Steps -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">用 PROCESS 框架构建 refactor-22</h2>
+      </div>
+      <ul class="list">
+        <li><span class="highlight">P - Plan</span>：明确目标是"自动检测并修复22种代码坏味道"</li>
+        <li><span class="highlight">R - Requirements</span>：输入是源代码目录路径，输出是修复后的代码和重构报告</li>
+        <li><span class="highlight">O - Operations</span>：检测层 → 策略层 → 执行层，三步流程</li>
+        <li><span class="highlight">C - Capabilities</span>：需要文件读写、代码解析、命令执行权限</li>
+        <li><span class="highlight">E - Evaluation</span>：输出格式为Markdown报告，包含问题清单和修复建议</li>
+        <li><span class="highlight">S - Script</span>：编写YAML格式的Skill定义</li>
+        <li><span class="highlight">S - Sanity</span>：测试用例覆盖所有22种坏味道的检测和修复</li>
+      </ul>
+    </section>
+
+    <!-- 06 Skill vs Prompt -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">为什么用 Skill 而不是 Prompt？</h2>
+      </div>
+      <div class="framework-grid">
+        <div class="fw-card" style="border-left-color: #e53e3e;">
+          <div class="fw-title" style="color: #e53e3e;">❌ 使用 Prompt 的问题</div>
+          <div class="fw-desc">每次都要描述22种坏味道的检测规则，冗长且容易出错；无法保证输出格式一致；无法执行实际的代码修改操作</div>
+        </div>
+        <div class="fw-card" style="border-left-color: #48bb78;">
+          <div class="fw-title" style="color: #48bb78;">✅ 使用 Skill 的优势</div>
+          <div class="fw-desc">一次配置，多次复用；规则固化，输出一致；可以调用脚本执行实际重构；有明确的权限控制和错误处理</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 Skill vs Program -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">为什么用 Skill 而不是纯程序？</h2>
+      </div>
+      <div class="framework-grid">
+        <div class="fw-card" style="border-left-color: #e53e3e;">
+          <div class="fw-title" style="color: #e53e3e;">❌ 纯程序的局限性</div>
+          <div class="fw-desc">规则硬编码，修改困难；无法理解上下文语义；面对复杂代码模式容易误判；缺乏灵活性</div>
+        </div>
+        <div class="fw-card" style="border-left-color: #48bb78;">
+          <div class="fw-title" style="color: #48bb78;">✅ Skill 的智能优势</div>
+          <div class="fw-desc">LLM理解代码语义，检测更准确；规则可以动态调整；支持上下文感知的重构建议；灵活应对各种代码风格</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 16 Principles -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">16条成功原则在refactor-22中的体现</h2>
+      </div>
+      <ul class="list">
+        <li><span class="highlight">见名知意</span>：参数命名清晰（file_path, refactor_type）</li>
+        <li><span class="highlight">语义化版本</span>：v1.0 → v1.1（新增检测规则）→ v2.0（新增语言支持）</li>
+        <li><span class="highlight">用例先行</span>：每种坏味道都有测试用例</li>
+        <li><span class="highlight">步步校验</span>：检测结果要验证，修复后要验证</li>
+        <li><span class="highlight">固化责任</span>：确定性检测用脚本，语义理解用LLM</li>
+        <li><span class="highlight">白名单优于黑名单</span>：明确允许修复的范围</li>
+        <li><span class="highlight">样例胜过描述</span>：每种重构都有示例</li>
+        <li><span class="highlight">反馈闭环</span>：收集误报/漏报，迭代优化规则</li>
+      </ul>
+    </section>
+
+    <!-- 09 Summary -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">综合案例总结：串联前六讲内容</h2>
+      </div>
+      <ul class="list">
+        <li><span class="highlight">第一讲：什么是Skill？</span> → refactor-22是一个典型的Skill示例</li>
+        <li><span class="highlight">第二讲：Skill vs Prompt</span> → 解释了为什么选择Skill而不是Prompt</li>
+        <li><span class="highlight">第三讲：Skill vs Program</span> → 展示了Skill的智能优势</li>
+        <li><span class="highlight">第四讲：RISD框架</span> → 验证了refactor-22值得写</li>
+        <li><span class="highlight">第五讲：PROCESS框架</span> → 展示了如何构建refactor-22</li>
+        <li><span class="highlight">第六讲：16条原则</span> → 体现了优秀Skill的特质</li>
+      </ul>
+      <p class="lead" style="text-align: center; margin-top: 3vw; color: #667eea;">refactor-22是一个完美的综合案例，展示了Skill的完整价值！</p>
+    </section>
+
+    <!-- 10 End -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">谢谢观看</h1>
+      <h2 class="h-sub">白话 Skill 系列 · 第七讲（完结篇）</h2>
+    </section>
+  </div>
+
+  <div id="nav"></div>
+  <div class="foot" id="foot">01/10</div>
+
+  <script>
+    const deck = document.getElementById('deck');
+    const nav = document.getElementById('nav');
+    const foot = document.getElementById('foot');
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      nav.appendChild(dot);
+    });
+
+    function updateNav(current) {
+      document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+      foot.textContent = String(current + 1).padStart(2, '0') + '/' + String(totalSlides).padStart(2, '0');
+    }
+
+    function goToSlide(index) {
+      deck.scrollTo({ left: index * window.innerWidth, behavior: 'smooth' });
+    }
+
+    deck.addEventListener('scroll', () => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      updateNav(current);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      if (e.key === 'ArrowLeft' && current > 0) goToSlide(current - 1);
+      if (e.key === 'ArrowRight' && current < totalSlides - 1) goToSlide(current + 1);
+    });
+  </script>
+</body>
+</html>

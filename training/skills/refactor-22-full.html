@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>refactor-22 完整技能解析</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', 'Noto Serif SC', sans-serif; }
+    
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      display: flex;
+      background: #f5f5f7;
+    }
+    
+    .slide {
+      flex: 0 0 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      padding: 5vw 7vw;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Hero Cover */
+    .hero-cover {
+      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      color: white;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .h-hero {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 4.5vw;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 2vw;
+    }
+    
+    .h-sub {
+      font-size: 1.4vw;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Content Slides */
+    .content-slide {
+      background: white;
+    }
+    
+    .slide-header {
+      margin-bottom: 3vw;
+    }
+    
+    .h-md {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 2.5vw;
+      font-weight: 600;
+      color: #1a202c;
+      line-height: 1.3;
+    }
+    
+    .lead {
+      font-size: 1.3vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 2vw;
+    }
+    
+    /* Architecture */
+    .arch-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2vw;
+      border-radius: 12px;
+      color: white;
+      margin-bottom: 1.5vw;
+    }
+    
+    .arch-num {
+      font-size: 1.5vw;
+      font-weight: 700;
+      margin-bottom: 0.5vw;
+    }
+    
+    .arch-title {
+      font-size: 1.3vw;
+      font-weight: 600;
+      margin-bottom: 0.8vw;
+    }
+    
+    .arch-desc {
+      font-size: 1vw;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    
+    /* Three Grid */
+    .three-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5vw;
+      margin-top: 2vw;
+    }
+    
+    .grid-card {
+      background: #f7fafc;
+      padding: 1.8vw;
+      border-radius: 8px;
+      border-top: 4px solid;
+    }
+    
+    .grid-card.high { border-color: #e53e3e; }
+    .grid-card.medium { border-color: #ed8936; }
+    .grid-card.low { border-color: #48bb78; }
+    
+    .grid-title {
+      font-size: 1.1vw;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 1vw;
+    }
+    
+    .grid-list {
+      list-style: none;
+    }
+    
+    .grid-list li {
+      font-size: 0.9vw;
+      line-height: 1.6;
+      color: #4a5568;
+      margin-bottom: 0.5vw;
+      padding-left: 1vw;
+      position: relative;
+    }
+    
+    .grid-list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      font-size: 0.8vw;
+    }
+    
+    /* List */
+    .list {
+      list-style: none;
+      max-width: 900px;
+      margin-top: 1.5vw;
+    }
+    
+    .list li {
+      font-size: 1.15vw;
+      line-height: 1.8;
+      color: #4a5568;
+      margin-bottom: 1.2vw;
+      padding-left: 2vw;
+      position: relative;
+    }
+    
+    .list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-size: 1.2vw;
+    }
+    
+    /* Code Block */
+    .code-block { 
+      background: #2c2416; 
+      padding: 1.5vw; 
+      border-radius: 8px; 
+      font-family: monospace; 
+      font-size: 0.85vw; 
+      color: #e8e4dc; 
+      overflow-x: auto;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      margin-top: 2vw;
+    }
+    
+    /* Table */
+    .smell-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2vw;
+      font-size: 0.85vw;
+    }
+    
+    .smell-table th, .smell-table td {
+      border: 1px solid #e2e8f0;
+      padding: 0.8vw;
+      text-align: left;
+    }
+    
+    .smell-table th {
+      background: #f7fafc;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    
+    .smell-table tr:nth-child(even) {
+      background: #f7fafc;
+    }
+    
+    .smell-id {
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    /* Navigation */
+    #nav {
+      position: fixed;
+      bottom: 3vw;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.6vw;
+      z-index: 100;
+    }
+    
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-dot.active {
+      background: #667eea;
+      transform: scale(1.4);
+    }
+    
+    .foot {
+      position: fixed;
+      bottom: 3vw;
+      right: 7vw;
+      font-size: 0.8vw;
+      color: rgba(0, 0, 0, 0.3);
+      font-family: monospace;
+    }
+    
+    .highlight {
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    .red-highlight {
+      color: #e53e3e;
+      font-weight: 600;
+    }
+    
+    .green-highlight {
+      color: #48bb78;
+      font-weight: 600;
+    }
+    
+    .orange-highlight {
+      color: #ed8936;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <!-- 01 Cover -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">refactor-22</h1>
+      <h2 class="h-sub">自动识别并消除 Martin Fowler 的 22 种代码坏味道</h2>
+    </section>
+
+    <!-- 02 Execution Flow -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">执行流程（Plan Mode）</h2>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">阶段 1</div>
+        <div class="arch-title">全库扫描</div>
+        <div class="arch-desc">运行静态分析工具（radon、jscpd、pylint、eslint）→ 定位 22 种代码坏味道 → 生成问题报告</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">阶段 2</div>
+        <div class="arch-title">优先级排序</div>
+        <div class="arch-desc">High: 重复代码、过长函数、过大类；Medium: 发散式变化、霰弹式修改；Low: 注释过多、冗赘类</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-num">阶段 3</div>
+        <div class="arch-title">逐项修复</div>
+        <div class="arch-desc">对每个识别出的问题，生成重构计划并执行</div>
+      </div>
+    </section>
+
+    <!-- 03 Priority -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">优先级分类</h2>
+      </div>
+      <div class="three-grid">
+        <div class="grid-card high">
+          <div class="grid-title">🔴 High（高优先级）</div>
+          <ul class="grid-list">
+            <li>F1 重复代码</li>
+            <li>F2 过长函数</li>
+            <li>F3 过大的类</li>
+            <li>F4 过长参数列</li>
+          </ul>
+        </div>
+        <div class="grid-card medium">
+          <div class="grid-title">🟠 Medium（中优先级）</div>
+          <ul class="grid-list">
+            <li>F5 发散式变化</li>
+            <li>F6 霰弹式修改</li>
+            <li>F7 依恋情结</li>
+            <li>F8 数据泥团</li>
+          </ul>
+        </div>
+        <div class="grid-card low">
+          <div class="grid-title">🟢 Low（低优先级）</div>
+          <ul class="grid-list">
+            <li>F12 冗赘类</li>
+            <li>F13 夸夸其谈未来性</li>
+            <li>F21 被拒绝的遗赠</li>
+            <li>F22 过多的注释</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 Smells 1-8 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">坏味道映射表（F1-F8）</h2>
+      </div>
+      <table class="smell-table">
+        <tr><th>ID</th><th>坏味道</th><th>重构策略</th></tr>
+        <tr><td><span class="smell-id">F1</span></td><td>重复代码</td><td>Extract Method / Pull Up Method</td></tr>
+        <tr><td><span class="smell-id">F2</span></td><td>过长函数</td><td>Extract Method / Replace Temp</td></tr>
+        <tr><td><span class="smell-id">F3</span></td><td>过大的类</td><td>Extract Class / Extract Subclass</td></tr>
+        <tr><td><span class="smell-id">F4</span></td><td>过长参数列</td><td>Introduce Parameter Object</td></tr>
+        <tr><td><span class="smell-id">F5</span></td><td>发散式变化</td><td>Split Phase / Extract Class</td></tr>
+        <tr><td><span class="smell-id">F6</span></td><td>霰弹式修改</td><td>Move Method / Move Field</td></tr>
+        <tr><td><span class="smell-id">F7</span></td><td>依恋情结</td><td>Move Method / Extract Method</td></tr>
+        <tr><td><span class="smell-id">F8</span></td><td>数据泥团</td><td>Extract Class / Introduce Parameter Object</td></tr>
+      </table>
+    </section>
+
+    <!-- 05 Smells 9-16 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">坏味道映射表（F9-F16）</h2>
+      </div>
+      <table class="smell-table">
+        <tr><th>ID</th><th>坏味道</th><th>重构策略</th></tr>
+        <tr><td><span class="smell-id">F9</span></td><td>基本类型偏执</td><td>Replace Primitive with Object</td></tr>
+        <tr><td><span class="smell-id">F10</span></td><td>Switch语句</td><td>Replace with Polymorphism</td></tr>
+        <tr><td><span class="smell-id">F11</span></td><td>平行继承体系</td><td>Move Method / Introduce Foreign Method</td></tr>
+        <tr><td><span class="smell-id">F12</span></td><td>冗赘类</td><td>Inline Class / Collapse Hierarchy</td></tr>
+        <tr><td><span class="smell-id">F13</span></td><td>夸夸其谈未来性</td><td>Inline Function / Remove Dead Code</td></tr>
+        <tr><td><span class="smell-id">F14</span></td><td>暂时字段</td><td>Extract Class / Introduce Null Object</td></tr>
+        <tr><td><span class="smell-id">F15</span></td><td>过度耦合的消息链</td><td>Hide Delegate / Extract Method</td></tr>
+        <tr><td><span class="smell-id">F16</span></td><td>中间人</td><td>Remove Middle Man / Inline Method</td></tr>
+      </table>
+    </section>
+
+    <!-- 06 Smells 17-22 -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">坏味道映射表（F17-F22）</h2>
+      </div>
+      <table class="smell-table">
+        <tr><th>ID</th><th>坏味道</th><th>重构策略</th></tr>
+        <tr><td><span class="smell-id">F17</span></td><td>内幕交易</td><td>Move Method / Change to Unidirectional</td></tr>
+        <tr><td><span class="smell-id">F18</span></td><td>异曲同工的类</td><td>Change Function Declaration / Move Method</td></tr>
+        <tr><td><span class="smell-id">F19</span></td><td>不完善的库类</td><td>Introduce Foreign Method / Local Extension</td></tr>
+        <tr><td><span class="smell-id">F20</span></td><td>纯稚的数据类</td><td>Encapsulate Record / Move Method</td></tr>
+        <tr><td><span class="smell-id">F21</span></td><td>被拒绝的遗赠</td><td>Push Down Method / Replace with Delegation</td></tr>
+        <tr><td><span class="smell-id">F22</span></td><td>过多的注释</td><td>Extract Method / Rename Method</td></tr>
+      </table>
+    </section>
+
+    <!-- 07 Two Hats -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">重构两顶帽子原则</h2>
+      </div>
+      <div class="three-grid">
+        <div class="grid-card high" style="grid-column: span 2;">
+          <div class="grid-title">🎩 帽子一：添加功能</div>
+          <ul class="grid-list">
+            <li>不修改现有代码</li>
+            <li>只添加新功能</li>
+            <li>添加相应测试</li>
+          </ul>
+        </div>
+        <div class="grid-card low" style="grid-column: span 2;">
+          <div class="grid-title">🎩 帽子二：重构</div>
+          <ul class="grid-list">
+            <li>不添加新功能</li>
+            <li>只调整代码结构</li>
+            <li>保持行为不变</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 Rhythm -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">重构的节奏</h2>
+      </div>
+      <ul class="list">
+        <li><span class="highlight">小步修改</span> - 每次改动都很小，容易回滚</li>
+        <li><span class="highlight">频繁测试</span> - 每次重构后都运行测试，确保行为不变</li>
+        <li><span class="highlight">持续交付</span> - 随时可以停止和交付，代码始终是可工作的</li>
+      </ul>
+    </section>
+
+    <!-- 09 Priority -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">重构手法优先级</h2>
+      </div>
+      <table class="smell-table">
+        <tr><th>优先级</th><th>重构手法</th><th>说明</th></tr>
+        <tr><td>1</td><td><span class="green-highlight">Extract Method</span></td><td>最常用、最安全的重构手法</td></tr>
+        <tr><td>2</td><td><span class="green-highlight">Rename Function</span></td><td>最基础的语义改善</td></tr>
+        <tr><td>3</td><td><span class="orange-highlight">Move Method</span></td><td>解决职责不清问题</td></tr>
+        <tr><td>4</td><td><span class="red-highlight">Extract Class</span></td><td>分解大类，落实单一职责</td></tr>
+      </table>
+    </section>
+
+    <!-- 10 Tools -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">静态分析工具集成</h2>
+      </div>
+      <div class="code-block">
+# Python 复杂度检测
+radon cc . -a
+
+# JavaScript 复杂度检测
+plato .
+
+# 重复代码检测
+jscpd .
+
+# Python 代码检查
+pylint .
+
+# JavaScript 代码检查
+eslint .</div>
+    </section>
+
+    <!-- 11 Security -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">安全机制</h2>
+      </div>
+      <ul class="list">
+        <li><span class="green-highlight">✅</span> 每次修改后运行编译/lint</li>
+        <li><span class="green-highlight">✅</span> 失败立即回滚</li>
+        <li><span class="green-highlight">✅</span> 支持撤销操作</li>
+        <li><span class="green-highlight">✅</span> 原子化操作，每次只应用一种重构手法</li>
+      </ul>
+    </section>
+
+    <!-- 12 Languages -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">语言感知</h2>
+      </div>
+      <div class="three-grid">
+        <div class="grid-card" style="border-color: #3776ab;">
+          <div class="grid-title">🐍 Python</div>
+          <ul class="grid-list">
+            <li>radon 复杂度检测</li>
+            <li>pylint 代码检查</li>
+            <li>jscpd 重复检测</li>
+          </ul>
+        </div>
+        <div class="grid-card" style="border-color: #f7df1e;">
+          <div class="grid-title">📜 JavaScript/TypeScript</div>
+          <ul class="grid-list">
+            <li>plato 复杂度检测</li>
+            <li>eslint 代码检查</li>
+            <li>jscpd 重复检测</li>
+          </ul>
+        </div>
+        <div class="grid-card" style="border-color: #ed8b00;">
+          <div class="grid-title">☕ Java / Go</div>
+          <ul class="grid-list">
+            <li>SonarQube 集成</li>
+            <li>内置规则检测</li>
+            <li>代码质量报告</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 Examples -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">示例用法</h2>
+      </div>
+      <div class="code-block">
+@Refactoring-Expert 扫描 src/ 目录，识别所有的 F1(重复代码) 和 F2(过长函数)
+
+/refactor-22 --target=src/ --auto-mechanical
+
+@Refactoring-Expert 检查 frontend/ 目录的 JavaScript 文件</div>
+    </section>
+
+    <!-- 14 Integration -->
+    <section class="slide content-slide">
+      <div class="slide-header">
+        <h2 class="h-md">与其他技能配合</h2>
+      </div>
+      <table class="smell-table">
+        <tr><th>命令</th><th>功能</th></tr>
+        <tr><td><span class="highlight">/tdd</span></td><td>TDD 测试驱动开发</td></tr>
+        <tr><td><span class="highlight">/refactor-22</span></td><td>代码坏味道重构</td></tr>
+        <tr><td><span class="highlight">/tdd + /refactor-22</span></td><td>测试保护下的重构（推荐）</td></tr>
+      </table>
+    </section>
+
+    <!-- 15 End -->
+    <section class="slide hero-cover">
+      <h1 class="h-hero">refactor-22</h1>
+      <h2 class="h-sub">Martin Fowler 22种代码坏味道 · 自动化重构专家</h2>
+    </section>
+  </div>
+
+  <div id="nav"></div>
+  <div class="foot" id="foot">01/15</div>
+
+  <script>
+    const deck = document.getElementById('deck');
+    const nav = document.getElementById('nav');
+    const foot = document.getElementById('foot');
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      nav.appendChild(dot);
+    });
+
+    function updateNav(current) {
+      document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+      foot.textContent = String(current + 1).padStart(2, '0') + '/' + String(totalSlides).padStart(2, '0');
+    }
+
+    function goToSlide(index) {
+      deck.scrollTo({ left: index * window.innerWidth, behavior: 'smooth' });
+    }
+
+    deck.addEventListener('scroll', () => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      updateNav(current);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const current = Math.round(deck.scrollLeft / window.innerWidth);
+      if (e.key === 'ArrowLeft' && current > 0) goToSlide(current - 1);
+      if (e.key === 'ArrowRight' && current < totalSlides - 1) goToSlide(current + 1);
+    });
+  </script>
+</body>
+</html>
