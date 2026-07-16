@@ -1,7 +1,0 @@
-schema: spec-driven
-created: 2026-07-01
-agents:
-  agent-1-orchestrator: "project-planning-expert, git-commit"
-  agent-2-requirements: "brainstorming, frontend-skill"
-  agent-3-development: "test-driven-development, webapp-testing"
-  agent-4-quality: "code-quality-controller, frontend-design, code-review, TRAE-security-review, bug-fixer"

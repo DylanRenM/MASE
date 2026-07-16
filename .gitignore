@@ -24,3 +24,6 @@ node_modules/
 
 # Backup
 .backup/
+
+# Local-only (bazi-encyclopedia backup)
+bazi-encyclopedia/

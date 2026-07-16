@@ -1,180 +1,143 @@
-# MASE — Measures AI Software Engineering
+# 麦哲思AI软件开发统一流程
 
-> 本项目是 MASE（Measures AI Software Engineering）话题的集中讨论与工作空间，于 2026-07-14 将散落在其他项目中的历史记录和产出物迁移至此。
+> MASE (Measures AI Software Engineering) — v1.1
 
-## 项目概述
+## 概述
 
-**MASE** 是麦哲思科技结合 VIBE 工程（Vibe-Driven AI Engineering）实践经验，沉淀并开源的一套 AI 软件工程统一方法论与工具集。它在 OpenSpec（规范层）和 Superpower/Skills（能力层）的基础上，补齐了流程编排、质量门禁、复盘闭环等关键拼图。
+本框架是一套完整的 AI 辅助软件开发方法论与工具集，核心架构为"**四 Agent · 九原则 · 六阶段 · PDCA 闭环**"。
 
-- **GitHub 仓库**：https://github.com/DylanRenM/MASE（v1.1）
-- **核心架构**：四 Agent · 六阶段 · PDCA 闭环
-- **开源博客**：[MASE：一套会自我进化的 AI 软件工程方法论](https://blog.csdn.net/dylanren/article/details/110038792)
-
-### 架构层级
-
-```
-┌──────────────────────────────────────────┐
-│ MASE（编排层）                             │
-│ 四 Agent 协作 · 六阶段流转 · PDCA 进化     │
-├──────────────────────────────────────────┤
-│ OpenSpec 层（规范层）                      │
-│ proposal / design / specs / tasks         │
-├──────────────────────────────────────────┤
-│ Superpower / Skills 层（能力层）           │
-│ brainstorming / TDD / code-review / ...   │
-└──────────────────────────────────────────┘
-```
-
-### 四 Agent 分工
-
-| Agent | 角色 | 职责 |
-|---|---|---|
-| A1 | 计划与统管 | 接收需求 → 分解任务 → 调度 → 门禁把关 → 发布 |
-| A2 | 需求 | 澄清需求 → 交互原型 → 操作流程 → 系统测试用例 |
-| A3 | 开发 | 技术预研 + POC → 架构设计 → TDD 构建 |
-| A4 | 质量 | 设计评审 → 代码评审+安全扫描 → BUG修复 → 复盘 |
-
-### 六阶段
-
-Proposal → Design → Build → Verify → Retro → Release
-
-### 八大工程原则
-
-1. 需求澄清确认（原型确认后才进入开发）
-2. 设计预研，消除风险（技术预研 + POC 验证）
-3. TDD 驱动（内外双循环）
-4. 验证与确认检查（端到端验证 + 合规审查）
-5. 根因分析（任何 Bug 必须找到根本原因）
-6. 系统化解决（杜绝临时补丁）
-7. 固定节奏提交（每 20 次对话一次提交）
-8. 及时备份（删除/回退前必做备份）
+- **四 Agent**：计划与统管 (A1) + 需求 (A2) + 开发 (A3) + 质量 (A4)
+- **九大工程原则**：需求澄清 → 设计预研 → 契约式约束 → TDD 驱动 → E2E 验证 → 根因分析 → 系统化解决 → 固定节奏提交 → 及时备份
+- **六阶段**：Proposal → Design → Build → Verify → Retro → Release
+- **PDCA 闭环**：每一次开发都在自我进化
 
 ---
 
-## 目录结构
+## ⚠️ 安装顺序（必读）
 
 ```
-MASE/
-├── README.md                           # 本文件
-├── github-repo/                        # GitHub 仓库（v1.1，通过 ZIP 下载解压）
-├── training/                           # 培训材料
-│   ├── mase-framework/                 # MASE 框架培训（5个文件）
-│   ├── ai4se/                          # AI4SE 培训体系（9个文件）
-│   └── skills/                         # Skill 系列培训（9个文件）
-├── framework/                          # 框架文档与演示
-│   ├── process-framework.html          # 过程框架
-│   ├── hmm-presentation.html           # HMM 演示
-│   ├── harness-maturity-model.md       # HMM 模型文档
-│   ├── risd-framework.html             # RISD 框架
-│   ├── AInotSilver.html
-│   ├── 需求工程标准-中文版.html
-│   ├── org-harness-framework/          # 组织级 Harness 框架
-│   │   ├── dod.md
-│   │   ├── lcm.md
-│   │   └── README.md
-│   ├── spec-contract-tdd/              # Spec、契约与 TDD 融合之道
-│   │   ├── ai-spec-contract-tdd.html
-│   │   ├── _shared/fonts/              # 字体资源
-│   │   └── assets/                     # 图片资源
-│   └── playwright/                     # Playwright 测试规范
-│       ├── playwright-standards.md     # 元素定位规范
-│       └── 2026-07-12-playwright-e2e-testing-design.md  # 设计文档
-├── scripts/                            # PPT 生成与分析脚本（9个文件）
-├── tests/                              # 测试示例
-│   └── test_api_contract.py            # API 接口契约测试
-├── history/                            # 历史讨论记录
-│   └── MASE_历史讨论汇总.md            # 完整历史汇总
-└── .gitignore
+第 1 步：  ./install.sh          → 部署框架组件到 ~/.measures-framework/
+第 2 步：  pip install -e .       → 安装 mase 命令行工具
+第 3 步：  mase init ...          → 创建新项目
+```
+
+**必须先运行 `install.sh`，再执行 `pip install`。** 颠倒顺序会导致 `mase init` 生成的 `mase check` 缺少工程规则文件（98% → 100% 的区别）。
+
+---
+
+## 第 1 步：安装框架
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+安装脚本会自动完成：
+
+| 操作 | 目标位置 |
+|------|---------|
+| 部署项目模板 | `~/.measures-framework/templates/` |
+| 部署 Agent 定义（4个） | AI IDE skills 目录（自动检测） |
+| 部署 Skills（11个） | AI IDE skills 目录（自动检测） |
+| 部署工程规则 | `~/.measures-framework/project-rules.md` |
+| 部署文档 + 使用手册 | `~/.measures-framework/docs/` |
+| 部署培训讲义 | `~/.measures-framework/training/` |
+| 部署文档索引页 | `~/.measures-framework/index.html` |
+
+支持的 AI IDE：Trae / Cursor / Windsurf（自动检测 skills 目录）。
+
+---
+
+## 第 2 步：安装 CLI
+
+```bash
+pip install -e . --break-system-packages
+```
+
+> macOS 用户需要加 `--break-system-packages`（PEP 668）。Linux 用户如果遇到同样错误也加此参数。建议使用虚拟环境：
+> ```bash
+> python3 -m venv .venv && source .venv/bin/activate && pip install -e .
+> ```
+
+验证安装：
+
+```bash
+mase --help
 ```
 
 ---
 
-## 培训材料索引
+## 第 3 步：创建项目
 
-### MASE 框架培训（[training/mase-framework/](training/mase-framework/)）
+```bash
+mase init my-project -p my_app -c auth payment
 
-| 文件 | 说明 |
-|---|---|
-| MASE框架培训讲义.pptx | 最新版（37页，16:9，深蓝+金色+青色） |
-| MASE框架培训讲义V1.pptx | V1 版本 |
-| MASE框架培训讲义V1.pdf | V1 PDF 版 |
-| MASE框架培训讲义V01.pptx | AIM 版本 |
-| MASE框架培训大纲.xlsx | 培训大纲（2天/半天） |
+cd my-project
 
-### AI4SE 培训体系（[training/ai4se/](training/ai4se/)）
+# （可选）安装项目开发依赖
+pip install -e .
 
-| 文件 | 说明 |
-|---|---|
-| AI4SE培训课件-V1.pptx | AI4SE 课件 V1 |
-| AI4SE培训课件-V0.pptx | AI4SE 课件 V0 |
-| AI4SE培训课件-V1.pdf | AI4SE 课件 PDF |
-| AI4SE培训大纲.xlsx | 半天 3 小时大纲 |
-| AI4SE-思想与实践.html | HTML 版思想与实践 |
-| AI软件工程培训讲义.pptx | AI 软件工程讲义 |
-| AI编程思想完整分类归集.docx | 编程思想分类 |
-| 培训大纲案例.xlsx | 大纲参考案例 |
-| measures-training.html | HTML 培训材料 |
+# 合规检查
+mase check
+```
 
-### Skill 系列培训（[training/skills/](training/skills/)）
+预期输出：`MASE 合规检查 — ✓ 通过  41/41  100%`
 
-| 文件 | 说明 |
-|---|---|
-| 白话Skill.html / .pptx | Skill 通俗讲解 |
-| what-is-skill.html / -v2.html | Skill 概念介绍 |
-| skill-vs-program.html | Skill 与程序对比 |
-| skill-vs-prompt.html | Skill 与 Prompt 对比 |
-| skill-experience.html | Skill 实践经验 |
-| refactor-22-case.html / -full.html | 22 种代码坏味道重构 |
+然后对 AI 说：**"创建新项目 my-project"** — 六阶段自动运转。
 
 ---
 
-## 框架文档索引
+## 包含内容
 
-| 文件 | 路径 | 说明 |
-|---|---|---|
-| process-framework.html | [framework/](framework/process-framework.html) | 过程框架演示 |
-| hmm-presentation.html | [framework/](framework/hmm-presentation.html) | HMM 成熟度模型演示 |
-| harness-maturity-model.md | [framework/](framework/harness-maturity-model.md) | HMM 模型文档 |
-| risd-framework.html | [framework/](framework/risd-framework.html) | RISD 框架 |
-| org-harness-framework/ | [framework/](framework/org-harness-framework/) | 组织级 Harness 框架（dod/lcm） |
-| ai-spec-contract-tdd.html | [framework/spec-contract-tdd/](framework/spec-contract-tdd/ai-spec-contract-tdd.html) | AI 编程的三重奏：Spec、契约与 TDD 的融合之道 |
-| playwright-standards.md | [framework/playwright/](framework/playwright/playwright-standards.md) | Playwright 元素定位规范 |
-| playwright-e2e-testing-design.md | [framework/playwright/](framework/playwright/2026-07-12-playwright-e2e-testing-design.md) | Playwright E2E 测试设计文档 |
-
----
-
-## 测试示例
-
-| 文件 | 路径 | 说明 |
-|---|---|---|
-| test_api_contract.py | [tests/](tests/test_api_contract.py) | API 接口契约测试（字段命名一致性、响应结构验证） |
+| 目录 | 内容 |
+|------|------|
+| `agents/` | 4 个 Agent 定义（计划与统管 / 需求 / 开发 / 质量，含阶段流程 + 门禁规则） |
+| `templates/` | 项目初始化模板（proposal/design/specs/tasks/contract + cases/lessons 模板） |
+| `skills/` | 11 个 AI Skills 定义（全 MASE 六阶段覆盖） |
+| `project-rules.md` | 九大工程原则 + E2E 门禁 + 契约约束（AI 可读格式） |
+| `docs/` | 框架设计文档 + 项目结构规范 + 使用手册 |
+| `training/` | 35 页 Vellum 风格培训讲义（HTML，可直接浏览器打开） |
+| `index.html` | 框架文档索引入口页 |
 
 ---
 
-## 历史讨论
+## 九大工程原则
 
-完整的 MASE 历史讨论汇总请参阅 [history/MASE_历史讨论汇总.md](history/MASE_历史讨论汇总.md)。
-
-历史讨论来源：
-- **日常办公项目**（2026-07-07 ~ 07-08）：MASE 框架培训讲义 PPT 生成与多轮格式调整
-- **SOLO Agent 项目**（2026-07-08）：AI4SE 培训大纲生成与字体统一
-
----
-
-## 待处理事项
-
-- [x] ~~GitHub 仓库克隆~~：已通过 ZIP 下载解压到 `github-repo/` 目录（git clone 因网络超时失败，改用 curl + Python zipfile 方案成功）
+1. **需求澄清确认** — 原型确认后才进入开发
+2. **设计预研，消除风险** — 技术预研 + POC 验证
+3. **契约式约束** — 从 Spec 推导 DbC 契约（前置/后置/不变式），TDD 翻译到测试 + 运行时断言
+4. **TDD 驱动** — 内外双循环：spec 驱动 + 测试驱动
+5. **验证与确认检查** — E2E 自动化回归 + 人工探索性测试 + 合规审查
+6. **根因分析** — 任何改错必找到根本原因
+7. **系统化解决** — 杜绝临时补丁
+8. **固定节奏提交** — 每 20 次对话做提交
+9. **及时备份** — 删除/回退必做备份
 
 ---
 
-## 迁移记录
+## 命令速查
 
-- **迁移日期**：2026-07-14
-- **迁移方式**：复制（保留原件）
-- **迁移范围**：MASE 框架核心 + AI4SE 培训体系 + Skill 系列 + HMM + Spec/契约/TDD 融合文档 + Playwright 测试规范 + API 契约测试
-- **原件位置**：日常办公、新讲义、org-harness-framework、pilot、numerology、新想法等项目
-- **记忆迁移**：20260705（TDD）+ 20260707 + 20260708 + 20260713（Playwright）四期 session memory 已复制到本项目 memory 目录
+```bash
+mase init <name> -p <pkg> -c <caps...>   # 创建项目
+mase check                                 # 合规检查（含阶段状态追踪）
+mase --help                                # 完整帮助
+```
 
-## License
+---
 
-MIT © 2026 麦哲思科技 (Measures Technology)
+## 相关文档
+
+- [框架设计文档](docs/MASE-framework.md)
+- [使用手册](docs/user-guide.md)
+- [项目目录结构规范](docs/project-structure-spec.md)
+- [培训讲义（浏览器打开）](training/measures-training.html)
+
+---
+
+## 版本
+
+v1.2 — 2026-07-16
+
+## 许可
+
+Measures (麦哲思) 版权所有
