@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# 麦哲思AI软件开发统一流程 — 安装脚本 v1.1
+# 麦哲思AI软件开发统一流程 — 安装脚本 v1.2
 # MASE (Measures AI Software Engineering)
 # ============================================================
 set -e
@@ -10,7 +10,7 @@ MEASURES_HOME="$HOME/.measures-framework"
 
 echo ""
 echo "  ╔══════════════════════════════════════════╗"
-echo "  ║  麦哲思AI软件开发统一流程  v1.1         ║"
+echo "  ║  麦哲思AI软件开发统一流程  v1.2         ║"
 echo "  ║  MASE (Measures AI Software Engineering)║"
 echo "  ╚══════════════════════════════════════════╝"
 echo ""

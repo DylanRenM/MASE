@@ -1,6 +1,6 @@
 # 麦哲思AI软件开发统一流程
 
-> MASE (Measures AI Software Engineering) — v1.1
+> MASE (Measures AI Software Engineering) — v1.2
 
 ## 概述
 
