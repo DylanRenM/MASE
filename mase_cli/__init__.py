@@ -1,3 +1,3 @@
 """MASE — Measures AI Software Engineering CLI"""
 
-__version__ = "1.0"
+__version__ = "1.3"

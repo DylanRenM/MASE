@@ -87,7 +87,7 @@
 <body>
 
 <h1>MASE 麦哲思AI软件开发统一流程</h1>
-<p class="subtitle">Measures AI Software Engineering — v1.1 — 四Agent · 六阶段 · PDCA 闭环</p>
+<p class="subtitle">Measures AI Software Engineering — v1.3 — 四Agent · 六阶段 · PDCA 闭环</p>
 
 <h2>快速开始</h2>
 <div class="card">
@@ -124,7 +124,7 @@ pip install -e .
   <div class="phase-card">
     <h4>4. Verify <span class="badge warn">C</span></h4>
     <p class="agent">Agent 4</p>
-    <p>端到端验证 → bug-fixer 微循环 → 全部 BUG 关闭</p>
+    <p>端到端验证 → E2E 自动化回归 + 环境恢复 → bug-fixer 微循环 → 全部 BUG 关闭</p>
   </div>
   <div class="phase-card">
     <h4>5. Retro <span class="badge warn">A</span></h4>
@@ -175,6 +175,9 @@ pip install -e .
   <li>📄 <a href="project-rules.md">九大工程原则</a> — AI IDE 常驻加载的精简规则</li>
 </ul>
 <ul class="link-list">
+  <li>📄 <a href="docs/superpowers/specs/2026-07-17-e2e-environment-isolation-design.md">E2E 环境隔离设计</a> — Sandbox 三层防线：快照恢复 + 写入重定向 + 环境验证</li>
+</ul>
+<ul class="link-list">
   <li><strong>模板</strong></li>
   <li>📂 <a href="templates/">templates/</a> — 项目模板、proposal/contract/spec 模板</li>
 </ul>
@@ -186,6 +189,8 @@ pip install -e .
   <li><strong>CLI 命令</strong></li>
   <li><kbd>mase init &lt;name&gt; -p &lt;pkg&gt; -c &lt;caps...&gt;</kbd> — 创建新项目</li>
   <li><kbd>mase check</kbd> — 在项目目录下执行合规检查（含阶段状态）</li>
+  <li><kbd>mase update</kbd> — 同步框架最新版本到已有 MASE 项目</li>
+  <li><kbd>mase update --dry-run</kbd> — 预览可更新内容</li>
 </ul>
 
 <h2>TDD 微循环（10步）</h2>
@@ -207,7 +212,7 @@ pip install -e .
 </div>
 
 <p style="margin-top:3rem; color:var(--muted); font-size:0.85rem; text-align:center;">
-  MASE v1.1 — Measures AI Software Engineering — 麦哲思科技
+  MASE v1.3 — Measures AI Software Engineering — 麦哲思科技
 </p>
 
 </body>

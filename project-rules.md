@@ -25,12 +25,14 @@
 - **定位**: Build
 - **规则**: 先写测试再写代码，E2E 同步编写
 - **微循环**: 复用检查 → 契约翻译测试 → 行为测试 → 实现 → 单测+集成+契约 → E2E → 功能测试 → 代码评审 → 安全扫描 → git commit
+- **E2E 环境隔离**: 每个 spec 文件 `beforeAll` 调用 sandbox 快照，`afterAll` 自动恢复环境（文件/配置/目录），防止测试污染
 - > 完整 10 步定义: [Agent 3 SKILL.md](agents/agent-3-development/SKILL.md#build-tdd-微循环10-步)
 
 ## R05: 验证与确认检查
 - **定位**: Verify
 - **规则**: E2E 自动化回归 + 契约测试 + 合规审查
 - **硬阻断**: P0 E2E 100% + API 契约测试 100%
+- **E2E 环境验证**: 回归完成后 sandbox 自动恢复环境，不一致即阻断后续测试
 - **豁免**: 需 Agent 1 批准（详见 [Agent 1 DoD](agents/agent-1-orchestrator/SKILL.md)）
 
 ## R06: 根因分析
@@ -68,3 +70,4 @@
 | 项目结构 | [project-structure-spec.md](docs/project-structure-spec.md) | 初始化时 |
 | 术语表 | [glossary.md](docs/glossary.md) | 术语混淆时 |
 | E2E 定位规范 | [webapp-testing](skills/webapp-testing/SKILL.md) | E2E 编写时 |
+| E2E 沙箱环境 | [sandbox 配置](templates/sandbox.config.json) | E2E 环境隔离 |

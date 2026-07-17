@@ -25,5 +25,8 @@ node_modules/
 # Backup
 .backup/
 
+# E2E Sandbox (runtime artifacts)
+e2e/sandbox/
+
 # Local-only (bazi-encyclopedia backup)
 bazi-encyclopedia/

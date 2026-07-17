@@ -8,9 +8,9 @@ FRAMEWORK_HOME = os.path.expanduser("~/.measures-framework")
 
 MASE_YAML_TEMPLATE = """\
 # MASE 项目标识文件
-# MASE (Measures AI Software Engineering) v1.1
+# MASE (Measures AI Software Engineering) v1.3
 mase:
-  version: "1.1"
+  version: "1.3"
   created: "{created}"
   project: "{name}"
 """

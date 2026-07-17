@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-from mase_cli.commands import init_project, check_project
+from mase_cli.commands import init_project, check_project, update_project
 
 
 def main():
@@ -25,6 +25,15 @@ def main():
     # --- mase check ---
     sub.add_parser("check", help="合规检查当前项目")
 
+    # --- mase update ---
+    update_parser = sub.add_parser("update", help="同步框架更新到已有项目")
+    update_parser.add_argument("--check", dest="check_only", action="store_true",
+                               help="仅检查可更新组件，不执行修改")
+    update_parser.add_argument("--dry-run", action="store_true",
+                               help="预览变更，不实际修改")
+    update_parser.add_argument("--dir", "-d", default=".",
+                               help="项目目录 (默认: 当前目录)")
+
     # --- Parse ---
     args = parser.parse_args()
 
@@ -32,6 +41,8 @@ def main():
         init_project.run(args)
     elif args.command == "check":
         check_project.run()
+    elif args.command == "update":
+        update_project.run(args)
     else:
         parser.print_help()
         sys.exit(1)

@@ -23,7 +23,8 @@ mkdir -p src/{pkg}/shared/{config,database,utils}
 mkdir -p tests/unit/{capability1,capability2}/{models,services,routes}
 mkdir -p tests/unit/shared/{config,database,utils}
 mkdir -p tests/integration
-mkdir -p tests/e2e
+mkdir -p tests/e2e/helpers
+mkdir -p tests/e2e/sandbox/{uploads,exports,logs,snapshots,backups}
 mkdir -p tests/fixtures/{capability1,capability2}/{models,services}
 
 # 其他目录
@@ -33,6 +34,7 @@ mkdir -p docs/cases/{bugs,patterns,pitfalls}
 
 # 根目录文件
 touch .env.example .gitignore Makefile README.md
+touch sandbox.config.json
 touch tests/conftest.py tests/__init__.py
 touch tests/e2e/conftest.py
 ```
@@ -61,6 +63,15 @@ project-root/
 │   ├── integration/
 │   ├── e2e/                   # E2E 测试（Playwright）
 │   │   ├── conftest.py
+│   │   ├── helpers/            # Page Object + Sandbox
+│   │   │   ├── pages.js
+│   │   │   └── sandbox.js
+│   │   ├── sandbox/            # 运行时隔离目录（.gitignore）
+│   │   │   ├── uploads/
+│   │   │   ├── exports/
+│   │   │   ├── logs/
+│   │   │   ├── snapshots/
+│   │   │   └── backups/
 │   │   └── test_p0.py
 │   ├── fixtures/{capability}/
 │   └── conftest.py
@@ -86,6 +97,7 @@ project-root/
 ├── scripts/
 ├── config/
 ├── project-rules.md            # MASE 工程原则（AI IDE 自动加载）
+├── sandbox.config.json         # E2E 环境隔离配置
 ├── pyproject.toml
 ├── Makefile
 ├── .env.example

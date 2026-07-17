@@ -1,6 +1,6 @@
 # 麦哲思AI软件开发统一流程
 
-> MASE (Measures AI Software Engineering) — v1.2
+> MASE (Measures AI Software Engineering) — v1.3
 
 ## 概述
 
@@ -106,8 +106,8 @@ mase check
 1. **需求澄清确认** — 原型确认后才进入开发
 2. **设计预研，消除风险** — 技术预研 + POC 验证
 3. **契约式约束** — 从 Spec 推导 DbC 契约（前置/后置/不变式），TDD 翻译到测试 + 运行时断言
-4. **TDD 驱动** — 内外双循环：spec 驱动 + 测试驱动
-5. **验证与确认检查** — E2E 自动化回归 + 人工探索性测试 + 合规审查
+4. **TDD 驱动** — 内外双循环：spec 驱动 + 测试驱动，含 E2E 环境隔离
+5. **验证与确认检查** — E2E 自动化回归 + 环境自动恢复 + 人工探索 + 合规审查
 6. **根因分析** — 任何改错必找到根本原因
 7. **系统化解决** — 杜绝临时补丁
 8. **固定节奏提交** — 每 20 次对话做提交
@@ -120,6 +120,9 @@ mase check
 ```bash
 mase init <name> -p <pkg> -c <caps...>   # 创建项目
 mase check                                 # 合规检查（含阶段状态追踪）
+mase update                                # 同步框架最新版本到已有项目
+mase update --dry-run                      # 预览更新变更（不实际修改）
+mase update --check                        # 仅检查可更新组件
 mase --help                                # 完整帮助
 ```
 
@@ -136,7 +139,7 @@ mase --help                                # 完整帮助
 
 ## 版本
 
-v1.2 — 2026-07-16
+v1.3 — 2026-07-17
 
 ## 许可
 

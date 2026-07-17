@@ -98,6 +98,39 @@ with sync_playwright() as p:
 - 每个 spec 文件 `beforeAll` 重新跑 `seed.py`
 - `trace: 'on-first-retry'` 必须开启
 
+### E2E Sandbox — 环境隔离与自动恢复
+
+E2E 测试可能通过 UI 操作修改系统设置、上传文件、变更配置。为避免测试污染真实环境，
+每个 spec 文件必须使用 sandbox helper 进行环境快照与恢复。
+
+**核心机制**：
+- `beforeAll` → `sandbox.snapshot()` — 捕获文件、目录、环境变量快照
+- `afterAll` → `sandbox.restore()` — 恢复到快照状态
+- `afterAll` → `sandbox.verify()` — 验证恢复一致性，不一致时 Block 后续测试
+
+**在 spec 文件中集成**：
+
+```javascript
+import { snapshot, restore, verify } from '../helpers/sandbox.js';
+
+test.beforeAll(async () => {
+  await snapshot();           // 1. 捕获环境快照
+  // ... seed.py 调用 ...     // 2. 已有：重建测试数据库
+});
+
+test.afterAll(async () => {
+  await restore();            // 3. 恢复环境
+  await verify();             // 4. 验证恢复一致性
+});
+```
+
+**配置**：项目根目录 `sandbox.config.json` 声明需保护的资源（目录、文件、环境变量）。
+
+**写入重定向**：`playwright.config.js` 中注入 `E2E_SANDBOX_MODE=true` 环境变量，
+应用代码读取后将上传/导出/日志写入 `e2e/sandbox/` 临时目录，不触及生产路径。
+
+**sandbox 目录**（`.gitignore`）：`e2e/sandbox/` 为运行时产物，不做版本控制。
+
 ## E2E Test Authoring
 
 ### 元素定位规范
