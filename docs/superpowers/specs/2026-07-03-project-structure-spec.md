@@ -1,3 +1,9 @@
+---
+normative: false
+status: superseded
+superseded_by: docs/project-structure-spec.md
+---
+
 # 项目目录结构规范
 
 > 所有新项目必须遵循此结构，Classify 代码文件时严格遵守。

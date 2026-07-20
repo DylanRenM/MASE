@@ -2,6 +2,7 @@
 
 > **加载策略**: 按需加载。架构设计、设计评审时注入上下文。
 > **适用阶段**: Design L2 架构设计、Agent 4 设计评审、Build 阶段重构决策。
+> **Profile 路由**: Lite 只检查当前 diff 的 KISS/YAGNI 与所有权；Standard 检查 capability 边界；Strict 才执行完整 SOLID/GRASP 架构评审。
 
 ---
 

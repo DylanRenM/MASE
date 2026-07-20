@@ -2,6 +2,8 @@
 change: "<change-name>"
 created: "YYYY-MM-DD"
 agent: "agent-3-development"
+profiles: [strict]
+generated_when: "state machine, irreversible migration, complex data model or algorithm"
 ---
 
 ## 管道/流程设计

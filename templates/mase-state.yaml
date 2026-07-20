@@ -1,13 +1,17 @@
-# MASE OpenSpec 配置
-schema: "mase-project/v1"
+# MASE change 唯一状态源；由 CLI 更新，不从人工报告反推。
+schema: mase-project/v2
+profile: standard
+stack: generic
+phase: draft
 
-# 项目类型声明
 project_type:
   has_ui: false
   ui_platform: null
 
-# 当前开发阶段: proposal | design | build | verify | retro | release
-phase: draft
+risk:
+  triggers: []
+  capabilities: {}
 
-# Capability 列表（由 mase init 自动填充）
+gates: {}
+evidence: []
 capabilities: []

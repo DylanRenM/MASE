@@ -2,6 +2,8 @@
 change: "<change-name>"
 created: "YYYY-MM-DD"
 agent: "agent-3-development"
+profiles: [standard, strict]
+generated_when: "cross-cutting architecture or high-risk boundary"
 ---
 
 ## 系统架构图

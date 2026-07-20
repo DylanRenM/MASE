@@ -1,271 +1,69 @@
-# 麦哲思AI软件开发统一流程 — 使用手册
+# MASE v2 使用手册
 
-> 适用于通过 Agent 协作的增量式软件开发流程
+## 安装
 
-## 快速开始
-
-一句话：**说需求，Agent 1 自动调度其他 Agent 走完全流程。**
-
-```
-用户: "我要做一个XXX功能"
-     ↓
-Agent 1 (统管): 分发 → Agent 2 做需求澄清 → Agent 3 做技术预研+开发 → Agent 4 做质量把关
-```
-
----
-
-## 六个阶段（PDCA 闭环）
-
-| 阶段 | PDCA | 谁干 | 产出什么 | 你看什么 |
-|------|:---:|------|---------|---------|
-| 1. 需求 | P | Agent 2 | proposal + 原型 + 测试用例 | 原型能不能走通 |
-| 2. 设计 | P | Agent 3 + 4 | tech-feasibility + architecture + specs | POC 跑通？架构合理？ |
-| 3. 构建 | D | Agent 3 + 4 | 可运行的代码 + 自动化测试 | 代码评审报告 |
-| 4. 验证 | C | Agent 4 | 全部 BUG 关闭 | 端到端测试通过 |
-| 5. 复盘 | A | Agent 4 + 1 | 复盘报告 + 改进措施 | 经验是否沉淀？流程是否改进？ |
-| 6. 发布 | — | Agent 1 | commit + 手册 + 归档 | git log |
-
----
-
-## 阶段 1：需求（Proposal）
-
-**触发**：你说"我要做XXX功能"
-
-**流程**：
-1. Agent 2 通过 `brainstorming` 逐问题澄清需求
-2. Agent 2 用 `frontend-skill` 生成可交互 HTML 原型
-3. Agent 2 编写 proposal.md（含操作流程 + 系统测试用例）
-
-**你确认**：
-- [ ] 看 HTML 原型 → 操作流程是否通顺？
-- [ ] 看 proposal.md → Success Criteria 是否覆盖了你的期望？
-- [ ] 看测试用例表 → 是否所有关键路径都有用例？
-
-**典型对话**：
-```
-你: 我想做一个书籍合并去重的工具
-Agent 2: 输入是电子书文件对吧？支持什么格式？
-你: EPUB/TXT/PDF
-Agent 2: 我生成一个原型你看看 → [HTML 原型]
-你: 这里加一个进度条
-...
-你: 没问题，进入设计阶段
-```
-
----
-
-## 阶段 2：设计（Design）
-
-### Layer 1：技术可行性研究（Agent 3 执行）
-
-**流程**：
-1. 识别技术难点，联网搜索成熟方案 + 最新技术
-2. 评估外部依赖，每个都写 POC 验证脚本跑通
-3. 提取可复用构件清单
-
-**产出**：`tech-feasibility.md`，含 3 张汇总表 + POC 验证记录
-
-**你确认**：
-- [ ] 所有 POC 脚本跑通了？
-- [ ] 每个技术难点都有可行方案？
-- [ ] 可复用构件清单列出来了？
-
-### Layer 2：架构设计（Agent 3 执行）
-
-**产出**：
-- `architecture.md` — 架构图 + 技术栈 + 模块边界
-- `detailed-design.md` — 数据模型 + API + 管道设计
-- `contract.md` — 三层契约定义（API/模块/函数级）
-- `specs/{capability}/spec.md` — Gherkin 验收规格
-- `tasks.md` — 开发任务清单（`project-planning-expert` 编排）
-
-### 设计评审（Agent 4 执行）
-
-- `code-quality-controller`：架构合规 + 需求一致性 + 文档一致性
-- `frontend-design`（如涉及 UI）：视觉/交互/响应式/a11y 审查
-
-**典型对话**：
-```
-你: 进入设计阶段
-Agent 3: 先做技术预研。BGE 嵌入模型选哪个版本？
-你: bge-large-zh-v1.5
-Agent 3: POC 验证脚本跑通了。向量库 Qdrant 本地 Docker 部署验证 OK。
-...
-Agent 3: architecture.md 写好了，你确认下
-你: 模块边界可以，继续
-Agent 3: detailed-design.md + contract.md 完成，进入 specs 编写
-Agent 4: 设计评审通过：架构合规 ✅，需求一致性 ✅，文档一致性 ✅
-```
-
----
-
-## 阶段 3：构建（Build）
-
-**TDD 微循环（10步）**：每个 Capability 的每个 Scenario，按以下步骤：
-
-```
-① 复用检查 → 对照可复用构件清单
-② 契约翻译 → 测试（contract.md → TDD RED）
-③ 写行为测试 → pytest（TDD 内层循环）
-④ 写实现代码（含运行时断言 require/ensure/invariant_check）
-⑤ 跑测试（单元 + 集成 + 契约测试）
-⑥ E2E 测试（has_ui: true 时，webapp-testing）
-⑦ 功能测试 → webapp-testing
-⑧ 代码评审 → code-review（含 spec 合规 + 契约合规 + 代码规约）
-⑨ 安全扫描 → security-review
-⑩ 通过 → git commit
-```
-
-**Agent 3 写代码，Agent 4 是旁路质量防线。**
-
-**典型对话**：
-```
-Agent 1: book-parser capability 开始构建
-Agent 3: Scenario 1 -- 契约翻译 → 写测试 → 写实现 → 测试通过 ✅
-Agent 4: 代码评审：spec 合规 ✅，代码规约：变量命名建议 snake_case ⚠️
-Agent 3: 已修改
-Agent 4: 评审通过 ✅
-Agent 3: Scenario 2 -- ...
-Agent 1: book-parser 全部 Scenario 完成 → 提交
-```
-
----
-
-## 阶段 4：验证（Verify）
-
-全部 Capability 构建完成后，你做端到端测试，发现问题 → Agent 4 修复。
-
-**BUG 修复微循环**：
-```
-发现 BUG → bug-fixer 修复 → 回归验证 → 测试缺口复盘
-    → 横向扫描同类 BUG → 经验教训记录 → BUG 关闭
-```
-
-**典型对话**：
-```
-你: 上传 EPUB 文件报 500 错误
-Agent 4: bug-fixer 启动 → 路径 A：崩溃错误
-Agent 4: 根因是章节解析时空章节导致 NoneType → 已修复
-Agent 4: 回溯：自动化测试为什么没发现？
-          → epubs/ 里没有空章节的测试用例
-          → 已补充 test_empty_chapter.py
-Agent 4: 横向扫描：PDF/TXT 解析器也有同样风险 → 已加固
-Agent 4: 经验记录：空章节边界条件 ✓
-你: 继续 → 无新 BUG → 验证通过
-```
-
----
-
-## 阶段 5：复盘（Retrospective — PDCA 闭环）
-
-验证通过后，Agent 4 做系统性复盘：
-
-**产出**：`docs/lessons/YYYY-MM-DD-{project}-retro.md`
-
-**复盘内容**：
-```
-① 收集材料 — 本轮所有 lessons / cases / 代码评审记录
-② 模式分析 — 高发 BUG 模式 / 测试盲区 / 设计缺陷 / 流程短板
-③ 产出报告 — 含改进措施
-④ 执行改进 — 更新 Skill 规则 / 模板 / 代码规约 / 门禁 Checklist
-```
-
-**典型对话**：
-```
-Agent 4: 本轮复盘：
-         - BUG 共 5 个，其中 3 个是空值边界遗漏
-         - 测试盲区：epub/txt/pdf 解析器缺少空输入测试 → 已补充
-         - 建议：code-review 第 7 组增加空值检查规约
-你: 同意，更新规约
-Agent 4: code-review SKILL.md 已更新 ✓
-Agent 1: 复盘报告已存档 → 进入发布
-```
-
----
-
-## 阶段 6：发布（Release）
-
-Agent 1 自动执行：
-1. 最终合规审查（对照 spec + design 全量检查）
-2. 生成使用手册（就是这份文档）
-3. git commit（Conventional Commit + 变更摘要）
-4. 归档 OpenSpec Change
-
-**你只需要说"发布"即可。**
-
----
-
-## 四个 Agent 速查
-
-| Agent | 角色 | 一句话职责 |
-|-------|------|-----------|
-| Agent 1 | 计划与统管 | 接收需求 → 分解任务 → 调度 ABC → 门禁 → 发布 |
-| Agent 2 | 需求 | 问清楚你要什么 → 原型确认 → 生成验收标准 |
-| Agent 3 | 开发 | 预研 + 架构 + 编码 → 做了还要做对 |
-| Agent 4 | 质量 | 设计评审 + 代码评审 + 安全扫描 + BUG 修复，专门挑刺 |
-
----
-
-## 命令速查
-
-| 你说的话 | 触发动作 |
-|---------|---------|
-| "我要做 XXX 功能" | 启动阶段 1：需求 |
-| "创建新项目" | 按模板初始化目录结构 + openspec |
-| "进入设计阶段" | 启动阶段 2：设计 |
-| "开始构建" | 启动阶段 3：TDD 构建 |
-| "端到端测试" | 启动阶段 4：验证 |
-| "复盘总结" | 启动阶段 5：复盘（PDCA-ACT） |
-| "发布" | 启动阶段 6：发布归档 |
-| "发现 BUG：XXX" | Agent 4 bug-fixer 介入 |
-
----
-## 项目结构速查
-
-| 目录 | 放什么 | 谁维护 |
-|------|--------|--------|
-| `src/{pkg}/{capability}/models/` | 数据模型 | Agent 3 |
-| `src/{pkg}/{capability}/services/` | 业务逻辑 | Agent 3 |
-| `src/{pkg}/{capability}/routes/` | API 路由 | Agent 3 |
-| `src/{pkg}/{capability}/schemas/` | 请求/响应 Schema | Agent 3 |
-| `src/{pkg}/shared/` | 跨 capability 共享代码 | Agent 3 |
-| `tests/unit/{capability}/` | 单元测试（镜像 src/） | Agent 3 |
-| `tests/integration/` | 集成测试 | Agent 3 |
-| `tests/fixtures/` | 测试数据 | Agent 3 |
-| `docs/user-guide.md` | 使用手册 | Agent 1 |
-| `docs/lessons/` | 经验教训 | Agent 4 |
-| `docs/cases/bugs/` | BUG 案例 | Agent 4 |
-| `docs/cases/patterns/` | 可复用模式 | Agent 3 |
-| `docs/cases/pitfalls/` | 踩坑记录 | 任何 Agent |
-| `openspec/changes/{name}/` | 当前变更的规范文档 | Agent 2+3 |
-
-详细规范见：`docs/project-structure-spec.md`（框架内置文档）。
-
-初始化一行命令：
 ```bash
-mase init my-project -p my_app -c auth payment
+python3 -m pip install .
+mase install --source .
+mase --version
 ```
 
----
+`mase install` 只复制 `framework-manifest.yaml` 声明的运行时，不复制历史、培训或产品实例。
 
-## 常见问题
+## 创建项目
 
-**Q: 可以跳过某个阶段吗？**
-A: 不建议。每个阶段有门禁检查，跳过会导致后续阶段无法进入。
+```bash
+# 低风险通用项目
+mase init demo --stack generic --profile lite
 
-**Q: 多个 Capability 可以并行吗？**
-A: 可以。Design Layer 2 产出后，不同 Capability 可并行进入 Build。
+# Python 常规项目；-p/-c 与 v1.3 兼容
+mase init api --stack python --profile standard -p api_pkg -c auth catalog
 
-**Q: 能在 Build 中途加需求吗？**
-A: 建议回到阶段 1，补充 proposal → 通过后追加到 tasks.md。
+# 无完整 Xcode 也可先使用 SwiftPM/Command Line Tools
+mase doctor --stack swift
+mase init reader --stack swift --profile standard
+```
 
-**Q: 怎么知道当前在哪个阶段？**
-A: 看 `openspec/changes/{name}/mase-state.yaml` 的 `phase` 字段。
+Profile 选择：本地 MVP 用 Lite；UI/文件/并发用 Standard；鉴权/支付/监管/不可逆迁移用 Strict。高风险 capability 会局部升级。
 
----
+## 常用命令
 
-## 相关文档
+| 命令 | 用途 |
+|---|---|
+| `mase doctor --stack swift` | 非修改式环境预检 |
+| `mase check --json` | 按当前 Profile/stack 检查结构 |
+| `mase status --change NAME` | 从 state+tasks 检查进度一致性 |
+| `mase metrics FILE...` | 报告上下文代理指标 |
+| `mase metrics ... --input-tokens N` | 记录平台提供的真实 Token |
+| `mase update --dry-run` | 预览 v1.3→v2 迁移 |
+| `mase install --dry-run` | 查看框架将分发的资源 |
 
-- [框架设计文档](MASE-framework.md)
-- [项目目录结构规范](project-structure-spec.md)
-- [工程规则](../project-rules.md)
+## 开发方式
+
+1. 对已有需求、原型和测试做差异分析；一次批量确认真正的冲突。
+2. 记录 Profile、stack、风险和门禁到 change 的 `mase-state.yaml`。
+3. 只生成 Profile/风险需要的设计产物。
+4. 将工作拆成纵向任务，每项声明 `reads` 和 `verify`。
+5. RED→GREEN→REFACTOR 只跑相关测试；Capability 和最终边界再扩大验证。
+6. 从结构化 evidence 生成报告，归档时生成 master 快照。
+
+## 状态不一致
+
+如果任务全部完成但 state 仍是 build，`mase status` 会失败。修正唯一 state，而不是修改验证报告。相反，state 标为 complete 但仍有任务未完成也会失败。
+
+## 非破坏更新
+
+`mase update` 默认检测：版本、核心规则、IDE adapters、Sandbox 模板和 Gitignore。实际修改前写入 `.mase-backup/<timestamp>/`；用户修改过的 generated 文件报告 conflict，不静默覆盖。
+
+## Token 节约
+
+- 每个任务只读当前 Spec、相关接口/测试、diff 和交接摘要。
+- Skill 先读短路由器，只加载命中的 reference。
+- 默认排除 history、training、framework 演示、产品实例和归档。
+- 没有平台 usage 时，字符数只能称为 context proxy。
+
+## 兼容说明
+
+- `mase init NAME -p package -c cap...` 继续按 Python 项目工作。
+- v1.3 master 和历史文档不会自动删除；v2 停止开发期双写。
+- 安装、更新和删除前始终可先使用 `--dry-run`。

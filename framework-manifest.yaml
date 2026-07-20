@@ -1,0 +1,65 @@
+schema: mase-framework/v2
+version: 2.0.0
+license: MIT
+
+canonical:
+  rules: project-rules.md
+  package: pyproject.toml
+  state_template: templates/mase-state.yaml
+  spec_template: templates/specs/_capability_/spec.md
+
+profiles:
+  directory: profiles
+  default: standard
+
+ide_adapters:
+  - AGENTS.md
+  - CLAUDE.md
+  - CONVENTIONS.md
+  - .github/copilot-instructions.md
+
+runtime:
+  - project-rules.md
+  - profiles
+  - schemas
+  - templates
+  - agents
+  - skills
+  - docs/MASE-framework.md
+  - docs/coding-standards.md
+  - docs/design-principles.md
+  - docs/glossary.md
+  - docs/project-structure-spec.md
+  - docs/user-guide.md
+
+default_context_excludes:
+  - .build
+  - dist
+  - node_modules
+  - openspec/master
+  - openspec/archive
+  - openspec/changes/*/poc
+  - docs/archive
+  - docs/superpowers
+  - history
+  - training
+  - .frontend-slides
+  - framework
+  - examples
+
+framework_repository_excludes:
+  - docs/codes-projects
+  - src
+  - tests/unit
+  - tests/integration
+  - tests/contract
+  - tests/e2e
+
+generated:
+  - AGENTS.md
+  - CLAUDE.md
+  - CONVENTIONS.md
+  - .github/copilot-instructions.md
+  - verification-summary.md
+  - test-traceability.md
+  - openspec/master

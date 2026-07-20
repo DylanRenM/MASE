@@ -1,3 +1,9 @@
+---
+normative: false
+status: superseded
+superseded_by: docs/MASE-framework.md
+---
+
 # 麦哲思AI软件开发统一流程 (MASE (Measures AI Software Engineering)) 设计文档
 
 > 状态: 已确认 | 日期: 2026-07-03

@@ -6,6 +6,8 @@ license: Complete terms in LICENSE.txt
 
 This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
 
+MASE routing: use this file for Web production UI. For macOS/mobile native UI, load a platform-specific design reference instead. For a requirements prototype, visual polish is secondary to interaction coverage, accessibility and explicit confirmation; the approved requirements Spec always wins over the prototype.
+
 The user provides frontend requirements: a component, page, application, or interface to build. They may include context about the purpose, audience, or technical constraints.
 
 ## Design Thinking

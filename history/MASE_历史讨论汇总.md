@@ -1,3 +1,9 @@
+---
+normative: false
+status: history
+default_context: excluded
+---
+
 # MASE 历史讨论汇总
 
 > 本文档汇总了在多个项目中散落的 MASE（Measures AI Software Engineering）相关讨论记录，于 2026-07-14 迁移至本项目。

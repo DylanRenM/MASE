@@ -1,3 +1,9 @@
+---
+normative: false
+status: web-adapter-history
+superseded_by: skills/webapp-testing/SKILL.md
+---
+
 # MASE 框架 E2E Playwright 强化设计
 
 > 创建日期：2026-07-14

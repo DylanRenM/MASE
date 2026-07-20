@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://measures.local/schemas/mase-state-v2.json",
+  "title": "MASE change state",
+  "type": "object",
+  "required": ["schema", "profile", "stack", "phase", "risk", "gates", "evidence"],
+  "properties": {
+    "schema": {"const": "mase-project/v2"},
+    "profile": {"enum": ["lite", "standard", "strict"]},
+    "stack": {"enum": ["generic", "python", "swift"]},
+    "phase": {
+      "enum": ["draft", "proposal", "design", "build", "verify", "retro", "release", "complete", "archived"]
+    },
+    "risk": {
+      "type": "object",
+      "required": ["triggers"],
+      "properties": {
+        "triggers": {"type": "array", "items": {"type": "string"}},
+        "capabilities": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
+    "gates": {"type": "object", "additionalProperties": {"type": "string"}},
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate", "result"],
+        "properties": {
+          "gate": {"type": "string"},
+          "result": {"enum": ["passed", "failed", "skipped", "pending"]},
+          "path": {"type": "string"},
+          "at": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

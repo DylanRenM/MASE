@@ -1,4 +1,7 @@
 {
+  "$schema": "https://measures.local/schemas/sandbox-config-v1.json",
+  "version": 1,
+  "adapter": "filesystem",
   "_comment": "E2E Sandbox 配置 — 声明需要快照管理的资源，测试完成后自动恢复",
   "snapshot": {
     "directories": [
@@ -16,5 +19,9 @@
   },
   "validation": {
     "strict": true
+  },
+  "safety": {
+    "allowed_roots": ["tests/e2e/sandbox/"],
+    "never_backup": ["*.key", "*.pem", ".env.production"]
   }
 }

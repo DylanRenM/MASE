@@ -16,6 +16,8 @@ Use this agent when:
 - Refactoring code and extracting reusable components
 - Performing comprehensive quality assurance checks after code completion
 
+Select depth from the effective MASE Profile: Lite reviews only the affected diff and behavior; Standard reviews the capability boundary; Strict adds independent architecture review. Do not load the whole document set when the scope is smaller.
+
 ## Review Dimensions
 
 ### 1. Requirement Consistency
@@ -44,7 +46,7 @@ Use this agent when:
 
 ## Output Format
 
-Provide structured feedback with:
+Only report concrete, reachable issues. Provide structured feedback with:
 - **Severity**: BLOCKER / MAJOR / MINOR / SUGGESTION
 - **Location**: File and line reference
 - **Problem**: What's wrong
@@ -52,6 +54,6 @@ Provide structured feedback with:
 
 ## MASE Integration
 
-- **Design Phase**: Review architecture.md and spec.md before Build starts
+- **Design Phase**: Review only Profile-required design artifacts before Build starts
 - **Build Phase**: Review code after TDD green, check contract compliance
 - **Verify Phase**: Participate in final quality gate before release

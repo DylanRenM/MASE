@@ -1,0 +1,49 @@
+schema: mase-project/v2
+profile: standard
+stack: generic
+phase: complete
+project_type:
+  has_ui: false
+  ui_platform: null
+risk:
+  triggers:
+    - framework-migration
+  capabilities:
+    stack-aware-cli:
+      profile: standard
+    single-source-project-state:
+      profile: standard
+gates:
+  proposal: passed
+  design: passed
+  openspec_strict: passed
+  framework_python: passed
+  sandbox_javascript: passed
+  cli_check: passed
+  migration: passed
+  morerduo_regression: passed
+evidence:
+  - gate: openspec_strict
+    result: passed
+    path: openspec/changes/adaptive-lightweight-mase
+  - gate: framework_python
+    result: passed
+    path: tests (47 passed)
+  - gate: sandbox_javascript
+    result: passed
+    path: tests/e2e/sandbox.test.js (9 passed)
+  - gate: cli_check
+    result: passed
+    path: mase check + generic/python/swift integration tests
+  - gate: migration
+    result: passed
+    path: tests/test_mase_update.py + tests/test_mase_cli_operations.py
+  - gate: morerduo_regression
+    result: passed
+    path: scripts/verify-morerduo.sh (49 unit, 53 integration, 60 contract, 20 E2E)
+capabilities:
+  - adaptive-process-profiles
+  - single-source-project-state
+  - stack-aware-cli
+  - token-efficient-context-routing
+  - framework-content-boundaries

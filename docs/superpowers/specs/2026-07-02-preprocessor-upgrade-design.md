@@ -1,3 +1,9 @@
+---
+normative: false
+status: product-history
+default_context: excluded
+---
+
 # 预处理层升级 + 全链路质量重构 设计文档
 
 > 状态: 设计中 | 日期: 2026-07-02

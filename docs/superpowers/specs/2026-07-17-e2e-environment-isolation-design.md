@@ -1,3 +1,9 @@
+---
+normative: false
+status: archived-decision
+superseded_by: skills/webapp-testing/SKILL.md#sandbox-contract
+---
+
 # E2E 测试环境隔离与自动恢复设计方案
 
 > 创建日期：2026-07-17

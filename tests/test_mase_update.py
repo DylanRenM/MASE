@@ -8,6 +8,7 @@ import sys
 import tempfile
 import shutil
 import pytest
+import yaml
 from pathlib import Path
 
 # 确保可以导入 mase_cli
@@ -159,8 +160,8 @@ class TestCheckUpdates:
         assert len(gitignore_changes) == 1
         assert gitignore_changes[0]["action"] == "update"
 
-    def test_no_changes_when_already_updated(self, temp_project, framework_home, monkeypatch):
-        """已更新到最新版本的项目不应有任何变更。"""
+    def test_only_user_owned_conflict_remains_after_update(self, temp_project, framework_home, monkeypatch):
+        """更新后只保留需要用户决策的自定义文件冲突。"""
         from mase_cli.commands import update_project
 
         # 先执行一次更新
@@ -169,10 +170,12 @@ class TestCheckUpdates:
         update_project.apply_updates(all_changes, project_dir=temp_project,
                                       dry_run=False, framework_home=framework_home)
 
-        # 再次检查 — 应该无变更
+        # 再次检查 — 用户维护的 conftest 不应被静默覆盖，冲突持续可见
         changes = update_project.check_updates(project_dir=temp_project,
                                                 framework_home=framework_home)
-        assert len(changes) == 0
+        assert [(item["component"], item["action"]) for item in changes] == [
+            ("tests/e2e/conftest.py", "conflict")
+        ]
 
     def test_not_a_mase_project(self, tmp_path, framework_home):
         """非 MASE 项目目录应报错。"""
@@ -195,8 +198,10 @@ class TestApplyUpdates:
 
         update_project.apply_updates(changes, project_dir=temp_project, dry_run=False, framework_home=framework_home)
 
-        content = _read(os.path.join(temp_project, ".mase.yaml"))
-        assert 'version: "1.3"' in content
+        payload = yaml.safe_load(_read(os.path.join(temp_project, ".mase.yaml")))
+        assert payload["mase"]["version"] == "1.3"
+        assert payload["mase"]["profile"] == "standard"
+        assert payload["mase"]["stack"] == "python"
 
     def test_create_sandbox_config(self, temp_project, framework_home):
         from mase_cli.commands import update_project

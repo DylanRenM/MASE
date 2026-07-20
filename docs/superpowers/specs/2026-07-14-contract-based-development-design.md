@@ -1,3 +1,9 @@
+---
+normative: false
+status: archived-decision
+superseded_by: project-rules.md#r03-契约边界
+---
+
 # MASE 框架契约式开发（DbC）强化设计
 
 > 创建日期：2026-07-14

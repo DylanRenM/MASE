@@ -1,0 +1,39 @@
+schema: mase-profile/v1
+name: strict
+rank: 3
+description: 鉴权、支付、医疗、金融、监管、不可逆迁移等高风险系统
+required_artifacts:
+  - proposal
+  - tech_feasibility
+  - architecture
+  - detailed_design
+  - specs
+  - api_contract
+  - tasks
+hard_gates:
+  - api_contract
+  - p0_e2e
+  - full_regression
+  - security_review
+  - independent_review
+capability_gates:
+  - related_tests
+  - integration_tests
+  - security_review
+  - independent_review
+test_schedule:
+  micro:
+    - related_unit
+    - related_contract
+    - related_integration
+  capability:
+    - capability_regression
+    - code_review
+    - security_review
+    - independent_review
+  final:
+    - full_unit
+    - full_integration
+    - full_contract
+    - full_e2e
+review: independent-multi-round

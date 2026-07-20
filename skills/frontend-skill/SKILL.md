@@ -5,6 +5,14 @@ description: Use when the task asks for a visually strong landing page, website,
 
 # Frontend Skill
 
+## MASE modes
+
+- **Reference prototype**: validate flow and state coverage with minimal implementation. It is not production code and cannot override the requirements Spec.
+- **Production Web UI**: use the full art-direction guidance below.
+- **Native UI**: route to the native platform reference; do not translate an HTML prototype literally.
+
+When the prototype conflicts with the designated requirements source, update the prototype. Never infer new requirements from decorative HTML.
+
 Use this skill when the quality of the work depends on art direction, hierarchy, restraint, imagery, and motion rather than component count.
 
 Goal: ship interfaces that feel deliberate, premium, and current. Default toward award-level composition: one big idea, strong imagery, sparse copy, rigorous spacing, and a small number of memorable motions.

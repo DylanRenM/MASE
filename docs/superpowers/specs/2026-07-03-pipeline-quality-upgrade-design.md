@@ -1,3 +1,9 @@
+---
+normative: false
+status: product-history
+default_context: excluded
+---
+
 # 管道质量升级设计 — 从正则到LLM驱动的预处理与渲染
 
 > 状态: 已确认 | 日期: 2026-07-03 | 基于: `2026-07-01-bazi-encyclopedia-design.md`

@@ -9,9 +9,12 @@ description: 将代码或设计逻辑图形化为交互式流程图（Mermaid）
 
 ## 适用场景
 
+- 状态机、并发时间线、三个以上业务分支或跨模块所有权确实难以线性评审时
 - Verify 阶段：对照项目的设计文档（`openspec/changes/{name}/detailed-design.md` + `architecture.md`）检查代码实现逻辑是否偏离设计
 - Build 阶段：复杂模块实现前先画流程图理解设计意图
 - 任何需要"检查代码是否按设计走"的时刻
+
+简单函数、单步操作和短 diff 不触发本 Skill；不要为流程形式完整而生成图。
 
 ## 核心流程
 
