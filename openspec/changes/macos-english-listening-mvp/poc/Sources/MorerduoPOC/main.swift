@@ -84,6 +84,20 @@ final class SpeechProbe: NSObject, AVSpeechSynthesizerDelegate, @unchecked Senda
     }
 }
 
+final class AudibleSpeechProbe: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
+    let completion = DispatchSemaphore(value: 0)
+    private(set) var finished = false
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        finished = true
+        completion.signal()
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        completion.signal()
+    }
+}
+
 func synthesizeSpeech(
     text: String,
     voice: AVSpeechSynthesisVoice,
@@ -142,6 +156,32 @@ func verifySpeechSynthesis() throws {
         + "\(normal.ranges) progress ranges, slow/fast ratio "
         + String(format: "%.2f", Double(slow.frames) / Double(fast.frames))
     )
+}
+
+@MainActor
+func verifyAudibleSpeech() throws {
+    guard let voice = AVSpeechSynthesisVoice(language: "en-US") else {
+        throw POCError.failed("No macOS English system voice is available")
+    }
+
+    let synthesizer = AVSpeechSynthesizer()
+    let probe = AudibleSpeechProbe()
+    synthesizer.delegate = probe
+    let utterance = AVSpeechUtterance(
+        string: "Morerduo audible speech check. If you can hear this sentence, audio playback is working."
+    )
+    utterance.voice = voice
+    utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+    synthesizer.speak(utterance)
+
+    let deadline = Date().addingTimeInterval(15)
+    while Date() < deadline, !probe.finished {
+        if probe.completion.wait(timeout: .now()) == .success { break }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+    }
+
+    try require(probe.finished, "Audible TTS did not finish within 15 seconds")
+    print("PASS audible TTS: \(voice.identifier)")
 }
 
 func makeTextPDF(at url: URL) throws {
@@ -340,6 +380,16 @@ func verifyFileMonitoring(in temporaryDirectory: URL) throws {
 enum MorerduoPOC {
     @MainActor
     static func main() {
+        if CommandLine.arguments.contains("--audible") {
+            do {
+                try verifyAudibleSpeech()
+            } catch {
+                fputs("FAIL \(error)\n", stderr)
+                exit(EXIT_FAILURE)
+            }
+            return
+        }
+
         let temporaryDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("morerduo-poc-\(UUID().uuidString)", isDirectory: true)
 

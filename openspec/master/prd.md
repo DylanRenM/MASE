@@ -57,3 +57,4 @@
 |------|--------|------|
 | 2026-07-20 | `macos-english-listening-mvp` | Proposal 与交互原型通过，进入 Design L1 |
 | 2026-07-20 | `macos-english-listening-mvp` | Design L1 本地构建与 Accessibility POC 通过，采用 local-only 交付 |
+| 2026-07-20 | `macos-english-listening-mvp` | 有声系统 TTS 经用户人工确认，Design L1 门禁通过 |

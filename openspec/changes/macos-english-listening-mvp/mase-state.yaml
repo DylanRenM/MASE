@@ -13,6 +13,10 @@ delivery:
   e2e_driver: "apple-accessibility"
   distribution: "local-ad-hoc"
 
+gates:
+  proposal: passed
+  design_l1: passed
+
 capabilities:
   - document-ingestion
   - english-content-filtering

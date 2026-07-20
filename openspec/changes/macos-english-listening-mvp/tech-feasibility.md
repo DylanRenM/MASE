@@ -24,7 +24,7 @@ status: "poc-passed-local-only"
 | 平台 | macOS 13+ | Swift Package 声明 `.macOS(.v13)`；原生 SwiftUI | POC 编译及 hosting view 布局通过 |
 | 文件容量 | 支持 20MB 以内文件且 UI 不长期无响应 | 元数据先校验；解析和过滤在后台任务执行；UI 只接收结果 | 18.0MB 混合文本过滤耗时 1.681 秒 |
 | 文件监控 | 修改后 5 秒内提示 | vnode DispatchSource，覆盖写入及原子替换 | 追加写入 0.210 秒；原子替换 0.212 秒 |
-| TTS 可控性 | 进度可追踪，三档速度可区分 | delegate 字符范围 + utterance rate | 8 次范围回调；慢/快音频帧比例 1.75 |
+| TTS 可控性 | 进度可追踪，三档速度可区分且扬声器可听 | delegate 字符范围 + utterance rate | 8 次范围回调；慢/快音频帧比例 1.75；有声播放人工确认 |
 | 隐私 | 文件不离开本机 | 仅系统框架和本地 Swift Package；无网络运行时依赖 | 依赖及数据流审查 |
 | 安全 | 文档内容不执行 | DOCX 只读取 XML 文本节点；PDFKit 只读取页面字符串 | POC 仅产生纯字符串；L2 增加解析契约 |
 | 可测试性 | 时间、TTS、监控可替换 | 依赖倒置，生产适配器实现协议 | L2 contract + Build 测试替身验证 |
@@ -100,6 +100,7 @@ status: "poc-passed-local-only"
 |--------|----------|------|------|
 | SwiftUI 原生布局 | `poc/Sources/MorerduoPOC/main.swift` | ✅ | hosting view 成功布局 |
 | 英文 TTS / 进度 / 速度 | 同上 | ✅ | Samantha voice；80,316 帧；8 个范围；速率比 1.75 |
+| 英文 TTS 扬声器输出 | `poc/Sources/MorerduoPOC/main.swift --audible` | ✅ | `speak(...)` 完成，用户人工确认清晰可听 |
 | PDFKit 文本提取 | 同上 | ✅ | 提取 40 个字符 |
 | ZIPFoundation DOCX | 同上 | ✅ | 0.9.20，最小 DOCX 解包及 XML 提取成功 |
 | 18MB 级英文过滤 | 同上 | ✅ | 1.681 秒；输出字符集满足约束 |

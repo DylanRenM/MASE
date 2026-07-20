@@ -19,6 +19,14 @@ The executable verifies:
 
 The POC creates all fixtures under the process temporary directory and removes them on exit.
 
+Run the manual speaker-output check separately:
+
+```bash
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk swift run morerduo-poc --audible
+```
+
+This mode uses `AVSpeechSynthesizer.speak(...)` rather than the silent buffer API and must be confirmed by a person listening to the Mac speakers.
+
 ## Local app bundle
 
 Build and ad-hoc sign a standard local `.app` without full Xcode:
