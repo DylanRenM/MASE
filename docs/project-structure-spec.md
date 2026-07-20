@@ -32,7 +32,7 @@ project/
 
 | Stack | 产品根 | 测试根 | 项目清单 |
 |---|---|---|---|
-| generic | `src/` | `tests/` | 无强制语言清单 |
+| generic | 可选 | 可选 | 无强制语言清单 |
 | python | `src/{package}/` | `tests/` | `pyproject.toml` |
 | swift | `Sources/{Module}/` | `Tests/{Module}Tests/` | `Package.swift` |
 
@@ -53,11 +53,11 @@ MASE/
 ├── docs/                      # 现行规范
 ├── docs/archive/              # 非规范历史
 ├── training/                  # 非规范培训内容
-├── examples/                  # 产品实例
+├── examples/                  # 仅限最小化、无独立生命周期的示例
 └── tools/                     # 幻灯片等辅助工具
 ```
 
-在完成物理迁移前，manifest 的 `default_context_excludes` 负责隔离历史、培训、产品代码和生成物。
+MASE 框架与采用它开发的真实产品必须使用不同项目根和独立 Git 仓库。真实产品不得放入 `MASE/`；`examples/` 只容纳用于演示框架接口的最小化示例，不承载产品需求、交付包或构建缓存。manifest 的 `default_context_excludes` 继续隔离历史、培训和生成物。
 
 ## 禁止模式
 
@@ -65,4 +65,5 @@ MASE/
 - 在 CLI 源码内嵌大段项目模板。
 - 把 Proposal、Specs 和 E2E 报告中的同一场景复制三遍。
 - 把培训 HTML/PPT、历史设计或产品实例作为现行框架规范检索。
+- 把采用 MASE 开发的真实产品源码、需求、OpenSpec 或构建缓存放进 MASE 框架仓库。
 - 为 Lite 项目创建空的 architecture/detailed-design/contract 文档只为满足目录。

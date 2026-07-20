@@ -2,6 +2,7 @@ from argparse import Namespace
 from pathlib import Path
 
 import pytest
+import yaml
 
 from mase_cli.commands import check_project, init_project
 
@@ -64,8 +65,39 @@ def test_check_supports_json_serialization(tmp_path):
     assert payload["profile"] == "lite"
 
 
+def test_generic_check_does_not_assume_product_source_directories(tmp_path):
+    project = init_project.run(init_args(tmp_path, "framework-check", "generic", "standard"))
+    for directory in (project / "src", project / "tests"):
+        if directory.exists():
+            directory.rmdir()
+
+    report = check_project.inspect_project(project)
+
+    assert report.ok is True
+    checked = {item.path for item in report.items}
+    assert "src" not in checked
+    assert "tests" not in checked
+
+
 def test_init_rejects_project_name_path_traversal(tmp_path):
     with pytest.raises(ValueError, match="project name"):
         init_project.run(init_args(tmp_path, "../outside", "generic", "lite"))
 
     assert not (tmp_path.parent / "outside").exists()
+
+
+def test_swift_check_accepts_manifest_declared_custom_layout(tmp_path):
+    project = init_project.run(init_args(tmp_path, "swift-layout", "swift", "standard"))
+    metadata = yaml.safe_load((project / ".mase.yaml").read_text())
+    metadata["mase"]["layout"] = {"product": "src", "tests": "tests"}
+    (project / ".mase.yaml").write_text(yaml.safe_dump(metadata, sort_keys=False))
+    (project / "src").mkdir()
+    (project / "tests").mkdir(exist_ok=True)
+
+    report = check_project.inspect_project(project)
+
+    assert report.ok is True
+    checked = {item.path for item in report.items}
+    assert "src" in checked
+    assert "tests" in checked
+    assert "Sources" not in checked

@@ -47,14 +47,6 @@ default_context_excludes:
   - framework
   - examples
 
-framework_repository_excludes:
-  - docs/codes-projects
-  - src
-  - tests/unit
-  - tests/integration
-  - tests/contract
-  - tests/e2e
-
 generated:
   - AGENTS.md
   - CLAUDE.md

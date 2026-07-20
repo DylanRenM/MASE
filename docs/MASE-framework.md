@@ -84,3 +84,5 @@ Lite 可由一个工作 Agent 连续执行；Standard/Strict 才需要更多独�
 ## 框架边界
 
 运行时只分发 rules、profiles、schemas、templates、agents、skills 和现行文档。`docs/superpowers`、history、training、framework 演示、生成站点、examples 和产品实例均为非规范内容，默认不进入 Agent 上下文。
+
+采用 MASE 的真实产品是框架使用者，不是框架组成部分。产品必须使用独立项目根、`.mase.yaml`、OpenSpec 状态和 Git 仓库；MASE 仓库不得依赖产品源码或产品测试才能通过自身门禁。

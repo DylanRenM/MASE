@@ -55,6 +55,7 @@ def inspect_project(project_dir: Union[str, Path] = ".") -> ProjectReport:
     metadata = load_yaml(marker).get("mase", {})
     stack = str(metadata.get("stack", "python" if (root / "pyproject.toml").exists() else "generic"))
     profile = str(metadata.get("profile", "standard"))
+    layout = metadata.get("layout", {}) if isinstance(metadata.get("layout", {}), dict) else {}
     common = [
         _exists(root, ".mase.yaml"),
         _exists(root, "README.md"),
@@ -66,9 +67,16 @@ def inspect_project(project_dir: Union[str, Path] = ".") -> ProjectReport:
     if stack == "python":
         stack_items.extend((_exists(root, "pyproject.toml"), _exists(root, "src"), _exists(root, "tests")))
     elif stack == "swift":
-        stack_items.extend((_exists(root, "Package.swift"), _exists(root, "Sources"), _exists(root, "Tests")))
+        product_root = str(layout.get("product", "Sources"))
+        test_root = str(layout.get("tests", "Tests"))
+        stack_items.extend(
+            (_exists(root, "Package.swift"), _exists(root, product_root), _exists(root, test_root))
+        )
     elif stack == "generic":
-        stack_items.extend((_exists(root, "src"), _exists(root, "tests")))
+        # Generic projects may be frameworks, documentation repositories, or
+        # orchestration workspaces with no conventional product source tree.
+        # Their required structure is intentionally limited to common MASE files.
+        pass
     else:
         stack_items.append(CheckItem("stack", False, True, f"unsupported stack: {stack}"))
     return ProjectReport(root, stack, profile, tuple(common + stack_items))
