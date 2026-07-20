@@ -2,8 +2,13 @@ import Foundation
 
 public struct TimerConfiguration: Equatable, Sendable {
   public static let validMinutes = 1...240
+  public static let unlimited = TimerConfiguration(limit: nil)
 
   public let limit: Duration?
+
+  private init(limit: Duration?) {
+    self.limit = limit
+  }
 
   public init(minutes: Int?) throws {
     guard let minutes else {

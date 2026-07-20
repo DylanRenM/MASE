@@ -297,6 +297,27 @@ protocol ReadingSessionEffectExecuting: Sendable {
 - 停止按钮始终占位，非 playing/paused 时 disabled，避免状态切换导致布局跳动。
 - 错误使用 sheet/alert；源文件变化使用 modal confirmation，且必须阻止重复弹层。
 
+### 已批准原型与 POC 复用决策
+
+| 区域 | 生产复用 | 决策 |
+|------|----------|------|
+| 窗口 | 原型单窗口三段式工作台 | 顶部文件上下文、中央状态/进度/控制、底部速度/定时；默认 760×640，最小 640×560 |
+| 文件 | 原型文件名、格式提示与选择入口 | 只保留真实 `fileImporter`；移除“载入示例”演示按钮 |
+| 播放 | POC 主播放/暂停按钮与独立停止按钮 | 保留 `playPauseButton`、`stopButton`；停止始终占位，非 playing/paused 时禁用 |
+| 设置 | 原型三档 segmented control 与分钟输入 | 不提供音色、循环次数；定时仅接受留空或 1...240 整数分钟 |
+| 提示 | 原型源文件修改 modal | 决定事件必须携带当前 `ReloadPromptToken`；移除“模拟修改/模拟到期”演示工具 |
+| 内容 | 原型脚注与隐私说明 | 不展示整篇正文或当前段落全文，避免大文档 UI 开销与无障碍噪声 |
+
+稳定 Accessibility identifiers：
+
+- `appTitle`、`filePickerButton`、`fileNameLabel`、`sessionStatus`；
+- `readingProgress`、`readingProgressLabel`；
+- `playPauseButton`、`stopButton`；
+- `speedPicker`、`timerMinutesField`、`timerValidationMessage`；
+- `errorMessage`、`reloadSourceDialog`、`continueOldContentButton`、`reloadSourceButton`。
+
+所有 identifier 由单一常量定义提供，SwiftUI 与 E2E page object 共享同一字符串契约；原型 HTML id 仅作设计参考，不直接成为生产 API。
+
 ### 状态可见性
 
 - idle：显示支持格式/20MB，播放与停止 disabled。

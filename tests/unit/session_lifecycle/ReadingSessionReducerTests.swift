@@ -156,6 +156,31 @@ struct ReadingSessionReducerTests {
     #expect(ready.effects.isEmpty)
   }
 
+  @Test("timer configuration may change while idle or ready")
+  func timerChangesBeforePlayback() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let unlimited = try TimerConfiguration(minutes: nil)
+    let thirtyMinutes = try TimerConfiguration(minutes: 30)
+    let document = makeDocument()
+
+    let idle = reducer.reduce(
+      state: .initial(timer: unlimited),
+      event: .changeTimer(thirtyMinutes)
+    )
+    let ready = reducer.reduce(
+      state: .ready(document: document, speed: .fast, timer: unlimited),
+      event: .changeTimer(thirtyMinutes)
+    )
+
+    #expect(idle.state == .initial(timer: thirtyMinutes))
+    #expect(
+      ready.state
+        == .ready(document: document, speed: .fast, timer: thirtyMinutes)
+    )
+    #expect(idle.effects.isEmpty)
+    #expect(ready.effects.isEmpty)
+  }
+
   @Test("selecting a new file while paused clears old resources before loading")
   func selectingFileWhilePaused() throws {
     let reducer = ReadingSessionReducer(contractMode: .strict)
@@ -665,6 +690,7 @@ struct ReadingSessionReducerTests {
       .resume,
       .stop,
       .changeSpeed(.fast),
+      .changeTimer(try TimerConfiguration(minutes: 10)),
       .cursorAdvanced(.zero, token: sessionToken),
       .paragraphFinished(token: sessionToken),
       .timerExpired(TimerExpiry(token: sessionToken)),

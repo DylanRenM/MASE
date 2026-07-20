@@ -64,6 +64,8 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
       return dismissError(state: state)
     case .changeSpeed(let speed):
       return changeSpeed(state: state, speed: speed)
+    case .changeTimer(let timer):
+      return changeTimer(state: state, timer: timer)
     case .sourceChanged(let promptToken, let sessionToken):
       return sourceChanged(
         state: state,
@@ -416,6 +418,35 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
         effects: []
       )
     case .loading, .playing, .awaitingReloadDecision:
+      return nil
+    }
+  }
+
+  private func changeTimer(
+    state: ReadingSessionState,
+    timer: TimerConfiguration
+  ) -> Transition? {
+    if state.timer == timer {
+      return Transition(state: state, effects: [])
+    }
+    switch state.mode {
+    case .idle:
+      return Transition(
+        state: .initial(timer: timer, speed: state.speed, error: state.error),
+        effects: []
+      )
+    case .ready:
+      guard let document = state.document else { return nil }
+      return Transition(
+        state: .ready(
+          document: document,
+          speed: state.speed,
+          timer: timer,
+          error: state.error
+        ),
+        effects: []
+      )
+    case .loading, .playing, .paused, .awaitingReloadDecision:
       return nil
     }
   }

@@ -75,14 +75,14 @@
 
 ## 9. SwiftUI 应用集成
 
-- [ ] 9.1 复用检查：对照已确认交互原型和 SwiftUI POC，列出可直接复用布局/AXIdentifier 决策（依赖：8.6，复杂度：S）
-- [ ] 9.2 先写 `AppViewState` 映射测试，再实现主窗口 view model 投影（依赖：9.1，复杂度：M）
-- [ ] 9.3 先写 Accessibility identifier 契约测试，再实现文件区、进度区、播放/停止控制（依赖：9.2，复杂度：M）
-- [ ] 9.4 实现速度 segmented control、整数定时输入、disabled 状态和错误提示（依赖：9.3，复杂度：M）
-- [ ] 9.5 实现源文件修改确认弹层和 reload/continue 交互（依赖：9.4，复杂度：M）
-- [ ] 9.6 实现 macOS fileImporter、应用终止清理和首次启动 idle（依赖：9.5，复杂度：M）
-- [ ] 9.7 执行 frontend-design 评审：层级、状态可见性、键盘/VoiceOver、响应式最小窗口（依赖：9.6，复杂度：M）
-- [ ] 9.8 运行 UI 集成测试和手工功能走查，本地 commit `feat(morerduo-app)`（依赖：9.7，复杂度：S）
+- [x] 9.1 复用检查：对照已确认交互原型和 SwiftUI POC，列出可直接复用布局/AXIdentifier 决策（依赖：8.6，复杂度：S）
+- [x] 9.2 先写 `AppViewState` 映射测试，再实现主窗口 view model 投影（依赖：9.1，复杂度：M）
+- [x] 9.3 先写 Accessibility identifier 契约测试，再实现文件区、进度区、播放/停止控制（依赖：9.2，复杂度：M）
+- [x] 9.4 实现速度 segmented control、整数定时输入、disabled 状态和错误提示（依赖：9.3，复杂度：M）
+- [x] 9.5 实现源文件修改确认弹层和 reload/continue 交互（依赖：9.4，复杂度：M）
+- [x] 9.6 实现 macOS fileImporter、应用终止清理和首次启动 idle（依赖：9.5，复杂度：M）
+- [x] 9.7 执行 frontend-design 评审：层级、状态可见性、键盘/VoiceOver、响应式最小窗口（依赖：9.6，复杂度：M）
+- [x] 9.8 运行 UI 集成测试和手工功能走查，本地 commit `feat(morerduo-app)`（依赖：9.7，复杂度：S）
 
 ## 10. P0/P1 E2E 与环境隔离
 

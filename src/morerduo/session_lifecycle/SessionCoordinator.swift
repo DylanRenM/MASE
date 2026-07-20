@@ -152,7 +152,10 @@ public final class SessionCoordinator {
       return true
     case .timerExpired(let expiry):
       return state.sessionToken == expiry.token
-    default:
+    case .documentLoaded, .documentLoadFailed, .effectFailed, .play, .pause,
+      .resume, .changeSpeed, .changeTimer, .cursorAdvanced,
+      .paragraphFinished, .sourceChanged, .reloadSource, .continueOldContent,
+      .dismissError:
       return false
     }
   }

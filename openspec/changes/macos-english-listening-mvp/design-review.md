@@ -82,3 +82,19 @@
 ## 6. 门禁结论
 
 无 BLOCKER、无未关闭 MAJOR。Design L2 资产可进入 master 合并检查；合并完成并经 Agent 1/用户确认后，才能把 `mase-state.yaml.phase` 更新为 `build`。
+
+## 7. Build Capability 9 前端实现复核
+
+日期：2026-07-20；范围：`src/morerduo/app_integration`、`src/morerduo_app` 和真实 ad-hoc signed `.app`。
+
+| 维度 | 结论 | 实现证据 |
+|------|------|----------|
+| 层级与布局 | PASS | 单窗口文件→状态/进度/控制→设置层级；默认 760×640；系统将 500×400 请求钳制为 640×592（560 内容高度加标题栏） |
+| 状态可见性 | PASS | `AppViewState` 单向投影六种 mode；停止始终占位；loading indicator、typed error alert、不可取消 reload sheet |
+| 键盘与焦点 | PASS | `⌘O`、Space、`⌘.`；reload sheet 初始焦点在重新加载；主界面源码顺序即选择→播放→停止→速度→定时 |
+| VoiceOver | PASS | 真实 AX 树可读取首屏 10 个稳定 identifier；idle 时文件/速度/定时 `AXEnabled=true`，播放/停止 `AXEnabled=false`；状态切换发送 announcement |
+| 响应式与动效 | PASS | 内容最小 640×560、最大宽度 900；不使用非必要动画，系统 reduced-motion 下行为不变 |
+| 性能 | PASS | 文档处理位于非 MainActor executor；业务 cursor 全量保留，UI 进度投影节流至最多 10Hz |
+| 隐私与范围 | PASS | 不展示正文、不记录路径、不访问网络；无音色、循环次数、DOC/OCR 演示入口 |
+
+实现复核发现并关闭 `AXEnabled` modifier 顺序问题：将 `.disabled` 放在 identifier/快捷键 modifier 之后，release `.app` 复测播放与停止均正确暴露 disabled。

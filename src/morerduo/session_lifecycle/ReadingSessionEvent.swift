@@ -10,6 +10,7 @@ public enum ReadingSessionEvent: Equatable, Sendable {
   case resume
   case stop
   case changeSpeed(ReadingSpeed)
+  case changeTimer(TimerConfiguration)
   case cursorAdvanced(ReadingCursor, token: ReadingSessionToken)
   case paragraphFinished(token: ReadingSessionToken)
   case timerExpired(TimerExpiry)
