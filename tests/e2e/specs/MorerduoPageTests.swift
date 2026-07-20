@@ -40,18 +40,40 @@ struct MorerduoPageTests {
       )
     }
   }
+
+  @Test("reads enabled value and invokes press through the page object")
+  func readsAndPressesElement() throws {
+    let button = FixtureAccessibilityElement(
+      identifier: "playPauseButton",
+      enabled: false,
+      value: "播放"
+    )
+    let page = try MorerduoPage(root: button, isProcessTrusted: { true })
+
+    #expect(try !page.isEnabled(identifier: "playPauseButton"))
+    #expect(try page.value(identifier: "playPauseButton") == "播放")
+    try page.press(identifier: "playPauseButton")
+    #expect(button.pressCount == 1)
+  }
 }
 
-private struct FixtureAccessibilityElement: AccessibilityElementReading {
+private final class FixtureAccessibilityElement: AccessibilityElementReading {
   let storedIdentifier: String?
   let storedChildren: [any AccessibilityElementReading]
+  let storedEnabled: Bool
+  let storedValue: String?
+  private(set) var pressCount = 0
 
   init(
     identifier: String? = nil,
-    children: [any AccessibilityElementReading] = []
+    children: [any AccessibilityElementReading] = [],
+    enabled: Bool = true,
+    value: String? = nil
   ) {
     storedIdentifier = identifier
     storedChildren = children
+    storedEnabled = enabled
+    storedValue = value
   }
 
   func identifier() throws -> String? {
@@ -60,5 +82,17 @@ private struct FixtureAccessibilityElement: AccessibilityElementReading {
 
   func children() throws -> [any AccessibilityElementReading] {
     storedChildren
+  }
+
+  func isEnabled() throws -> Bool {
+    storedEnabled
+  }
+
+  func stringValue() throws -> String? {
+    storedValue
+  }
+
+  func press() throws {
+    pressCount += 1
   }
 }

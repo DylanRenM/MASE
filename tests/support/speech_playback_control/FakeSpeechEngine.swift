@@ -74,4 +74,16 @@ public final class FakeSpeechEngine: SpeechSynthesizing {
       )
     )
   }
+
+  public func emitProgress(requestUTF16Range: Range<Int>) {
+    guard let request = activeRequest else { return }
+    continuation.yield(
+      .progressed(
+        SpeechProgress(
+          request: request,
+          requestUTF16Range: requestUTF16Range
+        )
+      )
+    )
+  }
 }

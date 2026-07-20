@@ -29,7 +29,7 @@ public struct EnglishTextFilter: EnglishFiltering {
         }
         output.append(byte)
         hasPendingSpace = false
-      } else if byte == 9 || byte == 10 || byte == 13 || byte == 32 {
+      } else {
         hasPendingSpace = !output.isEmpty
       }
     }

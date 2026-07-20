@@ -85,7 +85,7 @@ let package = Package(
     ),
     .executableTarget(
       name: "MorerduoE2ERunner",
-      dependencies: ["MorerduoKit"],
+      dependencies: ["MorerduoKit", "MorerduoTestSupport", "ZIPFoundation"],
       path: "tests/e2e",
       exclude: ["sandbox.test.js"],
       swiftSettings: testingSwiftSettings,

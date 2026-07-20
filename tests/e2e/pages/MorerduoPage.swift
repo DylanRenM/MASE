@@ -7,11 +7,16 @@ enum MorerduoPageError: Error, Equatable {
   case attributeReadFailed(String)
   case invalidChildren
   case queryLimitExceeded
+  case actionFailed(String)
+  case timeout(String)
 }
 
 protocol AccessibilityElementReading {
   func identifier() throws -> String?
   func children() throws -> [any AccessibilityElementReading]
+  func isEnabled() throws -> Bool
+  func stringValue() throws -> String?
+  func press() throws
 }
 
 struct MorerduoPage {
@@ -57,6 +62,31 @@ struct MorerduoPage {
 
     throw MorerduoPageError.elementNotFound(identifier)
   }
+
+  func isEnabled(identifier: String) throws -> Bool {
+    try element(identifier: identifier).isEnabled()
+  }
+
+  func value(identifier: String) throws -> String? {
+    try element(identifier: identifier).stringValue()
+  }
+
+  func press(identifier: String) throws {
+    try element(identifier: identifier).press()
+  }
+
+  func waitForElement(
+    identifier: String,
+    timeout: Duration = .seconds(5)
+  ) async throws {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: timeout)
+    while clock.now < deadline {
+      if (try? element(identifier: identifier)) != nil { return }
+      try await Task.sleep(for: .milliseconds(25))
+    }
+    throw MorerduoPageError.timeout(identifier)
+  }
 }
 
 private struct AXAccessibilityElement: AccessibilityElementReading {
@@ -95,5 +125,30 @@ private struct AXAccessibilityElement: AccessibilityElementReading {
       throw MorerduoPageError.invalidChildren
     }
     return children.map { AXAccessibilityElement(element: $0) }
+  }
+
+  func isEnabled() throws -> Bool {
+    try attribute(kAXEnabledAttribute) as? Bool ?? false
+  }
+
+  func stringValue() throws -> String? {
+    try attribute(kAXValueAttribute) as? String
+  }
+
+  func press() throws {
+    let result = AXUIElementPerformAction(element, kAXPressAction as CFString)
+    guard result == .success else {
+      throw MorerduoPageError.actionFailed(kAXPressAction)
+    }
+  }
+
+  private func attribute(_ name: String) throws -> CFTypeRef? {
+    var value: CFTypeRef?
+    let result = AXUIElementCopyAttributeValue(element, name as CFString, &value)
+    if result == .noValue || result == .attributeUnsupported { return nil }
+    guard result == .success else {
+      throw MorerduoPageError.attributeReadFailed(name)
+    }
+    return value
   }
 }

@@ -54,7 +54,16 @@ struct EnglishTextFilterContractTests {
 
     let output = try EnglishTextFilter().filter(input)
 
-    #expect(output.map(\.text) == ["scriptalertXSSscript"])
+    #expect(output.map(\.text) == ["script alert XSS script"])
+  }
+
+  @Test("disallowed characters preserve adjacent word boundaries")
+  func preservesWordBoundaries() throws {
+    let input = [RawParagraph(text: "alpha-123-beta&gamma", ordinal: 0)]
+
+    let output = try EnglishTextFilter().filter(input)
+
+    #expect(output.map(\.text) == ["alpha beta gamma"])
   }
 
   @Test("produces deterministic values for identical inputs")

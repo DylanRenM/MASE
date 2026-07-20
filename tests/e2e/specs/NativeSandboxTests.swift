@@ -43,6 +43,39 @@ struct NativeSandboxTests {
     }
   }
 
+  @Test("spec wrapper restores and verifies after a successful scenario")
+  func specWrapperRestoresAfterSuccess() throws {
+    let root = try makeSandboxDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let original = root.appending(path: "source.txt")
+    try write("before", to: original)
+
+    try E2ESpecSandbox(root: root).run {
+      try write("changed", to: original)
+      try write("added", to: root.appending(path: "added.txt"))
+    }
+
+    #expect(try String(contentsOf: original, encoding: .utf8) == "before")
+    #expect(!FileManager.default.fileExists(atPath: root.appending(path: "added.txt").path))
+  }
+
+  @Test("spec wrapper restores before rethrowing a scenario failure")
+  func specWrapperRestoresAfterFailure() throws {
+    let root = try makeSandboxDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let original = root.appending(path: "source.txt")
+    try write("before", to: original)
+
+    #expect(throws: FixtureFailure.expected) {
+      try E2ESpecSandbox(root: root).run {
+        try write("changed", to: original)
+        throw FixtureFailure.expected
+      }
+    }
+
+    #expect(try String(contentsOf: original, encoding: .utf8) == "before")
+  }
+
   private func makeSandboxDirectory() throws -> URL {
     let root = FileManager.default.temporaryDirectory
       .appending(path: "morerduo-e2e-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -57,4 +90,8 @@ struct NativeSandboxTests {
     )
     try Data(value.utf8).write(to: url, options: .atomic)
   }
+}
+
+private enum FixtureFailure: Error {
+  case expected
 }

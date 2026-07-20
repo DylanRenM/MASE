@@ -6,6 +6,50 @@ enum NativeSandboxError: Error, Equatable {
   case rootMissing
   case snapshotRootMismatch
   case unsupportedEntry(String)
+  case restorationMismatch
+}
+
+struct E2ESpecSandbox {
+  private let sandbox: NativeSandbox
+
+  init(root: URL, fileManager: FileManager = .default) throws {
+    sandbox = try NativeSandbox(root: root, fileManager: fileManager)
+  }
+
+  func run<ResultValue>(_ scenario: () throws -> ResultValue) throws -> ResultValue {
+    let snapshot = try sandbox.snapshot()
+    let scenarioResult: Result<ResultValue, Error>
+    do {
+      scenarioResult = .success(try scenario())
+    } catch {
+      scenarioResult = .failure(error)
+    }
+
+    try sandbox.restore(snapshot)
+    guard try sandbox.isIdentical(to: snapshot) else {
+      throw NativeSandboxError.restorationMismatch
+    }
+    return try scenarioResult.get()
+  }
+
+  @MainActor
+  func runAsync<ResultValue>(_ scenario: () async throws -> ResultValue) async throws
+    -> ResultValue
+  {
+    let snapshot = try sandbox.snapshot()
+    let scenarioResult: Result<ResultValue, Error>
+    do {
+      scenarioResult = .success(try await scenario())
+    } catch {
+      scenarioResult = .failure(error)
+    }
+
+    try sandbox.restore(snapshot)
+    guard try sandbox.isIdentical(to: snapshot) else {
+      throw NativeSandboxError.restorationMismatch
+    }
+    return try scenarioResult.get()
+  }
 }
 
 struct NativeSandboxSnapshot: Equatable, Sendable {
