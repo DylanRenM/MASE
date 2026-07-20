@@ -351,6 +351,40 @@ struct SessionCoordinatorTests {
     #expect(coordinator.state.error == .sourceUnavailable)
   }
 
+  @Test("deleting a ready source makes real play verification return idle")
+  func deletedReadySourceCannotPlay() async throws {
+    let directory = FileManager.default.temporaryDirectory
+      .appendingPathComponent("morerduo-ready-delete-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(
+      at: directory,
+      withIntermediateDirectories: true
+    )
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let url = directory.appendingPathComponent("ready.txt")
+    try Data("Hello world".utf8).write(to: url)
+    let source = try FilePolicy.validate(url: url)
+    let document = LoadedDocument(
+      source: source,
+      paragraphs: [EnglishParagraph(text: "Hello world", ordinal: 0)]
+    )
+    try FileManager.default.removeItem(at: url)
+    let coordinator = SessionCoordinator(
+      initialState: .ready(
+        document: document,
+        speed: .normal,
+        timer: try TimerConfiguration(minutes: nil)
+      ),
+      reducer: ReadingSessionReducer(contractMode: .strict),
+      effectExecutor: RealSourceVerifyingExecutor()
+    )
+
+    await coordinator.send(.play(token: token(25)))
+
+    #expect(coordinator.state.mode == .idle)
+    #expect(coordinator.state.document == nil)
+    #expect(coordinator.state.error == .sourceUnavailable)
+  }
+
   @Test("an executor result is reduced without a side-channel callback")
   func executorCanReturnDomainEvent() async throws {
     let document = makeDocument()
@@ -365,6 +399,93 @@ struct SessionCoordinatorTests {
 
     #expect(coordinator.state.mode == .ready)
     #expect(coordinator.state.document == document)
+  }
+
+  @Test("reload completion atomically starts new content from the beginning")
+  func reloadCompletionStartsNewContent() async throws {
+    let oldDocument = makeDocument()
+    let oldToken = token(21)
+    let newToken = token(22)
+    let executor = RecordingEffectExecutor()
+    let awaiting = ReadingSessionState.awaitingReloadDecision(
+      document: oldDocument,
+      cursor: ReadingCursor(paragraphIndex: 0, utf16Offset: 5),
+      speed: .fast,
+      timer: try TimerConfiguration(minutes: 30),
+      sessionToken: oldToken,
+      promptToken: ReloadPromptToken(
+        rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000021")!
+      )
+    )
+    let coordinator = SessionCoordinator(
+      initialState: awaiting,
+      reducer: ReadingSessionReducer(contractMode: .strict),
+      effectExecutor: executor
+    )
+
+    await coordinator.send(
+      .reloadSource(
+        promptToken: try #require(awaiting.reloadPromptToken),
+        token: newToken
+      )
+    )
+    let newDocument = makeDocument()
+    await coordinator.send(
+      .documentLoaded(newDocument, token: newToken, autoplay: true)
+    )
+
+    #expect(coordinator.state.mode == .playing)
+    #expect(coordinator.state.document == newDocument)
+    #expect(coordinator.state.cursor == .zero)
+    #expect(coordinator.state.sessionToken == newToken)
+    #expect(
+      await executor.effects == [
+        .stopSpeech(token: oldToken),
+        .stopMonitor(token: oldToken),
+        .stopClock(token: oldToken),
+        .loadDocument(oldDocument.source.url, token: newToken, autoplay: true),
+        .verifySource(newDocument, token: newToken),
+        .startSpeech(
+          document: newDocument,
+          cursor: .zero,
+          speed: .fast,
+          token: newToken
+        ),
+        .startClock(token: newToken),
+        .startMonitor(source: newDocument.source, token: newToken),
+      ]
+    )
+  }
+
+  @Test("reload failure discards the old in-memory session")
+  func reloadFailureReturnsIdle() async throws {
+    let document = makeDocument()
+    let oldToken = token(23)
+    let newToken = token(24)
+    let promptToken = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000023")!
+    )
+    let coordinator = SessionCoordinator(
+      initialState: .awaitingReloadDecision(
+        document: document,
+        cursor: .zero,
+        speed: .normal,
+        timer: try TimerConfiguration(minutes: nil),
+        sessionToken: oldToken,
+        promptToken: promptToken
+      ),
+      reducer: ReadingSessionReducer(contractMode: .strict),
+      effectExecutor: RecordingEffectExecutor()
+    )
+
+    await coordinator.send(
+      .reloadSource(promptToken: promptToken, token: newToken)
+    )
+    await coordinator.send(.documentLoadFailed(.corrupted, token: newToken))
+
+    #expect(coordinator.state.mode == .idle)
+    #expect(coordinator.state.document == nil)
+    #expect(coordinator.state.error == .document(.corrupted))
   }
 
   @Test("a returned event supersedes the current effect batch")
@@ -661,6 +782,14 @@ private struct UntypedFailingEffectExecutor: ReadingSessionEffectExecuting {
 
   func execute(_ effect: ReadingSessionEffect) async throws -> ReadingSessionEvent? {
     throw ProbeError()
+  }
+}
+
+private struct RealSourceVerifyingExecutor: ReadingSessionEffectExecuting {
+  func execute(_ effect: ReadingSessionEffect) async throws -> ReadingSessionEvent? {
+    guard case .verifySource(let document, _) = effect else { return nil }
+    try SourceAvailabilityVerifier.verify(document.source)
+    return nil
   }
 }
 

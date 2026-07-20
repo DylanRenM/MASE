@@ -92,7 +92,15 @@ struct ReadingSessionStateContractTests {
     #expect(loading.sessionToken == token)
     #expect(ReadingSessionEvent.selectFile(url, token: token) == .selectFile(url, token: token))
     #expect(ReadingSessionEvent.play(token: token) == .play(token: token))
-    #expect(ReadingSessionEvent.reloadSource(token: token) == .reloadSource(token: token))
+    let promptToken = ReloadPromptToken(rawValue: uuid(7))
+    #expect(
+      ReadingSessionEvent.reloadSource(promptToken: promptToken, token: token)
+        == .reloadSource(promptToken: promptToken, token: token)
+    )
+    #expect(
+      ReadingSessionEvent.continueOldContent(promptToken: promptToken)
+        == .continueOldContent(promptToken: promptToken)
+    )
   }
 
   @Test("module invariants reject inconsistent mode payloads")

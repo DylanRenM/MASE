@@ -67,7 +67,7 @@ stop 和 timerExpired 归一为同一 reducer effect 集：
 2. coordinator 仅在 playing 状态显示一次确认弹层，并暂停业务朗读及计时。
 3. 用户选择 reload：停止旧会话，重新走加载管道，成功后从头 playing；失败则显示错误并进入 idle。
 4. 用户选择 continue：关闭弹层，从内存旧内容和原 cursor 继续。
-5. 原子替换/rename 后生产 monitor 重新打开路径并更新 descriptor。
+5. 原子替换/rename/delete 后生产 monitor 先取消旧 DispatchSource，由 cancel handler 关闭旧 descriptor，再以 50ms 间隔持续尝试重新打开原路径，直到成功或 stop；source generation 隔离取消后的迟到回调。
 
 ## 项目结构
 
@@ -174,12 +174,19 @@ protocol SpeechSynthesizing: Sendable {
 ### `SourceMonitoring`
 
 ```swift
+@MainActor
 protocol SourceMonitoring: Sendable {
     var events: AsyncStream<SourceFileEvent> { get }
-    func start(url: URL, fingerprint: SourceFingerprint) async throws
+    func start(
+        url: URL,
+        fingerprint: SourceFingerprint,
+        sessionToken: ReadingSessionToken
+    ) async throws
     func stop() async
 }
 ```
+
+`SourceFileEvent` 携带非空 `SourceFileChange` option set 和启动时的 session token；公开策略常量 `SourceMonitorPolicy.maximumDetectionLatency` 固定为 5 秒。`DispatchSourceFileMonitor` 保持一个逻辑 monitoring request 和最多一个 active descriptor；每个 source 使用独立 generation，stop 先退休 generation 再 cancel，cancel handler 唯一负责 close。pause 停止 monitor；resume 先用无缓存 URL 重验 source，再恢复 speech/clock 并启动新 monitor，pause 前已排队的 source callback 显式忽略。业务 reducer 只在 matching playing session 接受首个 change 并进入 `awaitingReloadDecision`，后续重复 change 保持同一 prompt token；timer expiry 在 prompt 期间仍执行 stop 语义。reload/continue 均携带并匹配 `ReloadPromptToken`；reload 先停止旧 speech/monitor/clock，再以新 session token 对同一路径执行 `autoplay` 原子加载；continue 复用内存 document/cursor，只恢复 speech 与 clock，terminal 文件事件的 monitor rearm 由适配器自身完成。
 
 ### `ReadingSessionReducing`
 

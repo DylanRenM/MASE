@@ -14,8 +14,8 @@ public enum ReadingSessionEvent: Equatable, Sendable {
   case paragraphFinished(token: ReadingSessionToken)
   case timerExpired(TimerExpiry)
   case sourceChanged(promptToken: ReloadPromptToken, sessionToken: ReadingSessionToken)
-  case reloadSource(token: ReadingSessionToken)
-  case continueOldContent
+  case reloadSource(promptToken: ReloadPromptToken, token: ReadingSessionToken)
+  case continueOldContent(promptToken: ReloadPromptToken)
   case dismissError
   case appTerminate
 }

@@ -89,12 +89,12 @@
 - **resume 失败后置条件**：系统 stop 失败时不得启动 replacement request，后续 fail-safe cleanup 必须仍可重试系统 stop。
 - **stop 后置条件**：active count 为 0；后续迟到回调被 session token + request token + utterance identity + callback generation 丢弃；即使领域 request 已退休，cleanup 仍调用系统 stop。
 
-### API: `SourceMonitoring.start(url:fingerprint:)`
+### API: `SourceMonitoring.start(url:fingerprint:sessionToken:)`
 
-- **前置条件**：URL 为当前文档本地路径，fingerprint 来源于同一路径。
-- **成功后置条件**：write/extend/attrib/rename/delete 任一变化在 5 秒内进入 event stream。
+- **前置条件**：URL 为当前文档本地 file URL，fingerprint 来源于同一路径且 size 非负，session token 属于当前播放 generation；同一实例当前没有 active source。
+- **成功后置条件**：write/extend/attribute/rename/delete 任一变化在 `SourceMonitorPolicy.maximumDetectionLatency == 5 seconds` 内进入 event stream；事件保留当前 session token 和非空 change set。
 - **失败后置条件**：返回 typed monitor error，会话不得假装监控成功。
-- **不变式**：同一实例最多一个 active source；stop 后旧 token 回调无业务效果。
+- **不变式**：同一实例最多一个 logical request 和一个 active descriptor；重复 start 返回 `alreadyActive`；stop 幂等并在 cancel handler 中关闭 descriptor；rename/delete 取消旧 source，并以有界 50ms 间隔持续尝试重建原路径直至成功或 stop；stop 或 rearm 后旧 generation/token 回调无业务效果。
 
 ### API: `ReadingSessionReducing.reduce(state:event:)`
 
@@ -168,7 +168,11 @@
 
 - **前置条件**：start/stop 由 coordinator 串行调用。
 - **后置条件**：资源关闭；rename/delete 后不泄露 descriptor。
-- **不变式**：pending prompt 最多一个；旧 token 不影响新文档。
+- **不变式**：
+  - pending prompt 最多一个；旧 token 不影响新文档；
+  - reload/continue decision 必须携带并匹配当前 `ReloadPromptToken`，重复或迟到 decision 无业务效果；
+  - reload 先清理旧资源，再以新 token 原子加载同一路径且成功后从 cursor zero autoplay；
+  - continue 只使用内存旧 document 和冻结 cursor，恢复 speech/clock，不混入磁盘新内容。
 
 ### 模块: `session_lifecycle`
 

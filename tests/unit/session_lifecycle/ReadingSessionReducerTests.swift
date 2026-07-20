@@ -55,12 +55,19 @@ struct ReadingSessionReducerTests {
 
     let paused = reducer.reduce(state: playing.state, event: .pause)
     #expect(paused.state.mode == .paused)
-    #expect(paused.effects == [.freezeClock(token: playToken), .pauseSpeech(token: playToken)])
+    #expect(
+      paused.effects == [
+        .freezeClock(token: playToken),
+        .pauseSpeech(token: playToken),
+        .stopMonitor(token: playToken),
+      ]
+    )
 
     let resumed = reducer.reduce(state: paused.state, event: .resume)
     #expect(resumed.state.mode == .playing)
     #expect(
       resumed.effects == [
+        .verifySource(document, token: playToken),
         .resumeSpeech(
           document: document,
           cursor: .zero,
@@ -69,6 +76,7 @@ struct ReadingSessionReducerTests {
           rebuild: false
         ),
         .startClock(token: playToken),
+        .startMonitor(source: document.source, token: playToken),
       ]
     )
 
@@ -114,6 +122,7 @@ struct ReadingSessionReducerTests {
     let resumed = reducer.reduce(state: changed.state, event: .resume)
     #expect(
       resumed.effects == [
+        .verifySource(document, token: sessionToken),
         .resumeSpeech(
           document: document,
           cursor: paused.cursor,
@@ -122,6 +131,7 @@ struct ReadingSessionReducerTests {
           rebuild: true
         ),
         .startClock(token: sessionToken),
+        .startMonitor(source: document.source, token: sessionToken),
       ]
     )
   }
@@ -192,6 +202,272 @@ struct ReadingSessionReducerTests {
     #expect(transition.effects == stopEffects(token: sessionToken))
   }
 
+  @Test("a source change freezes playback and duplicate prompts are ignored")
+  func sourceChangePromptIsDeduplicated() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(
+      cursor: ReadingCursor(paragraphIndex: 0, utf16Offset: 6)
+    )
+    let sessionToken = try #require(playing.sessionToken)
+    let firstPrompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000021")!
+    )
+    let duplicatePrompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000022")!
+    )
+
+    let first = reducer.reduce(
+      state: playing,
+      event: .sourceChanged(
+        promptToken: firstPrompt,
+        sessionToken: sessionToken
+      )
+    )
+    let duplicate = reducer.reduce(
+      state: first.state,
+      event: .sourceChanged(
+        promptToken: duplicatePrompt,
+        sessionToken: sessionToken
+      )
+    )
+
+    #expect(first.state.mode == .awaitingReloadDecision)
+    #expect(first.state.cursor == playing.cursor)
+    #expect(first.state.reloadPromptToken == firstPrompt)
+    #expect(
+      first.effects == [
+        .freezeClock(token: sessionToken),
+        .pauseSpeech(token: sessionToken),
+      ]
+    )
+    #expect(duplicate == Transition(state: first.state, effects: []))
+  }
+
+  @Test("a late source token cannot prompt the current session")
+  func lateSourceTokenIsIgnored() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(cursor: .zero)
+    let prompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000023")!
+    )
+
+    let transition = reducer.reduce(
+      state: playing,
+      event: .sourceChanged(promptToken: prompt, sessionToken: token(24))
+    )
+
+    #expect(transition == Transition(state: playing, effects: []))
+  }
+
+  @Test("a source callback queued before pause is ignored after monitor stop")
+  func pausedIgnoresQueuedSourceCallback() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(cursor: .zero)
+    let sessionToken = try #require(playing.sessionToken)
+    let paused = reducer.reduce(state: playing, event: .pause).state
+    let prompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000030")!
+    )
+
+    let transition = reducer.reduce(
+      state: paused,
+      event: .sourceChanged(promptToken: prompt, sessionToken: sessionToken)
+    )
+
+    #expect(transition == Transition(state: paused, effects: []))
+  }
+
+  @Test("timer expiry closes an active reload prompt with stop semantics")
+  func timerExpiryWinsReloadPromptRace() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(cursor: ReadingCursor(paragraphIndex: 0, utf16Offset: 5))
+    let sessionToken = try #require(playing.sessionToken)
+    let document = try #require(playing.document)
+    let prompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000031")!
+    )
+    let awaiting = reducer.reduce(
+      state: playing,
+      event: .sourceChanged(promptToken: prompt, sessionToken: sessionToken)
+    ).state
+
+    let transition = reducer.reduce(
+      state: awaiting,
+      event: .timerExpired(TimerExpiry(token: sessionToken))
+    )
+
+    #expect(
+      transition.state
+        == .ready(document: document, speed: playing.speed, timer: playing.timer)
+    )
+    #expect(transition.effects == stopEffects(token: sessionToken))
+  }
+
+  @Test("stale and duplicate prompt decisions cannot affect a new state")
+  func promptDecisionIdentityIsEnforced() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(cursor: .zero)
+    let sessionToken = try #require(playing.sessionToken)
+    let currentPrompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000032")!
+    )
+    let stalePrompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000033")!
+    )
+    let awaiting = reducer.reduce(
+      state: playing,
+      event: .sourceChanged(
+        promptToken: currentPrompt,
+        sessionToken: sessionToken
+      )
+    ).state
+
+    let stale = reducer.reduce(
+      state: awaiting,
+      event: .continueOldContent(promptToken: stalePrompt)
+    )
+    let continued = reducer.reduce(
+      state: awaiting,
+      event: .continueOldContent(promptToken: currentPrompt)
+    )
+    let duplicate = reducer.reduce(
+      state: continued.state,
+      event: .continueOldContent(promptToken: currentPrompt)
+    )
+
+    #expect(stale == Transition(state: awaiting, effects: []))
+    #expect(continued.state.mode == .playing)
+    #expect(duplicate == Transition(state: continued.state, effects: []))
+  }
+
+  @Test("reload stops the old session and loads the same path for autoplay")
+  func reloadStartsAtomicAutoplayLoad() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(
+      cursor: ReadingCursor(paragraphIndex: 0, utf16Offset: 6)
+    )
+    let oldToken = try #require(playing.sessionToken)
+    let document = try #require(playing.document)
+    let prompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000025")!
+    )
+    let awaiting = ReadingSessionState.awaitingReloadDecision(
+      document: document,
+      cursor: playing.cursor,
+      speed: playing.speed,
+      timer: playing.timer,
+      sessionToken: oldToken,
+      promptToken: prompt
+    )
+    let newToken = token(26)
+
+    let transition = reducer.reduce(
+      state: awaiting,
+      event: .reloadSource(promptToken: prompt, token: newToken)
+    )
+
+    #expect(
+      transition.state
+        == .loading(
+          speed: awaiting.speed,
+          timer: awaiting.timer,
+          sessionToken: newToken
+        )
+    )
+    #expect(
+      transition.effects == stopEffects(token: oldToken)
+        + [
+          .loadDocument(
+            document.source.url,
+            token: newToken,
+            autoplay: true
+          )
+        ]
+    )
+  }
+
+  @Test("continue old content resumes the frozen cursor and clock")
+  func continueOldContentResumesFrozenSession() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(
+      cursor: ReadingCursor(paragraphIndex: 0, utf16Offset: 6)
+    )
+    let sessionToken = try #require(playing.sessionToken)
+    let document = try #require(playing.document)
+    let prompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000027")!
+    )
+    let awaiting = ReadingSessionState.awaitingReloadDecision(
+      document: document,
+      cursor: playing.cursor,
+      speed: playing.speed,
+      timer: playing.timer,
+      sessionToken: sessionToken,
+      promptToken: prompt
+    )
+
+    let transition = reducer.reduce(
+      state: awaiting,
+      event: .continueOldContent(promptToken: prompt)
+    )
+
+    #expect(
+      transition.state
+        == .playing(
+          document: document,
+          cursor: awaiting.cursor,
+          speed: awaiting.speed,
+          timer: awaiting.timer,
+          sessionToken: sessionToken
+        )
+    )
+    #expect(
+      transition.effects == [
+        .resumeSpeech(
+          document: document,
+          cursor: awaiting.cursor,
+          speed: awaiting.speed,
+          token: sessionToken,
+          rebuild: false
+        ),
+        .startClock(token: sessionToken),
+      ]
+    )
+  }
+
+  @Test("speech callbacks queued before the reload prompt are ignored")
+  func promptIgnoresQueuedSpeechCallbacks() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(cursor: .zero)
+    let sessionToken = try #require(playing.sessionToken)
+    let document = try #require(playing.document)
+    let awaiting = ReadingSessionState.awaitingReloadDecision(
+      document: document,
+      cursor: .zero,
+      speed: playing.speed,
+      timer: playing.timer,
+      sessionToken: sessionToken,
+      promptToken: ReloadPromptToken(
+        rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000028")!
+      )
+    )
+
+    let progress = reducer.reduce(
+      state: awaiting,
+      event: .cursorAdvanced(
+        ReadingCursor(paragraphIndex: 0, utf16Offset: 5),
+        token: sessionToken
+      )
+    )
+    let finish = reducer.reduce(
+      state: awaiting,
+      event: .paragraphFinished(token: sessionToken)
+    )
+
+    #expect(progress == Transition(state: awaiting, effects: []))
+    #expect(finish == Transition(state: awaiting, effects: []))
+  }
+
   @Test("illegal events recover safely and record a fault in relaxed mode")
   func illegalEventRecoversWhenRelaxed() throws {
     let reducer = ReadingSessionReducer(contractMode: .relaxed)
@@ -208,28 +484,20 @@ struct ReadingSessionReducerTests {
     )
   }
 
-  @Test("an illegal active transition stops resources in relaxed mode")
-  func illegalActiveTransitionStopsResources() throws {
+  @Test("a stale reload decision is ignored outside its prompt")
+  func staleReloadDecisionIsIgnored() throws {
     let reducer = ReadingSessionReducer(contractMode: .relaxed)
     let playing = try makePlaying(cursor: .zero)
-    let document = try #require(playing.document)
-    let sessionToken = try #require(playing.sessionToken)
-
-    let transition = reducer.reduce(state: playing, event: .continueOldContent)
-
-    #expect(
-      transition.state
-        == .ready(
-          document: document,
-          speed: playing.speed,
-          timer: playing.timer,
-          error: .internalFailure
-        )
+    let stalePrompt = ReloadPromptToken(
+      rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000029")!
     )
-    #expect(
-      transition.effects == stopEffects(token: sessionToken)
-        + [.recordFault(.illegalTransition)]
+
+    let transition = reducer.reduce(
+      state: playing,
+      event: .continueOldContent(promptToken: stalePrompt)
     )
+
+    #expect(transition == Transition(state: playing, effects: []))
   }
 
   @Test("repeated play pause and stop commands are idempotent")
@@ -401,8 +669,8 @@ struct ReadingSessionReducerTests {
       .paragraphFinished(token: sessionToken),
       .timerExpired(TimerExpiry(token: sessionToken)),
       .sourceChanged(promptToken: promptToken, sessionToken: sessionToken),
-      .reloadSource(token: token(15)),
-      .continueOldContent,
+      .reloadSource(promptToken: promptToken, token: token(15)),
+      .continueOldContent(promptToken: promptToken),
       .dismissError,
       .appTerminate,
     ]

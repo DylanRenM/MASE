@@ -66,12 +66,12 @@
 
 ## 8. source-file-monitoring capability
 
-- [ ] 8.1 复用检查：验证 DispatchSource write/atomic replacement POC 与生产事件集（依赖：7.7，复杂度：S）
-- [ ] 8.2 先写 start/stop、单 active source、5 秒约束、token 和 prompt 去重契约测试（依赖：8.1，复杂度：M）
-- [ ] 8.3 实现 `DispatchSourceFileMonitor` 的 descriptor 生命周期和事件映射（依赖：8.2，复杂度：L）
-- [ ] 8.4 先写 rename/delete rearm、迟到回调、ready 后删除播放失败集成测试，再实现协调逻辑（依赖：8.3，复杂度：L）
-- [ ] 8.5 先写 reload success/failure、continue old 与计时冻结 reducer/集成测试，再实现分支 effects（依赖：8.4，复杂度：M）
-- [ ] 8.6 运行真实沙箱文件修改测试，完成 descriptor/竞态安全评审，本地 commit `feat(source-monitoring)`（依赖：8.5，复杂度：S）
+- [x] 8.1 复用检查：验证 DispatchSource write/atomic replacement POC 与生产事件集（依赖：7.7，复杂度：S）
+- [x] 8.2 先写 start/stop、单 active source、5 秒约束、token 和 prompt 去重契约测试（依赖：8.1，复杂度：M）
+- [x] 8.3 实现 `DispatchSourceFileMonitor` 的 descriptor 生命周期和事件映射（依赖：8.2，复杂度：L）
+- [x] 8.4 先写 rename/delete rearm、迟到回调、ready 后删除播放失败集成测试，再实现协调逻辑（依赖：8.3，复杂度：L）
+- [x] 8.5 先写 reload success/failure、continue old 与计时冻结 reducer/集成测试，再实现分支 effects（依赖：8.4，复杂度：M）
+- [x] 8.6 运行真实沙箱文件修改测试，完成 descriptor/竞态安全评审，本地 commit `feat(source-monitoring)`（依赖：8.5，复杂度：S）
 
 ## 9. SwiftUI 应用集成
 

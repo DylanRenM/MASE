@@ -64,9 +64,120 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
       return dismissError(state: state)
     case .changeSpeed(let speed):
       return changeSpeed(state: state, speed: speed)
-    case .sourceChanged, .reloadSource, .continueOldContent:
+    case .sourceChanged(let promptToken, let sessionToken):
+      return sourceChanged(
+        state: state,
+        promptToken: promptToken,
+        sessionToken: sessionToken
+      )
+    case .reloadSource(let promptToken, let token):
+      return reloadSource(state: state, promptToken: promptToken, token: token)
+    case .continueOldContent(let promptToken):
+      return continueOldContent(state: state, promptToken: promptToken)
+    }
+  }
+
+  private func sourceChanged(
+    state: ReadingSessionState,
+    promptToken: ReloadPromptToken,
+    sessionToken: ReadingSessionToken
+  ) -> Transition? {
+    guard state.sessionToken == sessionToken else {
+      return ignoredLateCallback(state: state)
+    }
+    if state.mode == .awaitingReloadDecision {
+      return Transition(state: state, effects: [])
+    }
+    if state.mode == .paused {
+      return ignoredLateCallback(state: state)
+    }
+    guard
+      state.mode == .playing,
+      let document = state.document
+    else {
       return nil
     }
+    return Transition(
+      state: .awaitingReloadDecision(
+        document: document,
+        cursor: state.cursor,
+        speed: state.speed,
+        timer: state.timer,
+        sessionToken: sessionToken,
+        promptToken: promptToken
+      ),
+      effects: [
+        .freezeClock(token: sessionToken),
+        .pauseSpeech(token: sessionToken),
+      ]
+    )
+  }
+
+  private func reloadSource(
+    state: ReadingSessionState,
+    promptToken: ReloadPromptToken,
+    token: ReadingSessionToken
+  ) -> Transition? {
+    guard state.reloadPromptToken == promptToken else {
+      return ignoredLateCallback(state: state)
+    }
+    guard
+      state.mode == .awaitingReloadDecision,
+      let document = state.document,
+      let oldToken = state.sessionToken
+    else {
+      return nil
+    }
+    return Transition(
+      state: .loading(
+        speed: state.speed,
+        timer: state.timer,
+        sessionToken: token
+      ),
+      effects: stopEffects(token: oldToken)
+        + [
+          .loadDocument(
+            document.source.url,
+            token: token,
+            autoplay: true
+          )
+        ]
+    )
+  }
+
+  private func continueOldContent(
+    state: ReadingSessionState,
+    promptToken: ReloadPromptToken
+  ) -> Transition? {
+    guard state.reloadPromptToken == promptToken else {
+      return ignoredLateCallback(state: state)
+    }
+    guard
+      state.mode == .awaitingReloadDecision,
+      let document = state.document,
+      let token = state.sessionToken
+    else {
+      return nil
+    }
+    return Transition(
+      state: .playing(
+        document: document,
+        cursor: state.cursor,
+        speed: state.speed,
+        timer: state.timer,
+        sessionToken: token
+      ),
+      effects: [
+        .resumeSpeech(
+          document: document,
+          cursor: state.cursor,
+          speed: state.speed,
+          token: token,
+          rebuild: false
+        ),
+        .startClock(token: token),
+      ]
+    )
   }
 
   private func documentLoadFailed(
@@ -219,7 +330,11 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
     )
     return Transition(
       state: paused,
-      effects: [.freezeClock(token: token), .pauseSpeech(token: token)]
+      effects: [
+        .freezeClock(token: token),
+        .pauseSpeech(token: token),
+        .stopMonitor(token: token),
+      ]
     )
   }
 
@@ -247,6 +362,7 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
     return Transition(
       state: playing,
       effects: [
+        .verifySource(document, token: token),
         .resumeSpeech(
           document: document,
           cursor: state.cursor,
@@ -255,6 +371,7 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
           rebuild: state.requiresUtteranceRebuild
         ),
         .startClock(token: token),
+        .startMonitor(source: document.source, token: token),
       ]
     )
   }
@@ -308,7 +425,8 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
       return Transition(state: state, effects: [])
     }
     guard
-      state.mode == .playing || state.mode == .paused,
+      state.mode == .playing || state.mode == .paused
+        || state.mode == .awaitingReloadDecision,
       let document = state.document,
       let token = state.sessionToken
     else {
@@ -339,6 +457,9 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
       return ignoredLateCallback(state: state)
     }
     guard state.mode == .playing, let document = state.document else {
+      if state.mode == .paused || state.mode == .awaitingReloadDecision {
+        return ignoredLateCallback(state: state)
+      }
       return nil
     }
     let isValid = ReadingSessionState.satisfiesInvariants(
