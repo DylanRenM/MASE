@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能语音朗读 · 灰度线框图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 font-sans antialiased">
+
+    <!-- 主卡片：朗读控制台 (普通用户) -->
+    <div class="w-full max-w-2xl bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8 space-y-8">
+
+        <!-- 标题区 -->
+        <div class="border-b border-gray-200 pb-4">
+            <h1 class="text-gray-900 text-2xl font-semibold tracking-tight" data-req="标题-智能语音朗读系统">智能语音朗读</h1>
+            <p class="text-gray-500 text-sm mt-1" data-req="副标题-选择英文文件开始听读">选择英文文件，自动朗读 · 循环 · 定时停止</p>
+        </div>
+
+        <!-- 文件选择与校验 (B001) -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-700 text-sm font-medium" data-req="文件选择标签-选择文件">文件来源</span>
+                <span class="text-gray-400 text-xs bg-gray-100 px-2 py-0.5 rounded-full">支持 .docx .txt</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <!-- 文件选择按钮 / 模拟选中状态 -->
+                <div class="relative flex-1">
+                    <input type="file" id="fileInput" class="hidden" accept=".docx,.txt" data-req="文件选择器-选择Word或TXT文件">
+                    <label for="fileInput" class="flex items-center justify-center w-full sm:w-auto px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg cursor-pointer transition-colors border border-gray-300 shadow-sm" data-req="文件选择按钮-点击选择文件">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            选择文件
+                        </span>
+                    </label>
+                    <!-- 已选文件展示 (模拟就绪状态) -->
+                    <div class="mt-2 sm:mt-0 sm:ml-3 flex items-center text-sm text-gray-700 bg-gray-100 px-4 py-2 rounded-lg border border-gray-200" data-req="已选文件-article_en.txt">
+                        <span class="truncate max-w-[180px]">article_en.txt</span>
+                        <span class="ml-2 text-gray-400 text-xs bg-gray-200 px-2 py-0.5 rounded-full">已就绪</span>
+                    </div>
+                </div>
+                <!-- 格式错误提示 (模拟异常) 默认隐藏 仅做展示 -->
+                <div class="hidden sm:flex items-center text-red-500 text-xs bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+                    <span data-req="格式错误提示-仅支持docx和txt文件">格式不支持</span>
+                </div>
+            </div>
+            <!-- 错误提示条 (模拟显示) 用于展示异常状态 -->
+            <div class="flex items-center gap-2 bg-gray-100 border border-gray-300 text-gray-600 text-sm px-4 py-2 rounded-lg" data-req="错误提示-文件格式无效请重新选择">
+                <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg>
+                <span>文件格式无效，请选择 .docx 或 .txt 文件</span>
+            </div>
+        </div>
+
+        <!-- 朗读控制核心区 (B002 / B003) -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-5">
+            <!-- 进度与状态 -->
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-500" data-req="朗读状态-正在朗读">状态：<span class="text-gray-700 font-medium">朗读中</span></span>
+                <span class="text-gray-400" data-req="朗读进度-行数">第 24 / 156 行</span>
+            </div>
+            <!-- 进度条 -->
+            <div class="w-full bg-gray-200 rounded-full h-2.5" data-req="进度条-朗读进度">
+                <div class="bg-gray-400 h-2.5 rounded-full w-[30%] transition-all" style="width: 30%;"></div>
+            </div>
+
+            <!-- 播放/暂停 与 速度控制 (F005) -->
+            <div class="flex flex-wrap items-center gap-4 pt-1">
+                <!-- 播放/暂停切换 (B003) -->
+                <div class="flex items-center gap-2">
+                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 border border-gray-300 shadow-sm transition" data-req="暂停按钮-点击暂停朗读">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3h3v14H5V3zm7 0h3v14h-3V3z"/></svg>
+                        暂停
+                    </button>
+                    <!-- 继续按钮 (模拟状态，默认隐藏) 此处展示以显示切换 -->
+                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 border border-gray-300 shadow-sm transition hidden" data-req="继续按钮-从暂停位置恢复朗读">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 3l12 7-12 7V3z"/></svg>
+                        继续
+                    </button>
+                </div>
+
+                <!-- 速度选择 (F005) 三个独立按钮 空闲/暂停可点击 播放中置灰 -->
+                <div class="flex items-center gap-2 ml-auto" data-req="速度控制组-慢/正常/快">
+                    <span class="text-gray-400 text-xs mr-1">速度</span>
+                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-600 px-3 py-1.5 rounded-md text-xs font-medium border border-gray-300 transition" data-req="速度按钮-慢速">慢</button>
+                    <button class="bg-gray-400 text-white px-3 py-1.5 rounded-md text-xs font-medium border border-gray-400 shadow-sm" data-req="速度按钮-正常(选中)">正常</button>
+                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-600 px-3 py-1.5 rounded-md text-xs font-medium border border-gray-300 transition" data-req="速度按钮-快速">快</button>
+                </div>
+            </div>
+
+            <!-- 循环播放指示 (B002) -->
+            <div class="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200">
+                <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9l4-4 4 4M20 15l-4 4-4-4"/></svg>
+                <span data-req="循环播放提示-朗读至末尾将自动从头开始">循环播放已开启 · 朗读至末尾自动重头开始</span>
+            </div>
+        </div>
+
+        <!-- 定时停止 (B004) -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-700 text-sm font-medium" data-req="定时停止标签-设定朗读时长">定时停止</span>
+                <span class="text-gray-400 text-xs bg-gray-100 px-2 py-0.5 rounded-full">到时自动中止</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-1 bg-gray-100 border border-gray-300 rounded-lg px-3 py-2">
+                    <input type="number" value="15" min="1" max="120" class="w-14 bg-transparent text-gray-900 text-sm font-medium text-center border-none outline-none" data-req="定时输入-朗读分钟数">
+                    <span class="text-gray-500 text-sm">分钟</span>
+                </div>
+                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 transition" data-req="定时设定按钮-应用定时">应用</button>
+                <span class="text-gray-400 text-xs ml-1" data-req="定时剩余提示-剩余时间">剩余 12:30</span>
+            </div>
+        </div>
+
+        <!-- 文件被外部修改提示 (异常场景) 模拟弹窗/提示条 -->
+        <div class="bg-gray-100 border-l-4 border-gray-400 text-gray-700 p-4 rounded-lg shadow-sm flex items-start gap-3" data-req="文件修改提示-文件已被外部修改是否重新加载">
+            <svg class="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="flex-1">
+                <p class="text-sm font-medium" data-req="修改提示文本-检测到文件已修改">检测到文件已被外部修改</p>
+                <p class="text-xs text-gray-500 mt-1" data-req="修改提示描述-是否重新加载并播放">是否重新加载并从头播放？</p>
+                <div class="flex gap-3 mt-3">
+                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-1.5 rounded-md text-xs font-medium border border-gray-300 transition" data-req="重新加载确认-是">是，重新加载</button>
+                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-600 px-4 py-1.5 rounded-md text-xs font-medium border border-gray-300 transition" data-req="重新加载拒绝-否">否，继续当前</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 全部非英文内容提示 (边界场景) -->
+        <div class="bg-gray-100 border border-gray-300 text-gray-600 text-sm px-4 py-3 rounded-lg flex items-center gap-2" data-req="无英文内容提示-未发现可朗读的英文内容">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>未发现可朗读的英文内容，请检查文件</span>
+        </div>
+
+        <!-- 底部辅助信息 -->
+        <div class="text-xs text-gray-400 border-t border-gray-200 pt-4 flex justify-between">
+            <span data-req="底部提示-朗读引擎">朗读引擎 · 英文TTS</span>
+            <span data-req="底部版本-原型v1.0">灰度线框图 v1.0</span>
+        </div>
+    </div>
+
+    <!-- 额外：角色说明（普通用户） 仅用于展示 -->
+    <div class="absolute top-4 left-4 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-500 shadow-sm" data-req="角色标签-普通用户">
+        角色：普通用户（英文听读）
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>磨耳朵 · macOS MVP 交互原型</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #e9e9e7;
+      --surface: rgba(250, 250, 249, 0.96);
+      --surface-muted: #f1f1ef;
+      --line: #d8d8d4;
+      --ink: #242424;
+      --muted: #777773;
+      --accent: #415bc7;
+      --accent-dark: #3249ad;
+      --accent-soft: #e7eaff;
+      --danger: #a23c32;
+      --danger-soft: #f9e9e7;
+      --shadow: 0 26px 70px rgba(25, 25, 23, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(255,255,255,.95), transparent 30%),
+        linear-gradient(145deg, #efefed, #dfdfdc);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 34px 20px;
+    }
+
+    button, input { font: inherit; }
+
+    button:focus-visible, input:focus-visible, label:focus-within {
+      outline: 3px solid rgba(65, 91, 199, .28);
+      outline-offset: 2px;
+    }
+
+    .window {
+      width: min(900px, 100%);
+      min-height: 650px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid rgba(70, 70, 66, .18);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      animation: arrive .48s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(12px) scale(.992); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .titlebar {
+      height: 52px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(245,245,243,.9);
+    }
+
+    .lights { display: flex; gap: 8px; }
+    .light { width: 12px; height: 12px; border-radius: 50%; background: #c8c8c4; }
+    .light:nth-child(1) { background: #ef6b60; }
+    .light:nth-child(2) { background: #edbd4f; }
+    .light:nth-child(3) { background: #62c555; }
+
+    .titlebar strong { font-size: 13px; font-weight: 650; letter-spacing: .01em; }
+
+    .prototype-mark {
+      justify-self: end;
+      color: var(--muted);
+      font-size: 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+    }
+
+    main { padding: 36px 44px 28px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    h1 { margin: 0; font-size: clamp(30px, 5vw, 46px); letter-spacing: -.045em; line-height: 1; }
+    .intro { margin: 12px 0 30px; color: var(--muted); font-size: 15px; }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .file-icon {
+      width: 42px;
+      height: 50px;
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .file-copy { min-width: 0; flex: 1; }
+    .file-name { font-size: 15px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .button, .file-button {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 620;
+      cursor: pointer;
+      transition: transform .14s ease, background .14s ease, border-color .14s ease, opacity .14s ease;
+      user-select: none;
+    }
+
+    .button:hover:not(:disabled), .file-button:hover { background: var(--surface-muted); border-color: #c2c2bd; }
+    .button:active:not(:disabled), .file-button:active { transform: scale(.975); }
+    .button:disabled { cursor: not-allowed; opacity: .42; }
+    .file-button input { display: none; }
+
+    .workspace { padding: 34px 0 28px; }
+
+    .status-line { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; }
+    .status { font-size: 18px; font-weight: 680; }
+    .position { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    .progress-track {
+      height: 7px;
+      margin-top: 16px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #dededa;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width .42s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .excerpt {
+      min-height: 52px;
+      margin: 20px 0 0;
+      color: #565653;
+      font-family: ui-serif, Georgia, serif;
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .primary {
+      min-width: 132px;
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      padding: 11px 22px;
+    }
+
+    .primary:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+    .settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .setting { padding: 22px 0; }
+    .setting + .setting { padding-left: 28px; border-left: 1px solid var(--line); }
+    .setting:first-child { padding-right: 28px; }
+
+    .setting-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .setting-title { font-size: 13px; font-weight: 680; }
+    .setting-note { font-size: 11px; color: var(--muted); }
+
+    .segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--surface-muted); border-radius: 10px; }
+    .segment { border: 0; border-radius: 7px; background: transparent; padding: 7px; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 650; }
+    .segment.selected { color: var(--accent-dark); background: white; box-shadow: 0 1px 5px rgba(35,35,32,.12); }
+    .segment:disabled { opacity: .38; cursor: not-allowed; }
+
+    .timer-row { display: flex; align-items: center; gap: 8px; }
+    .timer-row input { width: 94px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: white; color: var(--ink); }
+    .timer-row span { color: var(--muted); font-size: 12px; }
+    .remaining { margin-left: auto; color: var(--accent-dark) !important; font-variant-numeric: tabular-nums; }
+
+    .demo-tools { display: flex; gap: 8px; align-items: center; margin-top: 22px; }
+    .demo-tools > span { margin-right: auto; color: var(--muted); font-size: 11px; }
+    .demo-tools .button { padding: 6px 10px; font-size: 11px; background: transparent; }
+
+    .footnote { margin: 22px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      z-index: 20;
+      max-width: min(520px, calc(100vw - 32px));
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 15px;
+      background: rgba(35,35,33,.94);
+      color: white;
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      font-size: 13px;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.error { background: var(--danger); }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(25,25,23,.28);
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+
+    .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .modal {
+      width: min(430px, 100%);
+      background: #fbfbfa;
+      border: 1px solid rgba(60,60,56,.22);
+      border-radius: 15px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.28);
+      padding: 24px;
+      transform: scale(.96) translateY(8px);
+      transition: transform .2s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .modal-backdrop.open .modal { transform: scale(1) translateY(0); }
+    .modal h2 { margin: 0 0 8px; font-size: 19px; }
+    .modal p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 24px; }
+
+    @media (max-width: 680px) {
+      body { padding: 0; display: block; background: var(--surface); }
+      .window { min-height: 100vh; border: 0; border-radius: 0; box-shadow: none; }
+      main { padding: 28px 22px 24px; }
+      .titlebar { border-radius: 0; }
+      .file-row { flex-wrap: wrap; }
+      .file-button { width: 100%; text-align: center; }
+      .settings { grid-template-columns: 1fr; }
+      .setting + .setting { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
+      .setting:first-child { padding-right: 0; }
+      .controls { justify-content: stretch; }
+      .controls .button { flex: 1; }
+      .demo-tools { flex-wrap: wrap; }
+      .demo-tools > span { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <section class="window" aria-label="磨耳朵 macOS MVP 原型">
+    <header class="titlebar">
+      <div class="lights" aria-hidden="true"><span class="light"></span><span class="light"></span><span class="light"></span></div>
+      <strong>磨耳朵</strong>
+      <span class="prototype-mark">交互原型 v2</span>
+    </header>
+
+    <main>
+      <p class="eyebrow">macOS English Listener</p>
+      <h1>把英文，听进日常。</h1>
+      <p class="intro">选择本地英文文档，使用系统语音持续循环朗读。</p>
+
+      <section class="file-row" data-req="F001 文件选择与校验">
+        <div class="file-icon" id="fileType">DOC</div>
+        <div class="file-copy">
+          <div class="file-name" id="fileName">尚未选择文件</div>
+          <div class="file-meta" id="fileMeta">支持 TXT、DOCX、文本型 PDF · 最大 20MB</div>
+        </div>
+        <button class="button" id="sampleButton" type="button">载入示例</button>
+        <label class="file-button" tabindex="0">
+          选择文件
+          <input id="fileInput" type="file" accept=".txt,.docx,.pdf">
+        </label>
+      </section>
+
+      <section class="workspace" aria-live="polite">
+        <div class="status-line">
+          <span class="status" id="status">等待选择文件</span>
+          <span class="position" id="position">0% · 0 / 0 段</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-label="朗读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="excerpt" id="excerpt">文件内容仅在本机处理。选择文件后不会自动播放。</p>
+
+        <div class="controls" data-req="F003 F004 F005 播放控制">
+          <button class="button primary" id="primaryButton" type="button" disabled>播放</button>
+          <button class="button" id="stopButton" type="button" disabled>停止并重置</button>
+        </div>
+      </section>
+
+      <section class="settings">
+        <div class="setting" data-req="F006 三档速度">
+          <div class="setting-head">
+            <span class="setting-title">朗读速度</span>
+            <span class="setting-note">播放时不可更改</span>
+          </div>
+          <div class="segmented" id="speedGroup" role="group" aria-label="朗读速度">
+            <button class="segment" type="button" data-speed="slow">慢</button>
+            <button class="segment selected" type="button" data-speed="normal">正常</button>
+            <button class="segment" type="button" data-speed="fast">快</button>
+          </div>
+        </div>
+
+        <div class="setting" data-req="F007 有效朗读时间定时">
+          <div class="setting-head">
+            <span class="setting-title">定时停止</span>
+            <span class="setting-note">播放前设置 · 留空则不限时</span>
+          </div>
+          <div class="timer-row">
+            <input id="timerInput" type="number" min="1" max="240" step="1" placeholder="1–240" aria-label="定时分钟数">
+            <span>分钟</span>
+            <span class="remaining" id="remaining">不限时</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="demo-tools" aria-label="原型演示工具">
+        <span>原型演示工具</span>
+        <button class="button" id="changeDemo" type="button">模拟源文件修改</button>
+        <button class="button" id="timerDemo" type="button">模拟定时到期</button>
+      </div>
+
+      <p class="footnote">系统默认英文语音 · 数字、标点及其他语言字符会在朗读前过滤 · 不支持 DOC、扫描 PDF 或 OCR</p>
+    </main>
+  </section>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="modal-backdrop" id="changeModal" role="dialog" aria-modal="true" aria-labelledby="changeTitle">
+    <div class="modal">
+      <h2 id="changeTitle">源文件已被修改</h2>
+      <p>检测到当前文件内容发生变化。你可以重新加载并从头播放，也可以继续收听已经载入内存的旧内容。</p>
+      <div class="modal-actions">
+        <button class="button" id="keepOld" type="button">继续旧内容</button>
+        <button class="button primary" id="reloadFile" type="button">重新加载</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sampleParagraphs = [
+      "Small steps repeated every day become a language you can trust",
+      "Listen without rushing and let each familiar sound settle into memory",
+      "When the final paragraph ends the reading begins again from the start",
+      "Pause when you need silence then continue from the exact place you left"
+    ];
+
+    const state = {
+      mode: "idle",
+      fileName: "",
+      fileType: "DOC",
+      paragraphs: [],
+      paragraphIndex: 0,
+      fraction: 0,
+      speed: "normal",
+      configuredMinutes: null,
+      remainingSeconds: null,
+      tick: null
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const fileInput = $("#fileInput");
+    const primaryButton = $("#primaryButton");
+    const stopButton = $("#stopButton");
+    const timerInput = $("#timerInput");
+    const speedButtons = [...document.querySelectorAll("[data-speed]")];
+    const progressTrack = $(".progress-track");
+    let toastTimer;
+
+    function englishOnly(text) {
+      return text
+        .replace(/[^A-Za-z\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function showToast(message, error = false) {
+      const toast = $("#toast");
+      clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.toggle("error", error);
+      toast.classList.add("show");
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes) return "示例文档";
+      return bytes < 1024 * 1024
+        ? `${Math.max(1, Math.round(bytes / 1024))}KB`
+        : `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+    }
+
+    function splitParagraphs(text) {
+      return text
+        .split(/\n+/)
+        .map(englishOnly)
+        .filter(Boolean);
+    }
+
+    function setDocument(name, type, paragraphs, sizeLabel) {
+      stopTick();
+      state.mode = "ready";
+      state.fileName = name;
+      state.fileType = type.toUpperCase();
+      state.paragraphs = paragraphs;
+      state.paragraphIndex = 0;
+      state.fraction = 0;
+      state.remainingSeconds = null;
+      $("#fileName").textContent = name;
+      $("#fileType").textContent = state.fileType;
+      $("#fileMeta").textContent = `${sizeLabel} · 已过滤并就绪`;
+      render();
+      showToast("文件已就绪，不会自动播放");
+    }
+
+    function rejectFile(message) {
+      fileInput.value = "";
+      showToast(message, true);
+    }
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const extension = file.name.split(".").pop().toLowerCase();
+      if (!["txt", "docx", "pdf"].includes(extension)) {
+        rejectFile("不支持该格式，请选择 TXT、DOCX 或文本型 PDF");
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        rejectFile("文件超过 20MB，无法载入");
+        return;
+      }
+      if (extension === "txt") {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const paragraphs = splitParagraphs(String(reader.result || ""));
+          if (!paragraphs.length) {
+            rejectFile("未发现可朗读的英文内容");
+            return;
+          }
+          setDocument(file.name, extension, paragraphs, formatBytes(file.size));
+        };
+        reader.onerror = () => rejectFile("无法读取文件，文件可能已损坏");
+        reader.readAsText(file);
+        return;
+      }
+      setDocument(file.name, extension, sampleParagraphs, `${formatBytes(file.size)} · 原型模拟解析`);
+    });
+
+    $("#sampleButton").addEventListener("click", () => {
+      setDocument("daily_listening.txt", "txt", sampleParagraphs, "4KB · 示例");
+    });
+
+    speedButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (state.mode === "playing") return;
+        state.speed = button.dataset.speed;
+        render();
+      });
+    });
+
+    function readTimerSetting() {
+      const raw = timerInput.value.trim();
+      if (!raw) {
+        state.configuredMinutes = null;
+        state.remainingSeconds = null;
+        return true;
+      }
+      const value = Number(raw);
+      if (!Number.isInteger(value) || value < 1 || value > 240) {
+        showToast("定时时长必须是 1–240 之间的整数分钟", true);
+        return false;
+      }
+      state.configuredMinutes = value;
+      if (state.mode === "ready" || state.remainingSeconds === null) {
+        state.remainingSeconds = value * 60;
+      }
+      return true;
+    }
+
+    timerInput.addEventListener("change", () => {
+      if (state.mode === "playing") return;
+      readTimerSetting();
+      render();
+    });
+
+    function startTick() {
+      stopTick();
+      const intervals = { slow: 1100, normal: 760, fast: 470 };
+      state.tick = setInterval(() => {
+        state.fraction += .08;
+        if (state.fraction >= 1) {
+          state.fraction = 0;
+          state.paragraphIndex = (state.paragraphIndex + 1) % state.paragraphs.length;
+        }
+        if (state.remainingSeconds !== null) {
+          state.remainingSeconds = Math.max(0, state.remainingSeconds - intervals[state.speed] / 1000);
+          if (state.remainingSeconds === 0) {
+            stopSession("定时已到，朗读已停止并重置");
+            return;
+          }
+        }
+        render();
+      }, intervals[state.speed]);
+    }
+
+    function stopTick() {
+      if (state.tick) clearInterval(state.tick);
+      state.tick = null;
+    }
+
+    function playOrPause() {
+      if (state.mode === "ready") {
+        if (!readTimerSetting()) return;
+        state.mode = "playing";
+        startTick();
+      } else if (state.mode === "playing") {
+        state.mode = "paused";
+        stopTick();
+      } else if (state.mode === "paused") {
+        state.mode = "playing";
+        startTick();
+      }
+      render();
+    }
+
+    function stopSession(message = "朗读已停止，进度已重置") {
+      if (!state.paragraphs.length) return;
+      stopTick();
+      state.mode = "ready";
+      state.paragraphIndex = 0;
+      state.fraction = 0;
+      state.remainingSeconds = state.configuredMinutes === null ? null : state.configuredMinutes * 60;
+      render();
+      showToast(message);
+    }
+
+    primaryButton.addEventListener("click", playOrPause);
+    stopButton.addEventListener("click", () => stopSession());
+
+    $("#changeDemo").addEventListener("click", () => {
+      if (state.mode !== "playing") {
+        showToast("请先播放文件，再模拟源文件修改", true);
+        return;
+      }
+      stopTick();
+      $("#changeModal").classList.add("open");
+    });
+
+    $("#keepOld").addEventListener("click", () => {
+      $("#changeModal").classList.remove("open");
+      startTick();
+      showToast("继续朗读已载入的旧内容");
+    });
+
+    $("#reloadFile").addEventListener("click", () => {
+      $("#changeModal").classList.remove("open");
+      state.paragraphs = [...sampleParagraphs, "The refreshed source is now ready for listening"];
+      state.paragraphIndex = 0;
+      state.fraction = 0;
+      startTick();
+      render();
+      showToast("已重新加载，并从头播放");
+    });
+
+    $("#timerDemo").addEventListener("click", () => {
+      if (state.mode !== "playing") {
+        showToast("请先播放文件，再模拟定时到期", true);
+        return;
+      }
+      stopSession("定时已到，朗读已停止并重置");
+    });
+
+    function formatRemaining(seconds) {
+      if (seconds === null) return "不限时";
+      const total = Math.ceil(seconds);
+      const minutes = Math.floor(total / 60);
+      const rest = String(total % 60).padStart(2, "0");
+      return `${minutes}:${rest}`;
+    }
+
+    function render() {
+      const hasDocument = state.paragraphs.length > 0;
+      const total = state.paragraphs.length;
+      const overall = hasDocument ? ((state.paragraphIndex + state.fraction) / total) * 100 : 0;
+      const labels = { idle: "等待选择文件", ready: "文件已就绪", playing: "正在朗读", paused: "已暂停" };
+
+      $("#status").textContent = labels[state.mode] || "文件已就绪";
+      $("#position").textContent = `${Math.round(overall)}% · ${hasDocument ? state.paragraphIndex + 1 : 0} / ${total} 段`;
+      $("#progressFill").style.width = `${overall}%`;
+      progressTrack.setAttribute("aria-valuenow", String(Math.round(overall)));
+      $("#excerpt").textContent = hasDocument
+        ? state.paragraphs[state.paragraphIndex]
+        : "文件内容仅在本机处理。选择文件后不会自动播放。";
+
+      primaryButton.disabled = !hasDocument;
+      primaryButton.textContent = state.mode === "playing" ? "暂停" : state.mode === "paused" ? "继续" : "播放";
+      stopButton.disabled = !(state.mode === "playing" || state.mode === "paused");
+      timerInput.disabled = state.mode === "playing" || state.mode === "paused";
+      $("#remaining").textContent = state.mode === "playing" || state.mode === "paused"
+        ? formatRemaining(state.remainingSeconds)
+        : state.configuredMinutes === null ? "不限时" : `${state.configuredMinutes}:00`;
+
+      speedButtons.forEach((button) => {
+        button.disabled = state.mode === "playing";
+        button.classList.toggle("selected", button.dataset.speed === state.speed);
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# MASE OpenSpec 配置
+schema: "mase-project/v1"
+
+project_type:
+  has_ui: true
+  ui_platform: "macOS 13+ / SwiftUI"
+
+phase: design
+
+capabilities:
+  - document-ingestion
+  - english-content-filtering
+  - speech-playback-control
+  - active-reading-timer
+  - reading-progress
+  - source-file-monitoring
+  - session-lifecycle
