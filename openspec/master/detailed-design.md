@@ -195,6 +195,16 @@ struct Transition: Equatable {
 }
 ```
 
+### `ReadingSessionEffectExecuting`
+
+```swift
+protocol ReadingSessionEffectExecuting: Sendable {
+    func execute(_ effect: ReadingSessionEffect) async throws -> ReadingSessionEvent?
+}
+```
+
+会产生领域结果的 effect 必须把结果作为返回值交回 coordinator，在当前串行 batch 内继续 reduce；adapter 不得在 `execute` 内同步回调 `SessionCoordinator.send`。返回事件一旦被 reduce，其 transition 将取代原 batch 的剩余 effects。等待期间被取消的旧 effect 即使不配合取消并返回事件，coordinator 也必须在发布前丢弃该事件。cleanup effect 采用 best-effort 顺序执行，单项失败不得跳过后续 cleanup。
+
 ## 状态转换表
 
 | 当前状态 | 事件 | 下一状态 | 主要 effect |
@@ -214,7 +224,7 @@ struct Transition: Equatable {
 | awaitingReloadDecision | continueOld | playing | resumeSpeech, startClock, rearmMonitor |
 | any loaded | appTerminate | idle | stopResources, discardSession |
 
-非法事件不改变状态，并在 strict 构建中触发 invariant diagnostic；用户快速重复的合法事件必须幂等。
+非法事件在 strict 构建中触发 invariant diagnostic；relaxed 构建发出不含文件路径或正文的结构化 fault、停止活动副作用并恢复 idle/ready。迟到 token 回调不属于非法事件，只做幂等忽略；用户快速重复的合法事件必须幂等。
 
 ## 关键算法/策略
 
@@ -261,7 +271,7 @@ struct Transition: Equatable {
 - 外部输入错误全部转为 typed recoverable error，不使用 `precondition` 崩溃。
 - `precondition`/`assert` 仅保护程序员错误和 reducer 内部不变量。
 - Dev/测试 strict：非法状态转换、越界 cursor、重复活动 TTS 立即失败。
-- Production relaxed：记录 fault、停止副作用并恢复到 idle/ready，禁止继续处于不一致 playing。
+- Production relaxed：非法 transition 或 cursor 违规使用当前 token 清理；真正的 state invariant 违规执行无 token emergency cleanup；两者均记录不含路径/正文的 fault 并恢复到 idle/ready，禁止继续处于不一致 playing。
 
 ## SwiftUI 视觉与交互规范
 

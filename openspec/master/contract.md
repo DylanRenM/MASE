@@ -4,7 +4,7 @@
 >
 > 适用层级：API 级 ☑　模块级 ☑　函数级 ☑
 >
-> Dev/测试：strict；本地 release：relaxed external errors + strict internal diagnostics。
+> Dev/测试：strict；本地 release：typed external errors + relaxed fail-safe recovery + structured internal diagnostics。
 
 ## 0. 公共类型约束
 
@@ -101,6 +101,20 @@
   - effects 顺序确定；
   - 相同 state/event 返回相同 transition。
 - **不变式**：纯函数，不调用时钟、文件、TTS、日志或 UI。
+
+### API: `ReadingSessionEffectExecuting.execute(_:)`
+
+- **前置条件**：只由 `SessionCoordinator` 在其串行 effect domain 内调用；effect payload 满足对应 document、cursor、speed 与 token 契约。
+- **成功后置条件**：
+  - 返回 `nil` 表示当前 effect 已完成且没有同步领域结果；
+  - 返回单个 `ReadingSessionEvent` 时，coordinator MUST 在同一 generation 内 reduce 该事件，并 MUST 丢弃原 batch 的剩余 effects；
+  - cleanup effect 即使单项失败，后续 cleanup 仍 MUST best-effort 执行。
+- **失败后置条件**：adapter failure 抛出 typed execution error或由 coordinator 按 effect 类型映射为 typed error；不得把失败伪装为成功状态。
+- **不变式**：
+  - `execute` 内 MUST NOT 同步回调并等待 `SessionCoordinator.send`；
+  - superseding event 到达后，当前 cleanup 可完成，但旧 generation 后续非 cleanup effects MUST 被丢弃；
+  - 被取消 effect 的返回事件或错误 MUST NOT 修改当前 generation；
+  - effect execution 不得重叠。
 
 ## 二、模块级契约
 
@@ -215,5 +229,5 @@
 ### 本地 release relaxed
 
 - 外部文件、TTS、权限和 monitor 错误全部转 typed error，不崩溃。
-- 内部 invariant 违规必须记录 fault、停止所有副作用并恢复 idle/ready。
+- 内部 invariant 违规必须记录不含路径或正文的结构化 fault、执行无 token emergency cleanup 并恢复 idle/ready。
 - 不得用 relaxed 模式跳过输入校验、安全上限或隐私约束。
