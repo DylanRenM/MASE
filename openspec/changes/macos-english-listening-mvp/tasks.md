@@ -98,19 +98,19 @@
 
 ## 11. Build 完成门禁
 
-- [ ] 11.1 运行 unit + integration + contract + E2E + app bundle + codesign 全套验证（依赖：10.9，复杂度：M）
-- [ ] 11.2 执行 spec/contract/architecture 一致性代码评审并关闭全部发现项（依赖：11.1，复杂度：M）
-- [ ] 11.3 执行文件解析、归档、路径、日志隐私和无网络依赖安全扫描（依赖：11.2，复杂度：M）
-- [ ] 11.4 更新测试追踪矩阵，确认 36 requirements 和全部 P0/P1 场景均有自动化证据（依赖：11.3，复杂度：S）
-- [ ] 11.5 生成本地 `.app` 验收包和验证摘要，创建 Build 门禁本地 Conventional Commit（依赖：11.4，复杂度：S）
+- [x] 11.1 运行 unit + integration + contract + E2E + app bundle + codesign 全套验证（依赖：10.9，复杂度：M）
+- [x] 11.2 执行 spec/contract/architecture 一致性代码评审并关闭全部发现项（依赖：11.1，复杂度：M）
+- [x] 11.3 执行文件解析、归档、路径、日志隐私和无网络依赖安全扫描（依赖：11.2，复杂度：M）
+- [x] 11.4 更新测试追踪矩阵，确认 36 requirements 和全部 P0/P1 场景均有自动化证据（依赖：11.3，复杂度：S）
+- [x] 11.5 生成本地 `.app` 验收包和验证摘要，创建 Build 门禁本地 Conventional Commit（依赖：11.4，复杂度：S）
 
 ## Verification Checklist
 
-- [ ] 所有 7 个 capability 的 Gherkin scenarios 已覆盖
-- [ ] 所有 API 级 DbC 契约已翻译为 contract tests
-- [ ] P0 E2E 场景已分配且要求 100% 通过
-- [ ] 每个任务都具有明确依赖、完成证据和本地提交边界
-- [ ] 外部仓库、云端 CI、完整 Xcode 不属于 Build 前置依赖
+- [x] 所有 7 个 capability 的 Gherkin scenarios 已覆盖
+- [x] 所有 API 级 DbC 契约已翻译为 contract tests
+- [x] P0 E2E 场景已分配且要求 100% 通过
+- [x] 每个任务都具有明确依赖、完成证据和本地提交边界
+- [x] 外部仓库、云端 CI、完整 Xcode 不属于 Build 前置依赖
 
 ## Planning Metadata
 

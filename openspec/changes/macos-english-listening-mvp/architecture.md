@@ -124,12 +124,12 @@ agent: "agent-3-development"
 ### `SpeechSynthesizing`
 
 - 协议：Swift command + `AsyncStream<SpeechEvent>`。
-- 命令：prepare、play、pause、resume、stop、changeSpeed。
+- 命令：start、pause、resume(rebuildingWith:)、stop；速度作为 request 值由 reducer 在合法状态切换。
 - 语义：同一时刻最多一个活动 utterance；session token、request token、active utterance identity 与 pause/resume progress callback generation 共同隔离迟到回调。
 
 ### `ReadingClock`
 
-- 协议：单调 instant 查询与异步 sleep。
+- 协议：单调 `Duration` 查询；timer polling 的 sleep 生命周期由 effect executor 管理。
 - 语义：不受系统墙上时间调整影响。
 
 ### `SourceMonitoring`
@@ -142,8 +142,8 @@ agent: "agent-3-development"
 ```text
 Local Git working tree
   └─ swift build -c release
-      └─ scripts/build-app.sh
-          ├─ 磨耳朵.app/Contents/MacOS/morerduo
+      └─ scripts/build-morerduo-app.sh
+          ├─ 磨耳朵.app/Contents/MacOS/MorerduoApp
           ├─ Info.plist
           └─ ad-hoc codesign
               └─ 当前用户 Mac（macOS 13+）
@@ -158,10 +158,10 @@ Local Git working tree
 ```text
 tests/e2e/
 ├── pages/MorerduoPage.swift
-├── specs/DocumentPlaybackSpec.swift
-├── specs/SessionControlsSpec.swift
-├── specs/TimerSpec.swift
-├── specs/SourceChangeSpec.swift
+├── specs/MorerduoMVPScenarioTests.swift
+├── specs/ReleaseAppAccessibilitySmokeTests.swift
+├── support/E2EFixtureFactory.swift
+├── support/NativeSessionE2EHarness.swift
 └── support/NativeSandbox.swift
 ```
 
@@ -169,8 +169,8 @@ tests/e2e/
 
 ### fixtures 数据准备方案
 
-- `tests/fixtures/` 按 capability 保存 TXT/DOCX/PDF。
-- 每个 spec 启动时由 `NativeSandbox` 复制 fixture 到唯一临时目录并记录快照。
+- `E2EFixtureFactory` 在每个 spec 的唯一临时目录生成 TXT/DOCX/PDF，不读取或修改用户 fixture。
+- 每个 spec 在生成 fixture 后由 `E2ESpecSandbox` 记录快照。
 - spec 结束时 `defer` 关闭 app、恢复文件/配置并做字节级一致性校验。
 - 环境恢复失败立即阻断后续 spec。
 
