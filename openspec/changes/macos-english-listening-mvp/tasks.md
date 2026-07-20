@@ -36,12 +36,12 @@
 
 ## 5. active-reading-timer capability
 
-- [ ] 5.1 复用检查：验证 `ContinuousClock`/`Duration` API 与 POC 工具链兼容（依赖：4.4，复杂度：S）
-- [ ] 5.2 先写 nil、1、240、非法整数/小数的 timer configuration 契约测试（依赖：5.1，复杂度：S）
-- [ ] 5.3 实现 `TimerConfiguration` typed validation（依赖：5.2，复杂度：S）
-- [ ] 5.4 先写 fake clock 下 playing 累计、pause/prompt 冻结、resume、stop clear 和单次 expiry 测试（依赖：5.3，契约：active timer，复杂度：M）
-- [ ] 5.5 实现 `ActiveTimeAccumulator`、clock protocol 和 expiry token 去重（依赖：5.4，复杂度：M）
-- [ ] 5.6 运行单元/契约/竞态测试，完成计时评审，本地 commit `feat(active-reading-timer)`（依赖：5.5，复杂度：S）
+- [x] 5.1 复用检查：验证 `ContinuousClock`/`Duration` API 与 POC 工具链兼容（依赖：4.4，复杂度：S）
+- [x] 5.2 先写 nil、1、240、非法整数/小数的 timer configuration 契约测试（依赖：5.1，复杂度：S）
+- [x] 5.3 实现 `TimerConfiguration` typed validation（依赖：5.2，复杂度：S）
+- [x] 5.4 先写 fake clock 下 playing 累计、pause/prompt 冻结、resume、stop clear 和单次 expiry 测试（依赖：5.3，契约：active timer，复杂度：M）
+- [x] 5.5 实现 `ActiveTimeAccumulator`、clock protocol 和 expiry token 去重（依赖：5.4，复杂度：M）
+- [x] 5.6 运行单元/契约/竞态测试，完成计时评审，本地 commit `feat(active-reading-timer)`（依赖：5.5，复杂度：S）
 
 ## 6. session-lifecycle capability
 
