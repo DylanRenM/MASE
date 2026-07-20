@@ -5,7 +5,7 @@ project_type:
   has_ui: true
   ui_platform: "macOS 13+ / SwiftUI"
 
-phase: design
+phase: build
 
 delivery:
   repository_mode: "local-only"
@@ -17,7 +17,7 @@ gates:
   proposal: passed
   design_l1: passed
   design_l2_review: passed
-  build_entry: awaiting_user_confirmation
+  build_entry: passed
 
 capabilities:
   - document-ingestion

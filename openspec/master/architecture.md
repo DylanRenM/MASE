@@ -50,7 +50,7 @@ agent: "agent-3-development"
 | DOCX | ZIPFoundation+XML、系统 unzip、完整 OOXML 库 | ZIPFoundation 0.9.20 + XMLParser | 轻量、MIT、目标 entry 提取 |
 | 时间 | Timer 递减、ContinuousClock | 单调 clock + 累计 Duration | 暂停与调度延迟不造成漂移 |
 | 文件监控 | 轮询、FSEvents、DispatchSource | DispatchSource vnode | 单文件低开销，修改检测 POC < 1 秒 |
-| 单元测试 | XCTest、Swift Testing | Swift Testing | SwiftPM 原生，无需外部 xctest 命令 |
+| 单元测试 | XCTest、Swift Testing | Swift Testing 可执行 runners | 独立 Command Line Tools 可直接发现并执行；不依赖完整 Xcode 的 `.xctest` runner |
 | UI E2E | XCUITest、坐标脚本、Accessibility | Accessibility + AXIdentifier | 本机验证通过，不依赖完整 Xcode |
 
 ## 组件/模块边界
@@ -187,4 +187,4 @@ tests/e2e/
 - 启动方式：`NSWorkspace.openApplication` 或 `open -n`。
 - 权限前置：Accessibility 已授权给 test runner；缺失即 fail-fast。
 - 时间：注入 accelerated test clock；保留一个真实最小计时冒烟场景。
-- 执行：本地 `swift test` → bundle build → E2E runner。
+- 执行：本地 Swift Testing executable runners → bundle build → E2E runner。

@@ -1,12 +1,12 @@
 ## 1. 项目骨架与测试基础
 
-- [ ] 1.1 创建根级 SwiftPM manifest，配置 `MorerduoKit`、`MorerduoApp`、unit/integration/contract test 和 E2E runner targets（依赖：无，复杂度：M）
-- [ ] 1.2 创建 `src/morerduo` 七个 capability 目录、`src/morerduo_app` 和镜像 `tests/` 目录（依赖：1.1，复杂度：S）
-- [ ] 1.3 编写本地 app bundle、ad-hoc codesign 与统一 verify 脚本，并为脚本失败路径写测试（依赖：1.1，复杂度：M）
-- [ ] 1.4 先写 strict/relaxed `Contract` 工具测试，再实现 require/ensure/invariantCheck（依赖：1.1，契约：运行时策略，复杂度：M）
-- [ ] 1.5 先写 E2E 沙箱快照/恢复/一致性测试，再实现 `NativeSandbox`（依赖：1.1，复杂度：M）
-- [ ] 1.6 先写 AXIdentifier 查找与权限失败测试，再实现 `MorerduoPage` Accessibility driver（依赖：1.3，复杂度：M）
-- [ ] 1.7 运行骨架测试、格式检查和构建脚本，完成基础设施代码评审与本地 commit（依赖：1.2–1.6，复杂度：S）
+- [x] 1.1 创建根级 SwiftPM manifest，配置 `MorerduoKit`、`MorerduoApp`、unit/integration/contract test 和 E2E runner targets（依赖：无，复杂度：M）
+- [x] 1.2 创建 `src/morerduo` 七个 capability 目录、`src/morerduo_app` 和镜像 `tests/` 目录（依赖：1.1，复杂度：S）
+- [x] 1.3 编写本地 app bundle、ad-hoc codesign 与统一 verify 脚本，并为脚本失败路径写测试（依赖：1.1，复杂度：M）
+- [x] 1.4 先写 strict/relaxed `Contract` 工具测试，再实现 require/ensure/invariantCheck（依赖：1.1，契约：运行时策略，复杂度：M）
+- [x] 1.5 先写 E2E 沙箱快照/恢复/一致性测试，再实现 `NativeSandbox`（依赖：1.1，复杂度：M）
+- [x] 1.6 先写 AXIdentifier 查找与权限失败测试，再实现 `MorerduoPage` Accessibility driver（依赖：1.3，复杂度：M）
+- [x] 1.7 运行骨架测试、格式检查和构建脚本，完成基础设施代码评审与本地 commit（依赖：1.2–1.6，复杂度：S）
 
 ## 2. document-ingestion capability
 

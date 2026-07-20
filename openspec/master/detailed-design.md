@@ -99,9 +99,9 @@ SwiftPM targets：
 
 - `MorerduoKit`：path `src/morerduo`；
 - `MorerduoApp` executable：path `src/morerduo_app`；
-- `MorerduoUnitTests`：path `tests/unit`；
-- `MorerduoIntegrationTests`：path `tests/integration`；
-- `MorerduoContractTests`：path `tests/contract`；
+- `MorerduoUnitTests` executable test runner：path `tests/unit`；
+- `MorerduoIntegrationTests` executable test runner：path `tests/integration`；
+- `MorerduoContractTests` executable test runner：path `tests/contract`；
 - `MorerduoE2ERunner` executable：path `tests/e2e`。
 
 ## 数据模型
@@ -306,7 +306,7 @@ struct Transition: Equatable {
 
 ```text
 scripts/verify-morerduo.sh
-  1. swift test（unit + integration + contract）
+  1. swift build 后依次执行 unit + integration + contract Swift Testing runners
   2. swift build -c release
   3. 组装 dist/磨耳朵.app
   4. plutil + codesign strict verify

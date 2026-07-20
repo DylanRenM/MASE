@@ -21,6 +21,8 @@ node_modules/
 *.tmp
 *.bak
 *~
+.build/
+dist/
 
 # Backup
 .backup/

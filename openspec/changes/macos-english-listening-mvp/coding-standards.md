@@ -79,7 +79,7 @@
 
 ## 10. 测试规范
 
-- 单元/集成/契约使用 Swift Testing；测试名描述行为结果。
+- 单元/集成/契约使用 Swift Testing 可执行 runners；测试名描述行为结果。
 - 每个 spec Scenario 至少映射一个测试 ID。
 - 测试不得依赖真实等待分钟；注入 fake clock。
 - 系统 TTS 自动化默认使用 silent buffer/fake；保留独立人工 audible POC。
