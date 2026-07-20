@@ -145,7 +145,7 @@ protocol DocumentLoading: Sendable {
 }
 ```
 
-错误枚举：`unsupportedFormat`、`notRegularFile`、`tooLarge`、`notReadable`、`corrupted`、`scannedPDF`、`unsupportedEncoding`、`noReadableEnglish`、`unsafeArchive`。
+错误枚举：`unsupportedFormat`、`notRegularFile`、`tooLarge`、`notReadable`、`emptyContent`、`corrupted`、`scannedPDF`、`unsupportedEncoding`、`noReadableEnglish`、`unsafeArchive`。
 
 ### `EnglishFiltering`
 

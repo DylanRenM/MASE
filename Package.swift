@@ -59,7 +59,7 @@ let package = Package(
     ),
     .executableTarget(
       name: "MorerduoUnitTests",
-      dependencies: ["MorerduoKit"],
+      dependencies: ["MorerduoKit", "ZIPFoundation"],
       path: "tests/unit",
       swiftSettings: testingSwiftSettings,
       linkerSettings: testingLinkerSettings

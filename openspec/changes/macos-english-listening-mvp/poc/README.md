@@ -19,6 +19,13 @@ The executable verifies:
 
 The POC creates all fixtures under the process temporary directory and removes them on exit.
 
+Run the document-ingestion dependencies independently when validating PDFKit,
+ZIPFoundation and XMLParser without invoking TTS:
+
+```bash
+swift run morerduo-poc --document-ingestion
+```
+
 Run the manual speaker-output check separately:
 
 ```bash

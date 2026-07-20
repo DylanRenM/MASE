@@ -10,14 +10,14 @@
 
 ## 2. document-ingestion capability
 
-- [ ] 2.1 复用检查：验证 Foundation resource values、PDFKit、ZIPFoundation 0.9.20 和 XMLParser API 满足 spec/contract（依赖：1.7，复杂度：S）
-- [ ] 2.2 先写 `FilePolicy` 合法格式、regular/readable、20MB 边界与错误契约测试（依赖：2.1，契约：FilePolicy，复杂度：M）
-- [ ] 2.3 实现 `FilePolicy`、`DocumentKind`、`SourceFingerprint` 和 typed `DocumentLoadError`（依赖：2.2，复杂度：M）
-- [ ] 2.4 先写 UTF-8 TXT 正常、空文件和不可读 fixture 行为测试，再实现 `TXTParser`（依赖：2.3，复杂度：M）
-- [ ] 2.5 先写 DOCX 正常、损坏、缺少 document.xml、50MB 解压上限和恶意 entry 测试，再实现目标式 `DOCXParser`（依赖：2.3，复杂度：L）
-- [ ] 2.6 先写文本 PDF、扫描 PDF、损坏 PDF 和多页顺序测试，再实现 `PDFParser`（依赖：2.3，复杂度：M）
-- [ ] 2.7 先写原子发布/中途失败回到 idle 与资源清理集成测试，再实现 `DocumentLoader` 分派与后台执行（依赖：2.4–2.6，契约：DocumentLoading，复杂度：M）
-- [ ] 2.8 运行单元、集成、契约测试；执行解析安全扫描和代码评审；本地 commit `feat(document-ingestion)`（依赖：2.7，复杂度：S）
+- [x] 2.1 复用检查：验证 Foundation resource values、PDFKit、ZIPFoundation 0.9.20 和 XMLParser API 满足 spec/contract（依赖：1.7，复杂度：S）
+- [x] 2.2 先写 `FilePolicy` 合法格式、regular/readable、20MB 边界与错误契约测试（依赖：2.1，契约：FilePolicy，复杂度：M）
+- [x] 2.3 实现 `FilePolicy`、`DocumentKind`、`SourceFingerprint` 和 typed `DocumentLoadError`（依赖：2.2，复杂度：M）
+- [x] 2.4 先写 UTF-8 TXT 正常、空文件和不可读 fixture 行为测试，再实现 `TXTParser`（依赖：2.3，复杂度：M）
+- [x] 2.5 先写 DOCX 正常、损坏、缺少 document.xml、50MB 解压上限和恶意 entry 测试，再实现目标式 `DOCXParser`（依赖：2.3，复杂度：L）
+- [x] 2.6 先写文本 PDF、扫描 PDF、损坏 PDF 和多页顺序测试，再实现 `PDFParser`（依赖：2.3，复杂度：M）
+- [x] 2.7 先写原子发布/中途失败回到 idle 与资源清理集成测试，再实现 `DocumentLoader` 分派与后台执行（依赖：2.4–2.6，契约：DocumentLoading，复杂度：M）
+- [x] 2.8 运行单元、集成、契约测试；执行解析安全扫描和代码评审；本地 commit `feat(document-ingestion)`（依赖：2.7，复杂度：S）
 
 ## 3. english-content-filtering capability
 

@@ -390,12 +390,21 @@ enum MorerduoPOC {
             return
         }
 
+        let isDocumentIngestionOnly = CommandLine.arguments.contains("--document-ingestion")
+
         let temporaryDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("morerduo-poc-\(UUID().uuidString)", isDirectory: true)
 
         do {
             try FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
             defer { try? FileManager.default.removeItem(at: temporaryDirectory) }
+
+            if isDocumentIngestionOnly {
+                try verifyPDFKit(in: temporaryDirectory)
+                try verifyZIPFoundationDOCX(in: temporaryDirectory)
+                print("PASS document-ingestion dependency checks")
+                return
+            }
 
             try verifySwiftUI()
             try verifySpeechSynthesis()
