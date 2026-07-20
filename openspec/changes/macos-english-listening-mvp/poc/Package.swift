@@ -8,7 +8,8 @@ let package = Package(
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "morerduo-poc", targets: ["MorerduoPOC"])
+        .executable(name: "morerduo-poc", targets: ["MorerduoPOC"]),
+        .executable(name: "morerduo-app-poc", targets: ["MorerduoAppPOC"])
     ],
     dependencies: [
         .package(
@@ -20,6 +21,9 @@ let package = Package(
         .executableTarget(
             name: "MorerduoPOC",
             dependencies: ["ZIPFoundation"]
+        ),
+        .executableTarget(
+            name: "MorerduoAppPOC"
         )
     ]
 )

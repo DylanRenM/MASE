@@ -2,14 +2,14 @@
 change: "macos-english-listening-mvp"
 created: "2026-07-20"
 agent: "agent-3-development"
-status: "poc-passed-toolchain-action-required"
+status: "poc-passed-local-only"
 ---
 
 ## 1. 技术难点方案表
 
 | 难点 | 成熟方案 | 最新技术调研 | 推荐方案 | POC 状态 | 遗留风险 |
 |------|----------|--------------|----------|----------|----------|
-| macOS 原生 UI | SwiftUI + AppKit hosting | Swift 6 主线程隔离更严格 | SwiftUI，UI 与会话状态保持单向绑定 | ✅ | 完整应用打包和 XCUITest 需要全量 Xcode |
+| macOS 原生 UI | SwiftUI + AppKit hosting | Swift 6 主线程隔离更严格 | SwiftUI，UI 与会话状态保持单向绑定 | ✅ | App Store/XCUITest 不在本地 MVP 交付范围 |
 | 系统英文 TTS | `AVSpeechSynthesizer` | delegate 可提供字符范围；buffer API 可无声验证 | 用适配器封装系统 API，以字符范围记录可恢复位置 | ✅ | 暂停后变速需停止当前 utterance 并从未读后缀重建 |
 | PDF 文本提取 | PDFKit `PDFDocument` / `PDFPage.string` | 系统框架，无第三方依赖 | 按页提取文本并转为有序段落 | ✅ | 多栏、复杂排版的阅读顺序仅作 P2 兼容性探索 |
 | DOCX 文本提取 | ZIP 解包 + WordprocessingML XML | ZIPFoundation 0.9.20 支持 SwiftPM 与现代 macOS | ZIPFoundation 解包，`XMLParser` 流式读取正文文本节点 | ✅ | 复杂对象、批注、页眉页脚需明确排除或专项测试 |
@@ -28,6 +28,8 @@ status: "poc-passed-toolchain-action-required"
 | 隐私 | 文件不离开本机 | 仅系统框架和本地 Swift Package；无网络运行时依赖 | 依赖及数据流审查 |
 | 安全 | 文档内容不执行 | DOCX 只读取 XML 文本节点；PDFKit 只读取页面字符串 | POC 仅产生纯字符串；L2 增加解析契约 |
 | 可测试性 | 时间、TTS、监控可替换 | 依赖倒置，生产适配器实现协议 | L2 contract + Build 测试替身验证 |
+| 本地交付 | 不依赖外部代码仓库或完整 Xcode | SwiftPM release + 标准 `.app` bundle + ad-hoc codesign | 本地构建、`plutil`、严格 codesign 校验通过 |
+| UI E2E | P0 场景自动化 | Apple Accessibility + 稳定 `AXIdentifier` | 载入、播放、暂停、停止流程自动化通过 |
 
 ## 3. 外部依赖评估表
 
@@ -38,16 +40,17 @@ status: "poc-passed-toolchain-action-required"
 | PDFKit | macOS 系统框架 | 文本型 PDF 提取 | Apple SDK | 第三方 PDF 解析库 | ✅ |
 | Foundation `XMLParser` | macOS 系统框架 | DOCX WordprocessingML 文本提取 | Apple SDK | 第三方 OOXML 库 | ✅ |
 | ZIPFoundation | 0.9.20，revision `22787ff` | DOCX ZIP 容器解包 | MIT | 自研 ZIP 或系统进程，不推荐 | ✅ |
-| 完整 Xcode | 未安装 | `.app` 工程、签名、XCTest/XCUITest、发布 | Apple 工具链 | 仅 SwiftPM 无法覆盖完整 UI E2E/发布流程 | ❌ 待安装 |
+| 完整 Xcode | 未安装，MVP 非必需 | App Store 归档、XCUITest、正式分发 | Apple 工具链 | SwiftPM + Accessibility 满足本地 MVP | ⏭️ 正式发布前再引入 |
 
 ## 4. 高风险项详细分析
 
-### 4.1 构建工具链完整性
+### 4.1 本地构建与 UI E2E 工具链
 
-- 问题描述：当前仅安装 Command Line Tools；`xcodebuild` 明确报错要求完整 Xcode。默认 `MacOSX26.5.sdk` 与 Swift 编译器补丁版本不匹配。
-- 已验证绕行：指定本机 `MacOSX15.4.sdk` 后，SwiftUI 与全部 POC 可以编译运行。
-- 推荐方案：在进入 Design L2 前安装与当前 macOS 匹配的完整 Xcode，切换 `xcode-select`，无 `SDKROOT` 覆盖重跑 POC，并增加最小 `.app` + XCTest/XCUITest 验证。
-- 遗留风险：未安装 Xcode 时无法满足 MASE 的 macOS UI E2E 硬门禁，也无法可靠完成签名和发布。
+- 问题描述：当前仅安装 Command Line Tools；默认 `MacOSX26.5.sdk` 与 Swift 编译器补丁版本不匹配，且没有 `xctest`。
+- 已验证方案：显式使用本机 `MacOSX15.4.sdk`，通过 SwiftPM release 构建原生 SwiftUI executable，组装标准 `.app`，执行 ad-hoc codesign；使用 Apple Accessibility 和 `AXIdentifier` 替代 XCUITest。
+- POC 结果：`.app` 的 Info.plist、磁盘签名和 Designated Requirement 校验通过；自动化完成载入、播放、暂停、停止并断言状态。
+- 推荐方案：MVP 保持本地 Git、SwiftPM 和 Accessibility 测试，不依赖外部仓库或云端 runner。
+- 遗留风险：App Store 归档、公证、Developer ID 正式签名和 XCUITest 不属于本地 MVP；若未来进入公开发布阶段，再安装完整 Xcode 并单独通过 Release 工具链门禁。
 
 ### 4.2 TTS 暂停位置与暂停后变速
 
@@ -102,7 +105,10 @@ status: "poc-passed-toolchain-action-required"
 | 18MB 级英文过滤 | 同上 | ✅ | 1.681 秒；输出字符集满足约束 |
 | 文件原地修改 | 同上 | ✅ | 0.210 秒检测 |
 | 文件原子替换 | 同上 | ✅ | 0.212 秒检测 |
-| 完整 Xcode / XCUITest | `xcodebuild -version` | ❌ | 当前只安装 Command Line Tools |
+| 本地 `.app` 构建 | `poc/scripts/build-local-app.sh` | ✅ | SwiftPM release、bundle 组装、Info.plist 校验通过 |
+| ad-hoc 签名 | `poc/scripts/build-local-app.sh` | ✅ | `codesign --verify --deep --strict` 通过 |
+| Accessibility UI 自动化 | `poc/scripts/verify-accessibility.applescript` | ✅ | 稳定 AXIdentifier；载入→播放→暂停→停止通过 |
+| 完整 Xcode / XCUITest | `xcodebuild -version` | ⏭️ | 本地 MVP 不需要；正式发布前单独验证 |
 
 ### 重跑命令
 
@@ -113,13 +119,15 @@ cd openspec/changes/macos-english-listening-mvp/poc
 SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk swift run morerduo-poc
 ```
 
-安装并选择匹配的完整 Xcode 后：
+构建并验证本地 `.app`：
 
 ```bash
 cd openspec/changes/macos-english-listening-mvp/poc
-swift run morerduo-poc
+./scripts/build-local-app.sh
+open -n '.build/local-app/磨耳朵 POC.app'
+osascript scripts/verify-accessibility.applescript
 ```
 
 ## 7. Design L1 结论
 
-核心产品方案技术可行，系统框架与唯一第三方运行依赖 ZIPFoundation 均已真实跑通。当前唯一阻断项是本机构建工具链不完整：缺少完整 Xcode，无法验证 `.app` 打包和 XCUITest。安装并选择匹配的 Xcode 后，重跑 POC 与最小 UI 测试即可关闭 Design L1 门禁。
+核心产品方案技术可行，系统框架与唯一第三方运行依赖 ZIPFoundation 均已真实跑通。本地 SwiftPM 已完成 `.app` 组装、ad-hoc 签名和 Accessibility UI 自动化验证；Design L1 不再受完整 Xcode、云端 CI 或外部代码仓库阻断，可以进入 Design L2。正式签名、公证、App Store 归档和 XCUITest 作为未来公开发布阶段的独立门禁。

@@ -26,6 +26,8 @@
 - 首版使用原生 SwiftUI 和 macOS 系统默认英文语音；
 - 不支持旧版 DOC、扫描 PDF、OCR、音色选择和循环次数设置；
 - 文档只在本地处理，不上传或执行其中的内容；
+- 开发仓库仅使用本地 Git，不向外部代码托管服务推送项目分支；
+- MVP 使用 SwiftPM 本地构建、ad-hoc 签名和 Accessibility E2E；App Store 发布不在本次范围；
 - Windows、iOS 和 Android 属于后续范围。
 
 ## Capabilities
@@ -54,3 +56,4 @@
 | 日期 | Change | 决策 |
 |------|--------|------|
 | 2026-07-20 | `macos-english-listening-mvp` | Proposal 与交互原型通过，进入 Design L1 |
+| 2026-07-20 | `macos-english-listening-mvp` | Design L1 本地构建与 Accessibility POC 通过，采用 local-only 交付 |

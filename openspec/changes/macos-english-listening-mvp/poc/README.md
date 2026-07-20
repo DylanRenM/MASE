@@ -18,3 +18,22 @@ The executable verifies:
 6. local source-file append and atomic-replacement detection within five seconds.
 
 The POC creates all fixtures under the process temporary directory and removes them on exit.
+
+## Local app bundle
+
+Build and ad-hoc sign a standard local `.app` without full Xcode:
+
+```bash
+./scripts/build-local-app.sh
+```
+
+The output is `.build/local-app/磨耳朵 POC.app`. The script validates the plist and runs strict codesign verification.
+
+Run the Accessibility UI flow:
+
+```bash
+open -n '.build/local-app/磨耳朵 POC.app'
+osascript scripts/verify-accessibility.applescript
+```
+
+The terminal or automation host must be enabled under macOS Privacy & Security → Accessibility. The script locates controls by stable `AXIdentifier` values rather than screen coordinates.

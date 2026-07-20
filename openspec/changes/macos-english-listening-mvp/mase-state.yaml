@@ -7,6 +7,12 @@ project_type:
 
 phase: design
 
+delivery:
+  repository_mode: "local-only"
+  build_mode: "swiftpm-app-bundle"
+  e2e_driver: "apple-accessibility"
+  distribution: "local-ad-hoc"
+
 capabilities:
   - document-ingestion
   - english-content-filtering
