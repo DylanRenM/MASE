@@ -125,7 +125,7 @@ agent: "agent-3-development"
 
 - 协议：Swift command + `AsyncStream<SpeechEvent>`。
 - 命令：prepare、play、pause、resume、stop、changeSpeed。
-- 语义：同一时刻最多一个活动 utterance。
+- 语义：同一时刻最多一个活动 utterance；session token、request token、active utterance identity 与 pause/resume progress callback generation 共同隔离迟到回调。
 
 ### `ReadingClock`
 

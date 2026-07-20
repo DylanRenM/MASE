@@ -136,24 +136,34 @@ func synthesizeSpeech(
 }
 
 func verifySpeechSynthesis() throws {
-    guard let voice = AVSpeechSynthesisVoice(language: "en-US") else {
-        throw POCError.failed("No macOS English system voice is available")
+    guard
+        let primaryVoice = AVSpeechSynthesisVoice(language: "en-US"),
+        let secondaryVoice = AVSpeechSynthesisVoice(language: "en-GB"),
+        primaryVoice.identifier != secondaryVoice.identifier
+    else {
+        throw POCError.failed("Two distinct macOS English system voices are required for exploration")
     }
 
     let text = "English listening feasibility check with reliable progress tracking"
-    let normal = try synthesizeSpeech(
-        text: text,
-        voice: voice,
-        rate: AVSpeechUtteranceDefaultSpeechRate
-    )
-    let slow = try synthesizeSpeech(text: text, voice: voice, rate: 0.4)
-    let fast = try synthesizeSpeech(text: text, voice: voice, rate: 0.6)
+    let exploredVoices = [primaryVoice, secondaryVoice]
+    var normalResults: [(frames: Int, ranges: Int)] = []
+    for voice in exploredVoices {
+        let result = try synthesizeSpeech(
+            text: text,
+            voice: voice,
+            rate: AVSpeechUtteranceDefaultSpeechRate
+        )
+        try require(result.ranges > 0, "TTS delegate produced no character-range callbacks")
+        normalResults.append(result)
+    }
+    let slow = try synthesizeSpeech(text: text, voice: primaryVoice, rate: 0.4)
+    let fast = try synthesizeSpeech(text: text, voice: primaryVoice, rate: 0.6)
 
-    try require(normal.ranges > 0, "TTS delegate produced no character-range callbacks")
     try require(slow.frames > fast.frames, "Slow and fast rates did not produce distinguishable durations")
     print(
-        "PASS TTS: \(voice.identifier), \(normal.frames) normal frames, "
-        + "\(normal.ranges) progress ranges, slow/fast ratio "
+        "PASS TTS voices: \(primaryVoice.identifier) "
+        + "(\(normalResults[0].ranges) ranges), \(secondaryVoice.identifier) "
+        + "(\(normalResults[1].ranges) ranges); slow/fast ratio "
         + String(format: "%.2f", Double(slow.frames) / Double(fast.frames))
     )
 }

@@ -182,8 +182,8 @@ extension ReadingSessionEffect {
       .pauseSpeech(let token), .stopSpeech(let token), .startClock(let token),
       .freezeClock(let token), .stopClock(let token), .stopMonitor(let token):
       return token
-    case .startSpeech(_, _, _, let token), .resumeSpeech(let token, _),
-      .startMonitor(_, let token):
+    case .startSpeech(_, _, _, let token),
+      .resumeSpeech(_, _, _, let token, _), .startMonitor(_, let token):
       return token
     case .emergencyCleanup, .recordFault:
       return nil

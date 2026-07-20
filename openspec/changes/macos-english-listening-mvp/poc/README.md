@@ -11,7 +11,7 @@ The explicit SDK is a temporary workaround for this machine: the active Command 
 The executable verifies:
 
 1. SwiftUI compilation and native layout on macOS 13+;
-2. English audio-buffer synthesis, progress ranges, and distinguishable rates through `AVSpeechSynthesizer`;
+2. silent English audio-buffer synthesis and progress ranges with distinct en-US/en-GB voices, plus distinguishable rates through `AVSpeechSynthesizer`;
 3. text extraction from a generated text PDF with PDFKit;
 4. DOCX ZIP extraction with ZIPFoundation and text extraction with `XMLParser`;
 5. strict English filtering against a 20MB-class fixture;

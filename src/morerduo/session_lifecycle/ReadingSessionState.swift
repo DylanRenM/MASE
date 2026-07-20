@@ -46,13 +46,14 @@ public struct ReadingSessionState: Equatable, Sendable {
 
   public static func initial(
     timer: TimerConfiguration,
+    speed: ReadingSpeed = .normal,
     error: UserFacingError? = nil
   ) -> Self {
     Self(
       mode: .idle,
       document: nil,
       cursor: .zero,
-      speed: .normal,
+      speed: speed,
       timer: timer,
       sessionToken: nil,
       reloadPromptToken: nil,
@@ -116,7 +117,8 @@ public struct ReadingSessionState: Equatable, Sendable {
     cursor: ReadingCursor,
     speed: ReadingSpeed,
     timer: TimerConfiguration,
-    sessionToken: ReadingSessionToken
+    sessionToken: ReadingSessionToken,
+    requiresUtteranceRebuild: Bool = false
   ) -> Self {
     loadedState(
       mode: .paused,
@@ -124,7 +126,8 @@ public struct ReadingSessionState: Equatable, Sendable {
       cursor: cursor,
       speed: speed,
       timer: timer,
-      sessionToken: sessionToken
+      sessionToken: sessionToken,
+      requiresUtteranceRebuild: requiresUtteranceRebuild
     )
   }
 
@@ -218,7 +221,8 @@ public struct ReadingSessionState: Equatable, Sendable {
     cursor: ReadingCursor,
     speed: ReadingSpeed,
     timer: TimerConfiguration,
-    sessionToken: ReadingSessionToken
+    sessionToken: ReadingSessionToken,
+    requiresUtteranceRebuild: Bool = false
   ) -> Self {
     Self(
       mode: mode,
@@ -227,7 +231,8 @@ public struct ReadingSessionState: Equatable, Sendable {
       speed: speed,
       timer: timer,
       sessionToken: sessionToken,
-      reloadPromptToken: nil
+      reloadPromptToken: nil,
+      requiresUtteranceRebuild: requiresUtteranceRebuild
     )
   }
 

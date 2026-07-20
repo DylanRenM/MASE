@@ -62,7 +62,9 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
       return terminate(state: state)
     case .dismissError:
       return dismissError(state: state)
-    case .changeSpeed, .sourceChanged, .reloadSource, .continueOldContent:
+    case .changeSpeed(let speed):
+      return changeSpeed(state: state, speed: speed)
+    case .sourceChanged, .reloadSource, .continueOldContent:
       return nil
     }
   }
@@ -245,10 +247,60 @@ public struct ReadingSessionReducer: ReadingSessionReducing, Sendable {
     return Transition(
       state: playing,
       effects: [
-        .resumeSpeech(token: token, rebuild: state.requiresUtteranceRebuild),
+        .resumeSpeech(
+          document: document,
+          cursor: state.cursor,
+          speed: state.speed,
+          token: token,
+          rebuild: state.requiresUtteranceRebuild
+        ),
         .startClock(token: token),
       ]
     )
+  }
+
+  private func changeSpeed(
+    state: ReadingSessionState,
+    speed: ReadingSpeed
+  ) -> Transition? {
+    if state.speed == speed {
+      return Transition(state: state, effects: [])
+    }
+    switch state.mode {
+    case .idle:
+      return Transition(
+        state: .initial(timer: state.timer, speed: speed, error: state.error),
+        effects: []
+      )
+    case .ready:
+      guard let document = state.document else { return nil }
+      return Transition(
+        state: .ready(
+          document: document,
+          speed: speed,
+          timer: state.timer,
+          error: state.error
+        ),
+        effects: []
+      )
+    case .paused:
+      guard let document = state.document, let token = state.sessionToken else {
+        return nil
+      }
+      return Transition(
+        state: .paused(
+          document: document,
+          cursor: state.cursor,
+          speed: speed,
+          timer: state.timer,
+          sessionToken: token,
+          requiresUtteranceRebuild: true
+        ),
+        effects: []
+      )
+    case .loading, .playing, .awaitingReloadDecision:
+      return nil
+    }
   }
 
   private func stop(state: ReadingSessionState) -> Transition? {

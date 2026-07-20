@@ -24,7 +24,7 @@ status: "poc-passed-local-only"
 | 平台 | macOS 13+ | Swift Package 声明 `.macOS(.v13)`；原生 SwiftUI | POC 编译及 hosting view 布局通过 |
 | 文件容量 | 支持 20MB 以内文件且 UI 不长期无响应 | 元数据先校验；解析和过滤在后台任务执行；UI 只接收结果 | 18.0MB 混合文本过滤耗时 1.681 秒 |
 | 文件监控 | 修改后 5 秒内提示 | vnode DispatchSource，覆盖写入及原子替换 | 追加写入 0.210 秒；原子替换 0.212 秒 |
-| TTS 可控性 | 进度可追踪，三档速度可区分且扬声器可听 | delegate 字符范围 + utterance rate | 8 次范围回调；慢/快音频帧比例 1.75；有声播放人工确认 |
+| TTS 可控性 | 进度可追踪，三档速度可区分且扬声器可听 | delegate 字符范围 + utterance rate | Samantha、Daniel 各 8 次范围回调；慢/快音频帧比例 1.75；有声播放人工确认 |
 | 隐私 | 文件不离开本机 | 仅系统框架和本地 Swift Package；无网络运行时依赖 | 依赖及数据流审查 |
 | 安全 | 文档内容不执行 | DOCX 只读取 XML 文本节点；PDFKit 只读取页面字符串 | POC 仅产生纯字符串；L2 增加解析契约 |
 | 可测试性 | 时间、TTS、监控可替换 | 依赖倒置，生产适配器实现协议 | L2 contract + Build 测试替身验证 |
@@ -56,9 +56,9 @@ status: "poc-passed-local-only"
 
 - 问题描述：`continueSpeaking()` 可以恢复同一 utterance，但不能改变已经创建的 utterance rate。
 - 成熟方案：通过 `willSpeakRangeOfSpeechString` 记录已读字符范围；速度不变时继续，速度改变时停止并从未读后缀创建新 utterance。
-- POC 结果：系统英文 voice 可生成音频；正常速度获得 80,316 帧和 8 次字符范围回调；慢/快帧数比例 1.75。
+- POC 结果：系统英文 voice 可生成音频；Design L1 的 Samantha 正常速度获得 80,316 帧和 8 次字符范围回调，慢/快帧数比例 1.75。Build 7.7 再以静音 buffer 验证本机 Samantha（en-US）与 Daniel（en-GB），两者均获得 8 次字符范围回调；适配器集成测试验证 immediate pause、暂停 generation 隔离和原速/变速 resume。
 - 推荐方案：业务层保存段落索引与最后完成的安全字符边界，TTS 适配器负责后缀重建。
-- 遗留风险：不同系统 voice 的回调粒度可能不同，Build 阶段需用至少两种本机英文 voice 做探索测试。
+- 遗留风险：不同系统 voice 的字符分词仍可能不同；Build 7.7 已用两种本机英文 voice 关闭“仅单 voice 验证”风险，业务仅依赖合法 UTF-16 lower bound，不依赖固定回调次数或粒度。
 
 ### 4.3 DOCX 解包与正文提取
 
@@ -99,7 +99,7 @@ status: "poc-passed-local-only"
 | 验证项 | 脚本路径 | 结果 | 备注 |
 |--------|----------|------|------|
 | SwiftUI 原生布局 | `poc/Sources/MorerduoPOC/main.swift` | ✅ | hosting view 成功布局 |
-| 英文 TTS / 进度 / 速度 | 同上 | ✅ | Samantha voice；80,316 帧；8 个范围；速率比 1.75 |
+| 英文 TTS / 进度 / 速度 | 同上 | ✅ | Design L1 Samantha：80,316 帧、8 个范围；Build 7.7 Samantha + Daniel：各 8 个范围；速率比 1.75 |
 | 英文 TTS 扬声器输出 | `poc/Sources/MorerduoPOC/main.swift --audible` | ✅ | `speak(...)` 完成，用户人工确认清晰可听 |
 | PDFKit 文本提取 | 同上 | ✅ | 提取 40 个字符 |
 | ZIPFoundation DOCX | 同上 | ✅ | 0.9.20，最小 DOCX 解包及 XML 提取成功 |

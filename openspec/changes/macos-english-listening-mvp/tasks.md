@@ -56,13 +56,13 @@
 
 ## 7. speech-playback-control capability
 
-- [ ] 7.1 复用检查：验证 AVSpeechSynthesizer buffer、speaker、range、rate POC 与生产协议映射（依赖：6.8，复杂度：S）
-- [ ] 7.2 先写 `SpeechRequest` 英文字符、offset、speed 和单 active request 契约测试（依赖：7.1，复杂度：M）
-- [ ] 7.3 实现 speech public types、三档 rate 集中配置和 fake speech engine（依赖：7.2，复杂度：M）
-- [ ] 7.4 先写正常播放、range 映射、段落完成、最后段循环、stop 迟到回调，以及同 session 内重复/旧 utterance callback 测试（依赖：7.3，复杂度：L）
-- [ ] 7.5 实现 `AVSpeechEngine` delegate adapter，并以 session token + active utterance/request identity 双重隔离回调（依赖：7.4，复杂度：L）
-- [ ] 7.6 先写暂停原速继续、暂停变速后缀重建和不得跳词测试，再实现相应控制（依赖：7.5，复杂度：L）
-- [ ] 7.7 运行 silent 自动化和独立 audible 冒烟；完成系统适配器评审，本地 commit `feat(speech-control)`（依赖：7.6，复杂度：M）
+- [x] 7.1 复用检查：验证 AVSpeechSynthesizer buffer、speaker、range、rate POC 与生产协议映射（依赖：6.8，复杂度：S）
+- [x] 7.2 先写 `SpeechRequest` 英文字符、offset、speed 和单 active request 契约测试（依赖：7.1，复杂度：M）
+- [x] 7.3 实现 speech public types、三档 rate 集中配置和 fake speech engine（依赖：7.2，复杂度：M）
+- [x] 7.4 先写正常播放、range 映射、段落完成、最后段循环、stop 迟到回调，以及同 session 内重复/旧 utterance callback 测试（依赖：7.3，复杂度：L）
+- [x] 7.5 实现 `AVSpeechEngine` delegate adapter，并以 session token + active utterance/request identity 双重隔离回调（依赖：7.4，复杂度：L）
+- [x] 7.6 先写暂停原速继续、暂停变速后缀重建和不得跳词测试，再实现相应控制（依赖：7.5，复杂度：L）
+- [x] 7.7 运行 silent 自动化和独立 audible 冒烟；完成系统适配器评审，本地 commit `feat(speech-control)`（依赖：7.6，复杂度：M）
 
 ## 8. source-file-monitoring capability
 

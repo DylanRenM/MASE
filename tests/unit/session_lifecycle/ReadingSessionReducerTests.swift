@@ -61,7 +61,13 @@ struct ReadingSessionReducerTests {
     #expect(resumed.state.mode == .playing)
     #expect(
       resumed.effects == [
-        .resumeSpeech(token: playToken, rebuild: false),
+        .resumeSpeech(
+          document: document,
+          cursor: .zero,
+          speed: .normal,
+          token: playToken,
+          rebuild: false
+        ),
         .startClock(token: playToken),
       ]
     )
@@ -87,6 +93,57 @@ struct ReadingSessionReducerTests {
     #expect(expired.state.cursor == .zero)
     #expect(expired.state.document == playing.document)
     #expect(expired.state.timer == playing.timer)
+  }
+
+  @Test("paused speed change preserves cursor and requests a suffix rebuild")
+  func pausedSpeedChangeRequiresRebuild() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let playing = try makePlaying(
+      cursor: ReadingCursor(paragraphIndex: 0, utf16Offset: 6)
+    )
+    let document = try #require(playing.document)
+    let sessionToken = try #require(playing.sessionToken)
+    let paused = reducer.reduce(state: playing, event: .pause).state
+
+    let changed = reducer.reduce(state: paused, event: .changeSpeed(.fast))
+    #expect(changed.state.mode == .paused)
+    #expect(changed.state.cursor == paused.cursor)
+    #expect(changed.state.speed == .fast)
+    #expect(changed.state.requiresUtteranceRebuild)
+
+    let resumed = reducer.reduce(state: changed.state, event: .resume)
+    #expect(
+      resumed.effects == [
+        .resumeSpeech(
+          document: document,
+          cursor: paused.cursor,
+          speed: .fast,
+          token: sessionToken,
+          rebuild: true
+        ),
+        .startClock(token: sessionToken),
+      ]
+    )
+  }
+
+  @Test("speed may change while idle or ready without starting speech")
+  func nonPlayingSpeedChangeIsConfigurationOnly() throws {
+    let reducer = ReadingSessionReducer(contractMode: .strict)
+    let timer = try TimerConfiguration(minutes: nil)
+    let idle = reducer.reduce(
+      state: .initial(timer: timer),
+      event: .changeSpeed(.slow)
+    )
+    #expect(idle.state.speed == .slow)
+    #expect(idle.effects.isEmpty)
+
+    let document = makeDocument()
+    let ready = reducer.reduce(
+      state: .ready(document: document, speed: .normal, timer: timer),
+      event: .changeSpeed(.fast)
+    )
+    #expect(ready.state.speed == .fast)
+    #expect(ready.effects.isEmpty)
   }
 
   @Test("selecting a new file while paused clears old resources before loading")

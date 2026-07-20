@@ -70,21 +70,24 @@
   - request text 满足严格英文约束且非空；
   - base offset 与原段落边界一致；
   - speed 为 slow/normal/fast；
+  - session token 与 request token 均属于当前 active generation；
   - 当前不存在另一个 active request，或调用方先执行 stop。
 - **成功后置条件**：
   - 最终产生 finished/cancelled/failed 之一；
   - progress range 不越过 request UTF-16 范围；
-  - progress base offset 映射回原段落时不回退到已确认边界之前。
+  - `safeResumeUTF16Offset` 等于 `baseUTF16Offset + requestRange.lowerBound`，即当前 `willSpeak` 词范围的原段落下界；
+  - 同一 request 只接受 `requestRange.lowerBound` 大于或等于上次安全下界的 progress，越界或倒退 range 必须丢弃。
 - **失败后置条件**：返回 typed speech error，不伪造 playing。
 - **不变式**：最多一个活动 utterance；stop 后不得发送新业务进度。
 
 ### API: `SpeechSynthesizing.pause/resume/stop`
 
 - **pause 前置条件**：当前存在 active utterance；重复 pause 必须幂等。
-- **pause 后置条件**：不再推进业务 cursor；保留最近安全边界。
-- **resume 前置条件**：处于 paused 且 request 仍有效。
-- **resume 后置条件**：从安全边界继续，不跳过未确认文本。
-- **stop 后置条件**：active count 为 0；后续迟到回调被 session token 丢弃。
+- **pause 后置条件**：使用 immediate boundary，并在调用系统 pause 前关闭当前 progress callback generation；暂停期间收到或旧 generation 延迟处理的 range 均不得推进业务 cursor，最近安全边界保持不变。
+- **resume 前置条件**：处于 paused 且 request 仍有效；原速继续传 nil，变速继续传从安全 cursor 构造的新 request。
+- **resume 后置条件**：原速打开新的 callback generation 后调用系统 continue；变速先退休旧 utterance identity、为旧 request 产生 cancelled 终态，再从新 request 后缀启动，不跳过未确认文本。
+- **resume 失败后置条件**：系统 stop 失败时不得启动 replacement request，后续 fail-safe cleanup 必须仍可重试系统 stop。
+- **stop 后置条件**：active count 为 0；后续迟到回调被 session token + request token + utterance identity + callback generation 丢弃；即使领域 request 已退休，cleanup 仍调用系统 stop。
 
 ### API: `SourceMonitoring.start(url:fingerprint:)`
 
@@ -138,10 +141,11 @@
 ### 模块: `speech_playback_control`
 
 - **前置条件**：只接收过滤后 paragraph 和合法 cursor。
-- **后置条件**：所有系统 delegate callback 转换为带 session token 的领域事件。
+- **后置条件**：所有系统 delegate callback 转换为同时带 session token 与 request token 的领域事件。
 - **不变式**：
   - active TTS ≤ 1；
   - playing 时速度不可变；
+  - 已接受的 progress 安全下界单调不减，paused 时 progress generation 关闭；
   - 暂停变速后用未读后缀重建；
   - last paragraph finished 后只进入 first paragraph，不产生 completed 终态。
 

@@ -52,6 +52,11 @@ let package = Package(
       dependencies: ["ZIPFoundation"],
       path: "src/morerduo"
     ),
+    .target(
+      name: "MorerduoTestSupport",
+      dependencies: ["MorerduoKit"],
+      path: "tests/support"
+    ),
     .executableTarget(
       name: "MorerduoApp",
       dependencies: ["MorerduoKit"],
@@ -59,21 +64,21 @@ let package = Package(
     ),
     .executableTarget(
       name: "MorerduoUnitTests",
-      dependencies: ["MorerduoKit", "ZIPFoundation"],
+      dependencies: ["MorerduoKit", "MorerduoTestSupport", "ZIPFoundation"],
       path: "tests/unit",
       swiftSettings: testingSwiftSettings,
       linkerSettings: testingLinkerSettings
     ),
     .executableTarget(
       name: "MorerduoIntegrationTests",
-      dependencies: ["MorerduoKit"],
+      dependencies: ["MorerduoKit", "MorerduoTestSupport"],
       path: "tests/integration",
       swiftSettings: testingSwiftSettings,
       linkerSettings: testingLinkerSettings
     ),
     .executableTarget(
       name: "MorerduoContractTests",
-      dependencies: ["MorerduoKit"],
+      dependencies: ["MorerduoKit", "MorerduoTestSupport"],
       path: "tests/contract",
       swiftSettings: testingSwiftSettings,
       linkerSettings: testingLinkerSettings

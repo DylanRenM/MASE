@@ -40,12 +40,13 @@ play event
 
 ### 暂停、继续与变速
 
-1. pause：结算 active duration；请求 speech pause；状态变为 paused。
+1. pause：结算 active duration；先关闭 progress callback generation，再以 immediate boundary 请求 speech pause；状态变为 paused。暂停期间收到或恢复后才处理的旧 generation range 一律丢弃。
 2. paused changeSpeed：只更新配置并标记 `requiresUtteranceRebuild`。
 3. resume：
-   - 速度未变且系统仍保留 utterance：`continueSpeaking()`；
-   - 速度改变：停止旧 utterance，从 cursor 未读后缀创建新 utterance。
+   - 速度未变且系统仍保留 utterance：打开新的 progress generation 后调用 `continueSpeaking()`；
+   - 速度改变：退休旧 utterance identity 并产生 cancelled 终态，停止旧 utterance，从 cursor 未读后缀创建新 utterance；若系统 stop 失败，不启动新 request，并允许 fail-safe cleanup 再次 stop。
 4. 绝不跳过未确认朗读完成的字符；必要时允许重复最近一个词。
+5. `willSpeak` range 必须位于 request UTF-16 边界内且下界单调不减；安全恢复位置等于 `baseUTF16Offset + requestRange.lowerBound`，倒退 range 被丢弃。
 
 ### 停止与定时到期
 
@@ -158,16 +159,17 @@ protocol EnglishFiltering: Sendable {
 ### `SpeechSynthesizing`
 
 ```swift
+@MainActor
 protocol SpeechSynthesizing: Sendable {
     var events: AsyncStream<SpeechEvent> { get }
     func start(_ request: SpeechRequest) async throws
     func pause() async throws
-    func resume() async throws
+    func resume(rebuildingWith request: SpeechRequest?) async throws
     func stop() async
 }
 ```
 
-`SpeechRequest` 包含 paragraph ID、未读后缀、原文 UTF-16 base offset 和 speed。
+`SpeechRequest` 包含 paragraph ID、未读后缀、原文 UTF-16 base offset、speed、session token 和 request token。`SpeechProgress.safeResumeUTF16Offset` 取当前 `willSpeak` range 映射回原段落后的 lower bound，而不是 range upper bound，以保证恢复最多重复当前未确认词且不跳词。delegate callback 必须同时匹配 active utterance identity、session token、request token 与 progress callback generation；同一 request 的已接受 range lower bound 必须单调不减。原速继续传 `nil` 并调用系统 `continueSpeaking()`，暂停变速则传新 request，先退休旧 identity、产生 cancelled 终态，再从安全 cursor 的未读后缀重建。系统 stop 失败时 replacement 不得启动，清理路径仍可重试 stop。
 
 ### `SourceMonitoring`
 

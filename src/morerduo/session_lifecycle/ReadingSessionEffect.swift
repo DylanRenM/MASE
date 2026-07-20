@@ -10,7 +10,13 @@ public enum ReadingSessionEffect: Equatable, Sendable {
     token: ReadingSessionToken
   )
   case pauseSpeech(token: ReadingSessionToken)
-  case resumeSpeech(token: ReadingSessionToken, rebuild: Bool)
+  case resumeSpeech(
+    document: LoadedDocument,
+    cursor: ReadingCursor,
+    speed: ReadingSpeed,
+    token: ReadingSessionToken,
+    rebuild: Bool
+  )
   case stopSpeech(token: ReadingSessionToken)
   case startClock(token: ReadingSessionToken)
   case freezeClock(token: ReadingSessionToken)
