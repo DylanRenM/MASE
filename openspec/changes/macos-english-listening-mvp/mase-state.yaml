@@ -16,6 +16,8 @@ delivery:
 gates:
   proposal: passed
   design_l1: passed
+  design_l2_review: passed
+  build_entry: awaiting_user_confirmation
 
 capabilities:
   - document-ingestion

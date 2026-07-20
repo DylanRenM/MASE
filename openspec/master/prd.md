@@ -34,13 +34,13 @@
 
 | Capability | 状态 | 摘要 |
 |------------|------|------|
-| `document-ingestion` | Proposal 已确认 | 文件策略、TXT/DOCX/PDF 解析及错误反馈 |
-| `english-content-filtering` | Proposal 已确认 | 严格 ASCII 英文字母与空白过滤 |
-| `speech-playback-control` | Proposal 已确认 | 播放、循环、暂停、继续、停止、速度 |
-| `active-reading-timer` | Proposal 已确认 | 有效朗读时间定时与不限时模式 |
-| `reading-progress` | Proposal 已确认 | 百分比和段落进度 |
-| `source-file-monitoring` | Proposal 已确认 | 5 秒内发现外部修改并分支处理 |
-| `session-lifecycle` | Proposal 已确认 | 合法状态转换、竞争控制与会话重置 |
+| `document-ingestion` | Design L2 已评审 | 文件策略、TXT/DOCX/PDF 解析及错误反馈 |
+| `english-content-filtering` | Design L2 已评审 | 严格 ASCII 英文字母与空白过滤 |
+| `speech-playback-control` | Design L2 已评审 | 播放、循环、暂停、继续、停止、速度 |
+| `active-reading-timer` | Design L2 已评审 | 有效朗读时间定时与不限时模式 |
+| `reading-progress` | Design L2 已评审 | 百分比和段落进度 |
+| `source-file-monitoring` | Design L2 已评审 | 5 秒内发现外部修改并分支处理 |
+| `session-lifecycle` | Design L2 已评审 | 合法状态转换、竞争控制与会话重置 |
 
 ## 成功标准
 
@@ -58,3 +58,4 @@
 | 2026-07-20 | `macos-english-listening-mvp` | Proposal 与交互原型通过，进入 Design L1 |
 | 2026-07-20 | `macos-english-listening-mvp` | Design L1 本地构建与 Accessibility POC 通过，采用 local-only 交付 |
 | 2026-07-20 | `macos-english-listening-mvp` | 有声系统 TTS 经用户人工确认，Design L1 门禁通过 |
+| 2026-07-20 | `macos-english-listening-mvp` | Design L2 评审通过并完成 architecture/specs/contract master 合并，等待 Build 确认 |
