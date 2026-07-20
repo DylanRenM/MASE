@@ -29,10 +29,10 @@
 
 ## 4. reading-progress capability
 
-- [ ] 4.1 复用检查：确认 prefix sums + UTF-16 cursor 与 AVSpeech range 兼容（依赖：3.5，复杂度：S）
-- [ ] 4.2 先写 idle、段内推进、段落切换、暂停、停止、循环和越界 cursor 契约测试（依赖：4.1，契约：ProgressCalculator，复杂度：M）
-- [ ] 4.3 实现 `ReadingCursor`、段落 prefix metadata、`ReadingProgress` 和 O(1) calculator（依赖：4.2，复杂度：M）
-- [ ] 4.4 运行单元/契约测试，完成纯函数代码评审，本地 commit `feat(reading-progress)`（依赖：4.3，复杂度：S）
+- [x] 4.1 复用检查：确认 prefix sums + UTF-16 cursor 与 AVSpeech range 兼容（依赖：3.5，复杂度：S）
+- [x] 4.2 先写 idle、段内推进、段落切换、暂停、停止、循环和越界 cursor 契约测试（依赖：4.1，契约：ProgressCalculator，复杂度：M）
+- [x] 4.3 实现 `ReadingCursor`、段落 prefix metadata、`ReadingProgress` 和 O(1) calculator（依赖：4.2，复杂度：M）
+- [x] 4.4 运行单元/契约测试，完成纯函数代码评审，本地 commit `feat(reading-progress)`（依赖：4.3，复杂度：S）
 
 ## 5. active-reading-timer capability
 
