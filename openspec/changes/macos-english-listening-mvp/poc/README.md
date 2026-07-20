@@ -26,6 +26,12 @@ ZIPFoundation and XMLParser without invoking TTS:
 swift run morerduo-poc --document-ingestion
 ```
 
+Run the 20MB-class ASCII byte-scan performance check independently:
+
+```bash
+swift run morerduo-poc --english-filtering
+```
+
 Run the manual speaker-output check separately:
 
 ```bash

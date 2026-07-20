@@ -21,11 +21,11 @@
 
 ## 3. english-content-filtering capability
 
-- [ ] 3.1 复用检查：对照 POC ASCII byte scan，确认不引入正则/第三方过滤库（依赖：2.8，复杂度：S）
-- [ ] 3.2 先写混合 Unicode、数字标点、连续空白、空段落、脚本文本和确定性契约测试（依赖：3.1，契约：EnglishFiltering，复杂度：M）
-- [ ] 3.3 实现 `RawParagraph`、`EnglishParagraph` 与 O(n) `EnglishTextFilter`（依赖：3.2，复杂度：M）
-- [ ] 3.4 先写 18–20MB 性能与 MainActor 非阻塞测试，再实现后台过滤编排（依赖：3.3，复杂度：M）
-- [ ] 3.5 运行单元、性能、契约测试；执行内容安全评审；本地 commit `feat(english-filtering)`（依赖：3.4，复杂度：S）
+- [x] 3.1 复用检查：对照 POC ASCII byte scan，确认不引入正则/第三方过滤库（依赖：2.8，复杂度：S）
+- [x] 3.2 先写混合 Unicode、数字标点、连续空白、空段落、脚本文本和确定性契约测试（依赖：3.1，契约：EnglishFiltering，复杂度：M）
+- [x] 3.3 实现 `RawParagraph`、`EnglishParagraph` 与 O(n) `EnglishTextFilter`（依赖：3.2，复杂度：M）
+- [x] 3.4 先写 18–20MB 性能与 MainActor 非阻塞测试，再实现后台过滤编排（依赖：3.3，复杂度：M）
+- [x] 3.5 运行单元、性能、契约测试；执行内容安全评审；本地 commit `feat(english-filtering)`（依赖：3.4，复杂度：S）
 
 ## 4. reading-progress capability
 

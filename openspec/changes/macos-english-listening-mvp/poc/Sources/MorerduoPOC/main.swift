@@ -390,6 +390,16 @@ enum MorerduoPOC {
             return
         }
 
+        if CommandLine.arguments.contains("--english-filtering") {
+            do {
+                try verifyEnglishFilterPerformance()
+            } catch {
+                fputs("FAIL \(error)\n", stderr)
+                exit(EXIT_FAILURE)
+            }
+            return
+        }
+
         let isDocumentIngestionOnly = CommandLine.arguments.contains("--document-ingestion")
 
         let temporaryDirectory = FileManager.default.temporaryDirectory
