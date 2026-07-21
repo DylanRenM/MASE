@@ -1,0 +1,88 @@
+# MASE 2.0 项目状态声明
+# 由 Agent-1 (计划统管) 维护
+
+project:
+  name: "故事点估算助手"
+  english_name: "StoryPoint Estimator AI"
+  description: "基于基准故事集的 AI 相对故事点估算工具，Flask + Jinja2 Web 应用"
+  target_merge: "PILOT (COSMIC智能化度量工具)"
+
+technical:
+  language: "Python 3.10+"
+  framework: "Flask 2.0+"
+  ui_platform: "Jinja2 (server-rendered HTML)"
+  database: "SQLite"
+  vector_store: "FAISS"
+  llm: "vendor-agnostic (Embedding + Chat 独立配置)"
+  testing:
+    unit: "pytest"
+    integration: "pytest + SQLite :memory:"
+    e2e: "Playwright"
+
+phase:
+  current: "design"
+  history:
+    - phase: "proposal"
+      completed_at: "2026-07-21"
+      agent: "A2 (需求) via brainstorming"
+      artifacts:
+        - "docs/superpowers/specs/2026-07-21-story-point-estimator-design.md"
+    - phase: "design"
+      started_at: "2026-07-21"
+      agent: "A1 (统管) via brainstorming"
+      artifacts:
+        - "docs/superpowers/specs/2026-07-21-story-point-estimator-design.md"
+        - "mase-state.yaml"
+        - "tasks.md"
+        - "contract.md"
+
+capabilities:
+  - id: "C1"
+    name: "Excel模板下载与解析"
+    description: "生成带数据验证的模板Excel，解析用户上传的基线故事"
+    core_modules: ["utils/excel_handler.py", "core/validator.py"]
+  - id: "C2"
+    name: "基准故事管理与向量化"
+    description: "SQLite存储、FAISS向量索引、全量替换/追加合并"
+    core_modules: ["db/models.py", "db/vector_store.py", "core/embedding.py", "services/baseline_service.py"]
+  - id: "C3"
+    name: "故事点估算引擎"
+    description: "Top3余弦相似度检索、加权平均、斐波那契舍入、LLM裁决与降级"
+    core_modules: ["core/estimator.py", "core/reporter.py", "services/estimate_service.py"]
+  - id: "C4"
+    name: "Web交互界面"
+    description: "Flask路由、Jinja2模板渲染、AJAX交互、历史记录"
+    core_modules: ["app.py", "templates/"]
+
+gates:
+  proposal:
+    status: "passed"
+    reviewed_by: "user"
+    reviewed_at: "2026-07-21"
+  design:
+    status: "pending_review"
+    checklist:
+      - item: "tech-feasibility.md"
+        status: "n/a"
+        note: "技术栈成熟（Flask+FAISS+openpyxl），无未知风险"
+      - item: "architecture.md"
+        status: "covered"
+        note: "合并到 design spec 第1章系统架构"
+      - item: "detailed-design.md"
+        status: "done"
+        note: "docs/superpowers/specs/2026-07-21-story-point-estimator-design.md"
+      - item: "contract.md"
+        status: "pending"
+      - item: "specs gherkin"
+        status: "pending"
+        note: "Gherkin 验收场景将嵌入 contract.md"
+      - item: "tasks.md"
+        status: "pending"
+  build:
+    status: "not_started"
+  verify:
+    status: "not_started"
+  retro:
+    status: "not_started"
+  release:
+    status: "not_started"
