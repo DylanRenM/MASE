@@ -34,8 +34,8 @@ class TestBaselineRepository:
         """insert_batch 后 get_all 返回所有记录。"""
         repo = BaselineRepository(conn)
         stories = [
-            {"id": "S1", "title": "t1", "description": "d1", "points": 1, "faiss_index": 0},
-            {"id": "S2", "title": "t2", "description": "d2", "points": 2, "faiss_index": 1},
+            {"id": "S1", "title": "t1", "description": "d1", "acceptance_criteria": "", "points": 1, "faiss_index": 0},
+            {"id": "S2", "title": "t2", "description": "d2", "acceptance_criteria": "", "points": 2, "faiss_index": 1},
         ]
         count = repo.insert_batch(stories)
         assert count == 2
@@ -48,10 +48,10 @@ class TestBaselineRepository:
         """replace_all 清除旧数据再插入新数据。"""
         repo = BaselineRepository(conn)
         repo.insert_batch([
-            {"id": "S1", "title": "t1", "description": "d1", "points": 1, "faiss_index": 0},
+            {"id": "S1", "title": "t1", "description": "d1", "acceptance_criteria": "", "points": 1, "faiss_index": 0},
         ])
         new_stories = [
-            {"id": "S2", "title": "t2", "description": "d2", "points": 3, "faiss_index": 0},
+            {"id": "S2", "title": "t2", "description": "d2", "acceptance_criteria": "", "points": 3, "faiss_index": 0},
         ]
         count = repo.replace_all(new_stories)
         assert count == 1

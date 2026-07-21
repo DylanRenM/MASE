@@ -22,10 +22,10 @@ class VectorStore:
     内部使用 IndexFlatIP（内积），等效于余弦相似度（向量已归一化时）。
     """
 
-    def __init__(self, dimension: int = 1536):
+    def __init__(self, dimension: int = 10):
         """
         Args:
-            dimension: 向量维度，默认 1536（text-embedding-3-small）。
+            dimension: 向量维度，默认 10（10个复杂度特征）。
         """
         self._dimension = dimension
         self._index = None
@@ -55,6 +55,19 @@ class VectorStore:
 
         self._index = faiss.IndexFlatIP(self._dimension)
         self._index.add(vectors)
+
+    def get_vectors(self) -> np.ndarray:
+        """获取索引中所有向量。
+
+        前置条件: 索引已构建。
+        后置条件: result.shape == (ntotal, dimension)。
+
+        Returns:
+            (N, D) 形状的向量数组。
+        """
+        if self._index is None or self._index.ntotal == 0:
+            return np.empty((0, self._dimension), dtype=np.float32)
+        return np.array([self._index.reconstruct(i) for i in range(self._index.ntotal)], dtype=np.float32)
 
     def search(self, query: np.ndarray, k: int = 3) -> list[tuple[int, float]]:
         """检索最相似的 k 个向量。

@@ -25,13 +25,13 @@ class TestGenerateTemplate:
             ws = wb.active
             assert ws.title == "基准故事"
 
-            headers = [ws.cell(1, col).value for col in range(1, 5)]
-            assert headers == ["ID", "故事标题", "故事描述", "故事点"]
+            headers = [ws.cell(1, col).value for col in range(1, 6)]
+            assert headers == ["ID", "故事标题", "故事描述", "验收标准", "故事点"]
         finally:
             os.unlink(filepath)
 
     def test_points_column_has_data_validation(self):
-        """故事点列 (D) 有数据验证下拉框。"""
+        """故事点列 (E) 有数据验证下拉框。"""
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
             filepath = f.name
 
@@ -46,7 +46,7 @@ class TestGenerateTemplate:
 
             dv = validations[0]
             assert dv.type == "list"
-            assert "D" in str(dv.sqref)  # 校验应用于 D 列
+            assert "E" in str(dv.sqref)  # 校验应用于 E 列
         finally:
             os.unlink(filepath)
 
@@ -57,9 +57,9 @@ class TestParseUpload:
     def test_parses_all_rows_correctly(self):
         """正确解析所有数据行。"""
         filepath = _create_test_excel([
-            ("S1", "修改Logo", "替换公司Logo", 1),
-            ("S2", "邮箱校验", "前端校验邮箱格式", 2),
-            ("S3", "导出Excel", "含查询接口", 5),
+            ("S1", "修改Logo", "替换公司Logo", "页面展示Logo", 1),
+            ("S2", "邮箱校验", "前端校验邮箱格式", "输入合法邮箱通过", 2),
+            ("S3", "导出Excel", "含查询接口", "导出1000条数据", 5),
         ])
 
         try:
@@ -86,7 +86,7 @@ class TestParseUpload:
     def test_parses_float_points_as_int(self):
         """浮点型故事点应该被转为 int。"""
         filepath = _create_test_excel([
-            ("S1", "test", "desc", 3),
+            ("S1", "test", "desc", "", 3),
         ])
 
         try:
@@ -98,13 +98,13 @@ class TestParseUpload:
 
 # ── helpers ──────────────────────────────────────────
 
-def _create_test_excel(rows: list[tuple[str, str, str, int]]) -> str:
+def _create_test_excel(rows: list[tuple[str, str, str, str, int]]) -> str:
     """创建测试用 Excel 文件并返回路径。"""
     from openpyxl import Workbook
 
     wb = Workbook()
     ws = wb.active
-    ws.append(["ID", "故事标题", "故事描述", "故事点"])
+    ws.append(["ID", "故事标题", "故事描述", "验收标准", "故事点"])
     for row in rows:
         ws.append(list(row))
 

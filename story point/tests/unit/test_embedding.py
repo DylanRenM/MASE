@@ -1,4 +1,9 @@
-"""Embedding 客户端单元测试（mock OpenAI API）。"""
+"""[DEPRECATED — v2.0] Embedding 客户端单元测试（mock OpenAI API）。
+
+本模块已随 EmbeddingClient 一起废弃。
+项目已从文本Embedding方案迁移到特征提取+向量检索方案。
+保留仅供参考，后续版本将删除。
+"""
 
 from unittest.mock import MagicMock, patch
 

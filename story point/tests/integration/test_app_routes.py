@@ -50,7 +50,7 @@ class TestAppRoutes:
         """GET / 返回 HTML。"""
         resp = client.get("/")
         assert resp.status_code == 200
-        assert "故事点估算助手".encode("utf-8") in resp.data
+        assert "StoryPoint".encode("utf-8") in resp.data
 
     def test_template_download_returns_xlsx(self, client):
         """GET /template/download 返回 Excel。"""
@@ -58,12 +58,20 @@ class TestAppRoutes:
         assert resp.status_code == 200
         assert "spreadsheet" in resp.content_type
 
-    def test_history_returns_json_array(self, client):
-        """GET /history 返回 JSON 数组。"""
+    def test_history_returns_404(self, client):
+        """GET /history 已移除，返回 404。"""
         resp = client.get("/history")
-        assert resp.status_code == 200
-        data = resp.get_json()
-        assert isinstance(data, list)
+        assert resp.status_code == 404
+
+    def test_batch_download_without_token_returns_404(self, client):
+        """GET /batch/download 无 token 返回 404。"""
+        resp = client.get("/batch/download")
+        assert resp.status_code == 404
+
+    def test_batch_download_invalid_token_returns_404(self, client):
+        """GET /batch/download 无效 token 返回 404。"""
+        resp = client.get("/batch/download?token=invalid")
+        assert resp.status_code == 404
 
     def test_estimate_without_title_returns_error(self, client):
         """POST /estimate 缺少标题返回 400。"""

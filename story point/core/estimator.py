@@ -1,6 +1,8 @@
 """估算器核心算法。
 
 提供余弦相似度计算、TopK 检索和加权平均功能。
+v2.0: 输入从文本Embedding向量改为特征向量（10维）。
+FAISS IndexFlatIP 内部做 L2 归一化，內积等价于余弦相似度。
 """
 
 import numpy as np

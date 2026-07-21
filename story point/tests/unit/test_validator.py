@@ -125,6 +125,7 @@ class TestValidateBaseline:
 def _make_rows(specs: list[tuple[str, str, str, int]]) -> list[dict]:
     """从 (id, title, description, points) 列表构建测试行。"""
     return [
-        {"id": sid, "title": title, "description": desc, "points": pts}
+        {"id": sid, "title": title, "description": desc,
+         "acceptance_criteria": "", "points": pts}
         for sid, title, desc, pts in specs
     ]

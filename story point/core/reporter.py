@@ -14,6 +14,10 @@ REPORT_PROMPT_TEMPLATE = """你是故事点估算专家。基准刻度：1, 2, 3
 新需求：
 - 标题：{title}
 - 描述：{description}
+- 验收准则：{acceptance_criteria}
+
+新需求复杂度特征：
+{features_context}
 
 数值估算结果：{weighted_result} 点
 
@@ -24,8 +28,13 @@ REPORT_PROMPT_TEMPLATE = """你是故事点估算专家。基准刻度：1, 2, 3
 {{"estimate": <1|2|3|5|8|13>,
   "confidence_min": <integer>,
   "confidence_max": <integer>,
-  "reasoning": "<中文估算依据>",
-  "risk_notes": "<中文风险提示>"}}"""
+  "reasoning": "<分 1./2./3. 列出判断依据，每条 1-2 句话>",
+  "risk_notes": "<列出 2-3 条关键风险，每条 1 句话>"}}
+
+reasoning 必须包含以下维度（用编号标注）：
+1. 复杂度评估：基于特征（前端页面数、后端接口数、外部依赖等）评估开发复杂度是低/中/高
+2. 基准对比：与最相似基准故事的差异分析，说明为何估高或估低
+3. 参数权衡：如新旧点数边界时，解释为何向上/向下取整"""
 
 
 class ReportGenerator:
@@ -50,7 +59,8 @@ class ReportGenerator:
 
     def generate(self, title: str, description: str,
                  top_k_stories: list[dict], similarities: list[float],
-                 weighted_avg: float) -> dict:
+                 weighted_avg: float, new_features: dict = None,
+                 acceptance_criteria: str = "") -> dict:
         """生成结构化估算报告。
 
         前置条件: title 和 description 非空,
@@ -64,6 +74,8 @@ class ReportGenerator:
             top_k_stories: TopK 基准故事列表。
             similarities: 对应的相似度列表。
             weighted_avg: 加权平均点数。
+            new_features: 新需求的复杂度特征字典（10个字段）。
+            acceptance_criteria: 验收准则（可选，GWT格式）。
 
         Returns:
             {
@@ -73,6 +85,7 @@ class ReportGenerator:
                 "reasoning": str,
                 "risk_notes": str,
                 "top_matches": [...],
+                "features": {...} | None,
                 "degraded": bool
             }
         """
@@ -80,7 +93,10 @@ class ReportGenerator:
 
         # 无参考基准时直接返回降级报告
         if not top_k_stories:
-            return self._degraded_result(weighted_avg, top_matches)
+            return self._degraded_result(weighted_avg, top_matches, new_features)
+
+        # 构建复杂度特征描述
+        features_context = self._format_features_context(new_features)
 
         # 构建 prompt
         baseline_details = ""
@@ -93,6 +109,8 @@ class ReportGenerator:
         prompt = REPORT_PROMPT_TEMPLATE.format(
             title=title,
             description=description,
+            acceptance_criteria=acceptance_criteria.strip() if acceptance_criteria else "（无）",
+            features_context=features_context,
             weighted_result=round_to_fibonacci(weighted_avg),
             k=len(top_k_stories),
             baseline_details=baseline_details.strip(),
@@ -102,8 +120,7 @@ class ReportGenerator:
         try:
             llm_result = self._call_chat_api(prompt)
         except Exception:
-            # 降级：纯数值估算
-            return self._degraded_result(weighted_avg, top_matches)
+            return self._degraded_result(weighted_avg, top_matches, new_features)
 
         # 解析 JSON
         try:
@@ -115,14 +132,40 @@ class ReportGenerator:
                 "reasoning": parsed.get("reasoning", ""),
                 "risk_notes": parsed.get("risk_notes", ""),
                 "top_matches": top_matches,
+                "features": new_features,
                 "degraded": False,
             }
         except Exception:
-            # 解析失败，降级
-            return self._degraded_result(weighted_avg, top_matches)
+            return self._degraded_result(weighted_avg, top_matches, new_features)
+
+    def _format_features_context(self, features: dict) -> str:
+        """格式化复杂度特征为文本描述。"""
+        if not features:
+            return "（未提供复杂度特征）"
+
+        field_labels = {
+            "frontend_pages": "前端页面数",
+            "backend_interfaces": "后端接口数",
+            "db_change": "数据库变更",
+            "external_dependency": "外部依赖",
+            "async_processing": "异步处理",
+            "transaction_required": "事务一致性",
+            "business_branches": "业务分支数",
+            "permission_control": "权限控制",
+            "data_migration": "数据迁移",
+            "cache_design": "缓存设计",
+        }
+
+        lines = []
+        for field, label in field_labels.items():
+            val = features.get(field, "-")
+            lines.append(f"  - {label}: {val}")
+
+        return "\n".join(lines)
 
     def _degraded_result(self, weighted_avg: float,
-                         top_matches: list[dict]) -> dict:
+                         top_matches: list[dict],
+                         features: dict = None) -> dict:
         """生成降级报告（纯数值）。"""
         estimate = round_to_fibonacci(weighted_avg)
         return {
@@ -132,6 +175,7 @@ class ReportGenerator:
             "reasoning": "LLM 不可用，以下为基于加权平均的数值估算结果",
             "risk_notes": "由于 LLM 服务不可用，无法提供详细风险分析",
             "top_matches": top_matches,
+            "features": features,
             "degraded": True,
         }
 

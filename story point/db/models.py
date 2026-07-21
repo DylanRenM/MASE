@@ -16,12 +16,13 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.execute("PRAGMA foreign_keys = ON")
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS baseline_stories (
-            id          TEXT PRIMARY KEY,
-            title       TEXT NOT NULL,
-            description TEXT NOT NULL,
-            points      INTEGER NOT NULL CHECK(points IN (1,2,3,5,8,13)),
-            faiss_index INTEGER,
-            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id                  TEXT PRIMARY KEY,
+            title               TEXT NOT NULL,
+            description         TEXT NOT NULL,
+            acceptance_criteria TEXT NOT NULL DEFAULT '',
+            points              INTEGER NOT NULL CHECK(points IN (1,2,3,5,8,13)),
+            faiss_index         INTEGER,
+            created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS estimate_history (
@@ -43,6 +44,14 @@ def init_db(conn: sqlite3.Connection) -> None:
             ON estimate_history(created_at DESC);
     """)
 
+    # 迁移：为已有数据库添加 acceptance_criteria 列（忽略列已存在的错误）
+    try:
+        conn.execute(
+            "ALTER TABLE baseline_stories ADD COLUMN acceptance_criteria TEXT NOT NULL DEFAULT ''"
+        )
+    except sqlite3.OperationalError:
+        pass  # 列已存在，跳过
+
 
 class BaselineRepository:
     """基线故事仓库。"""
@@ -63,9 +72,9 @@ class BaselineRepository:
         for s in stories:
             try:
                 self._conn.execute(
-                    """INSERT INTO baseline_stories (id, title, description, points, faiss_index)
-                       VALUES (?, ?, ?, ?, ?)""",
-                    (s["id"], s["title"], s["description"], s["points"], s.get("faiss_index")),
+                    """INSERT INTO baseline_stories (id, title, description, acceptance_criteria, points, faiss_index)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (s["id"], s["title"], s["description"], s.get("acceptance_criteria", ""), s["points"], s.get("faiss_index")),
                 )
                 count += 1
             except sqlite3.IntegrityError as e:
@@ -91,7 +100,7 @@ class BaselineRepository:
     def get_all(self) -> list[dict]:
         """获取所有基线故事，按 faiss_index 升序。"""
         cursor = self._conn.execute(
-            "SELECT id, title, description, points, faiss_index FROM baseline_stories "
+            "SELECT id, title, description, acceptance_criteria, points, faiss_index FROM baseline_stories "
             "ORDER BY faiss_index ASC"
         )
         return [dict(row) for row in cursor.fetchall()]
@@ -106,7 +115,7 @@ class BaselineRepository:
             找到的故事 dict，不存在返回 None。
         """
         cursor = self._conn.execute(
-            "SELECT id, title, description, points, faiss_index FROM baseline_stories "
+            "SELECT id, title, description, acceptance_criteria, points, faiss_index FROM baseline_stories "
             "WHERE faiss_index = ?",
             (index,),
         )

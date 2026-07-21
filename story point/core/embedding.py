@@ -1,5 +1,10 @@
 """Embedding API 封装。
 
+[DEPRECATED — v2.0]
+本模块已废弃。项目已从文本Embedding方案迁移到特征提取+向量检索方案。
+新模块: core/feature_encoder.py + utils/feature_extractor.py
+保留下仅供参考，后续版本将删除。
+
 支持供应商无关的 Embedding API 调用，含指数退避重试。
 """
 
