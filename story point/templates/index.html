@@ -321,7 +321,14 @@
             el.classList.remove('hidden');
         }
 
-        // 初始化
+        // 初始化：根据已有数据状态启用估算按钮
+        const initialStoryCount = {{ story_count }};
+        if (initialStoryCount > 0) {
+            document.getElementById('estimate-btn').disabled = false;
+            document.getElementById('upload-status').className = 'status status-ok';
+            document.getElementById('upload-status').innerHTML = '✓ 已加载 ' + initialStoryCount + ' 条基准故事';
+            document.getElementById('upload-status').classList.remove('hidden');
+        }
         loadHistory();
     </script>
 </body>
