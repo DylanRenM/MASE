@@ -20,7 +20,7 @@ technical:
     e2e: "Playwright"
 
 phase:
-  current: "build"
+  current: "release"
   history:
     - phase: "proposal"
       completed_at: "2026-07-21"
@@ -38,7 +38,22 @@ phase:
         - "contract.md"
     - phase: "build"
       started_at: "2026-07-21"
+      completed_at: "2026-07-21"
       agent: "A3 (开发)"
+      artifacts:
+        - "16 source files, 1268 lines"
+        - "55 tests, zero failures"
+    - phase: "verify"
+      started_at: "2026-07-21"
+      completed_at: "2026-07-21"
+      agent: "A4 (质量)"
+      artifacts:
+        - "code-review: 20 issues (3 critical, 8 high, 6 medium, 3 low)"
+        - "security-scan: 7 vulns (1 critical, 2 high, 3 medium, 1 low)"
+        - "all fixes verified, 55/55 tests green"
+    - phase: "release"
+      started_at: "2026-07-21"
+      agent: "A1 (统管)"
 
 capabilities:
   - id: "C1"
@@ -85,10 +100,15 @@ gates:
       - item: "tasks.md"
         status: "done"
   build:
-    status: "not_started"
+    status: "passed"
+    reviewed_by: "A4 (code-review + security-scan)"
+    reviewed_at: "2026-07-21"
   verify:
-    status: "not_started"
+    status: "passed"
+    reviewed_by: "A4 (regression tests)"
+    reviewed_at: "2026-07-21"
   retro:
-    status: "not_started"
+    status: "skipped"
+    note: "用户选择直接 Release"
   release:
-    status: "not_started"
+    status: "in_progress"
