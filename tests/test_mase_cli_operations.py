@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from mase_cli.commands import doctor, install_framework, metrics, status, update_project
+from mase_cli import main as cli
 
 
 def test_doctor_allows_swift_command_line_tools_without_full_xcode(monkeypatch):
@@ -108,3 +109,37 @@ def test_status_rejects_change_name_path_traversal(tmp_path):
 
     with pytest.raises(ValueError, match="change name"):
         status.get_status(tmp_path, "../outside")
+
+
+def test_cli_reports_expected_state_errors_without_traceback(tmp_path, capsys):
+    (tmp_path / "openspec" / "changes").mkdir(parents=True)
+
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["status", "--dir", str(tmp_path), "--change", "missing"])
+
+    captured = capsys.readouterr()
+    assert exit_info.value.code == cli.EXIT_NOT_FOUND
+    assert "error[4]" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_gate_cli_rejects_unsafe_change_before_running_command(tmp_path, capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(
+            [
+                "gate",
+                "run",
+                "related_tests",
+                "--dir",
+                str(tmp_path),
+                "--change",
+                "../outside",
+                "--",
+                "python3",
+                "-c",
+                "raise RuntimeError('must not run')",
+            ]
+        )
+
+    assert exit_info.value.code == cli.EXIT_NOT_FOUND
+    assert "Traceback" not in capsys.readouterr().err

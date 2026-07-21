@@ -151,6 +151,13 @@
     </div>
 
     <script>
+        // ── XSS 防护 ──
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
         // ── 模板下载 ──
         function downloadTemplate() {
             window.location.href = '/template/download';
@@ -234,6 +241,11 @@
             .then(r => r.json())
             .then(data => {
                 progress.classList.add('hidden');
+                if (data.status === 'error') {
+                    progress.innerHTML = '❌ ' + (data.errors || ['估算失败']).join('<br>');
+                    progress.classList.remove('hidden');
+                    return;
+                }
                 showReport(data);
                 loadHistory();
             })
@@ -263,7 +275,7 @@
                 html += '<h3 style="font-size:0.875rem;margin-bottom:4px;">🔍 参考基准</h3>';
                 html += '<table class="match-table"><tr><th>ID</th><th>标题</th><th>点数</th><th>相似度</th></tr>';
                 for (const m of data.top_matches) {
-                    html += `<tr><td>${m.id}</td><td>${m.title}</td><td>${m.points}</td><td>${m.similarity}%</td></tr>`;
+                    html += `<tr><td>${escapeHtml(m.id)}</td><td>${escapeHtml(m.title)}</td><td>${m.points}</td><td>${m.similarity}%</td></tr>`;
                 }
                 html += '</table>';
             }
@@ -271,13 +283,13 @@
             // 估算依据
             if (data.reasoning) {
                 html += `<h3 style="font-size:0.875rem;margin:12px 0 4px;">📝 估算依据</h3>`;
-                html += `<p style="font-size:0.8rem;color:#555;">${data.reasoning}</p>`;
+                html += `<p style="font-size:0.8rem;color:#555;">${escapeHtml(data.reasoning)}</p>`;
             }
 
             // 风险提示
             if (data.risk_notes) {
                 html += `<h3 style="font-size:0.875rem;margin:12px 0 4px;">⚠️ 风险提示</h3>`;
-                html += `<p style="font-size:0.8rem;color:#856404;background:#fff3cd;padding:8px;border-radius:4px;">${data.risk_notes}</p>`;
+                html += `<p style="font-size:0.8rem;color:#856404;background:#fff3cd;padding:8px;border-radius:4px;">${escapeHtml(data.risk_notes)}</p>`;
             }
 
             html += '</div>';

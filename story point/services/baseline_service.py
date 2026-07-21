@@ -71,16 +71,23 @@ class BaselineService:
         Returns:
             {"status": "ok", "count": N} 或 {"status": "error", "errors": [...]}
         """
-        # 生成 Embedding 向量
+        # 生成 Embedding 向量（仅对新增行）
         try:
             texts = [f"{r['title']} {r['description']}" for r in rows]
-            vectors = self._embedding_client.embed_batch(texts)
+            new_vectors = self._embedding_client.embed_batch(texts)
         except Exception as e:
             return {"status": "error", "errors": [f"向量化失败: {e}"]}
 
         # 给每行分配 faiss_index
-        for i, row in enumerate(rows):
-            row["faiss_index"] = i
+        if action == "replace":
+            for i, row in enumerate(rows):
+                row["faiss_index"] = i
+        else:
+            # 追加模式：从已有数据偏移
+            existing = self._baseline_repo.get_all()
+            offset = len(existing)
+            for i, row in enumerate(rows):
+                row["faiss_index"] = offset + i
 
         # 写入数据库
         if action == "replace":
@@ -88,11 +95,14 @@ class BaselineService:
         else:
             self._baseline_repo.insert_batch(rows)
 
-        # 重建/更新 FAISS 索引
+        # 重建 FAISS 索引
         all_stories = self._baseline_repo.get_all()
-        all_vectors = self._embedding_client.embed_batch(
-            [f"{s['title']} {s['description']}" for s in all_stories]
-        )
-        self._vector_store.build_index(all_vectors)
+        try:
+            all_vectors = self._embedding_client.embed_batch(
+                [f"{s['title']} {s['description']}" for s in all_stories]
+            )
+            self._vector_store.build_index(all_vectors)
+        except Exception as e:
+            return {"status": "error", "errors": [f"FAISS 索引重建失败（数据库已更新）: {e}"]}
 
         return {"status": "ok", "count": len(all_stories)}

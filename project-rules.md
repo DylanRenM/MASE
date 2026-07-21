@@ -9,7 +9,7 @@
 - `strict`：鉴权、支付、医疗、金融、监管或不可逆迁移。
 - Capability 遇到不可信输入、归档解析、并发、鉴权、密钥或迁移时只能升级门禁，不能降级。
 
-Profile 的机器定义见 `profiles/*.yaml`；change 的唯一状态源是 `mase-state.yaml`。
+Profile 的机器定义见 `profiles/*.yaml`，标准风险触发器见 `profiles/risks.yaml`；change 的唯一状态源是 `mase-state.yaml`。主 `stack` 只允许 generic/python/swift，其他技术写入 `toolchains`。
 
 ## 不可违反的规则
 
@@ -31,7 +31,7 @@ API/公共协议的输入、输出和行为语义必须有契约测试。模块�
 
 ### R05 硬门禁
 
-已触发的 API 契约必须 100% 通过；有 UI 的 P0 E2E 必须 100% 通过；Sandbox 恢复不一致时阻断。P1 默认不是全局硬门禁。
+已触发的 API 契约必须 100% 通过；只有产品有 UI 且本 change 修改 UI 时才触发 P0 E2E；Sandbox 恢复不一致时阻断。硬门禁不得删除或普通基线化。自动门禁的 passed 只能由 Gate Runner 产生，并随输入、日志或制品变化转为 stale/invalid；人工证据只能满足明确允许人工完成的 gate。
 
 ### R06 根因分析
 
@@ -47,7 +47,7 @@ Bug 修改前必须形成可验证的根因假设，并先取得失败证据。
 
 ### R09 非破坏迁移
 
-删除、回退、覆盖用户文件或框架迁移前必须备份。生成文件被修改时报告冲突，不静默覆盖。
+删除、回退、覆盖用户文件或框架迁移前必须先 dry-run 并备份。生成文件被修改、Schema 未知或内容无法验证时报告 conflict 并保留原文件，不静默覆盖。Brownfield 失败只有具备稳定签名、负责人、期限和处置 change 的非硬门禁记录才能进入基线。
 
 ## Token 上下文规则
 

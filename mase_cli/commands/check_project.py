@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Union
 
-from mase_cli.config import load_yaml
+from mase_cli.schema import GovernanceError, ProjectMetadata
+from mase_cli.state import ChangeState
 
 
 @dataclass(frozen=True)
@@ -52,10 +53,18 @@ def inspect_project(project_dir: Union[str, Path] = ".") -> ProjectReport:
     marker = root / ".mase.yaml"
     if not marker.exists():
         return ProjectReport(root, "unknown", "unknown", (CheckItem(".mase.yaml", False),))
-    metadata = load_yaml(marker).get("mase", {})
-    stack = str(metadata.get("stack", "python" if (root / "pyproject.toml").exists() else "generic"))
-    profile = str(metadata.get("profile", "standard"))
-    layout = metadata.get("layout", {}) if isinstance(metadata.get("layout", {}), dict) else {}
+    try:
+        metadata = ProjectMetadata.load(marker, allow_legacy=True)
+    except GovernanceError as exc:
+        return ProjectReport(
+            root,
+            "unknown",
+            "unknown",
+            (CheckItem(".mase.yaml", False, True, str(exc)),),
+        )
+    stack = metadata.stack
+    profile = metadata.profile
+    layout = metadata.layout
     common = [
         _exists(root, ".mase.yaml"),
         _exists(root, "README.md"),
@@ -79,7 +88,24 @@ def inspect_project(project_dir: Union[str, Path] = ".") -> ProjectReport:
         pass
     else:
         stack_items.append(CheckItem("stack", False, True, f"unsupported stack: {stack}"))
-    return ProjectReport(root, stack, profile, tuple(common + stack_items))
+    state_items: List[CheckItem] = []
+    changes_root = root / "openspec" / "changes"
+    if changes_root.is_dir():
+        for change in sorted(item for item in changes_root.iterdir() if item.is_dir()):
+            state_path = change / "mase-state.yaml"
+            if not state_path.exists():
+                if (change / "proposal.md").exists() or (change / "tasks.md").exists():
+                    relative = state_path.relative_to(root).as_posix()
+                    state_items.append(CheckItem(relative, False, True, "missing change state"))
+                continue
+            relative = state_path.relative_to(root).as_posix()
+            try:
+                ChangeState.load(state_path)
+            except (GovernanceError, ValueError) as exc:
+                state_items.append(CheckItem(relative, False, True, str(exc)))
+            else:
+                state_items.append(CheckItem(relative, True, True, "valid"))
+    return ProjectReport(root, stack, profile, tuple(common + stack_items + state_items))
 
 
 def run(project_dir: Union[str, Path] = ".", json_output: bool = False) -> ProjectReport:

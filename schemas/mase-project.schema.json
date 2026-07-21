@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://measures.local/schemas/mase-project-metadata-v2.json",
+  "title": "MASE project metadata",
+  "type": "object",
+  "required": ["mase"],
+  "properties": {
+    "mase": {
+      "type": "object",
+      "required": ["version", "project", "profile", "stack"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "created": {"type": "string"},
+        "project": {"type": "string", "minLength": 1},
+        "profile": {"enum": ["lite", "standard", "strict"]},
+        "stack": {"enum": ["generic", "python", "swift"]},
+        "toolchains": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "layout": {"type": "object", "additionalProperties": {"type": "string"}}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

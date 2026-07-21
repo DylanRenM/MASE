@@ -132,7 +132,7 @@ def create_app() -> Flask:
             # 保存 FAISS 索引
             vector_store.save(app_config.faiss_index_path)
 
-        return jsonify(result), (200 if result["status"] == "ok" else 500)
+        return jsonify(result), (200 if result["status"] == "ok" else 400)
 
     @app.route("/estimate", methods=["POST"])
     def estimate():

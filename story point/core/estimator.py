@@ -4,7 +4,6 @@
 """
 
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 def compute_similarities(new_vector: np.ndarray, baseline_vectors: np.ndarray) -> np.ndarray:
@@ -21,7 +20,11 @@ def compute_similarities(new_vector: np.ndarray, baseline_vectors: np.ndarray) -
     Returns:
         (N,) 形状的相似度数组。
     """
-    return cosine_similarity(new_vector.reshape(1, -1), baseline_vectors).flatten()
+    # 余弦相似度 = dot(a, b) / (||a|| × ||b||)
+    norm_new = np.linalg.norm(new_vector)
+    norm_baseline = np.linalg.norm(baseline_vectors, axis=1)
+    dot_products = np.dot(baseline_vectors, new_vector)
+    return dot_products / (norm_baseline * norm_new + 1e-10)
 
 
 def get_top_k(similarities: np.ndarray, k: int = 3) -> list[tuple[int, float]]:

@@ -2,49 +2,60 @@ schema: mase-project/v2
 profile: standard
 stack: generic
 phase: complete
-
-project_type:
-  has_ui: false
-  ui_platform: null
-
 risk:
   triggers:
-    - destructive-migration
-    - repository-boundary-change
-    - large-build-cache
+  - destructive-migration
+  - repository-boundary-change
+  - large-build-cache
   capabilities:
     repository-isolation:
       profile: standard
-
 gates:
-  proposal: passed
-  design: passed
-  product_verification: passed
-  framework_python: passed
-  sandbox_javascript: passed
-  openspec_strict: passed
-  cli_check: passed
-  repository_isolation: passed
-
+  proposal: stale
+  design: stale
+  product_verification: stale
+  framework_python: stale
+  sandbox_javascript: stale
+  openspec_strict: stale
+  cli_check: stale
+  repository_isolation: stale
 evidence:
-  - gate: product_verification
-    result: passed
-    path: migration-manifest.md (49 unit, 55 integration, 60 contract, 20 E2E, signed app)
-  - gate: framework_python
-    result: passed
-    path: tests (49 passed)
-  - gate: sandbox_javascript
-    result: passed
-    path: tests/sandbox/sandbox.test.js (9 passed)
-  - gate: openspec_strict
-    result: passed
-    path: openspec/changes/extract-morerduo-project
-  - gate: cli_check
-    result: passed
-    path: mase check (standard/generic)
-  - gate: repository_isolation
-    result: passed
-    path: verification-summary.md
-
+- gate: product_verification
+  result: stale
+  path: migration-manifest.md (49 unit, 55 integration, 60 contract, 20 E2E, signed
+    app)
+  kind: legacy
+- gate: framework_python
+  result: stale
+  path: tests (49 passed)
+  kind: legacy
+- gate: sandbox_javascript
+  result: stale
+  path: tests/sandbox/sandbox.test.js (9 passed)
+  kind: legacy
+- gate: openspec_strict
+  result: stale
+  path: openspec/changes/extract-morerduo-project
+  kind: legacy
+- gate: cli_check
+  result: stale
+  path: mase check (standard/generic)
+  kind: legacy
+- gate: repository_isolation
+  result: stale
+  path: verification-summary.md
+  kind: legacy
 capabilities:
-  - repository-isolation
+- repository-isolation
+toolchains:
+- node
+- python
+product:
+  has_ui: false
+  ui_platform: null
+impact:
+  ui_changed: false
+  paths: []
+dependencies: []
+conflicts_with: []
+blockers: []

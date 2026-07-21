@@ -1,0 +1,41 @@
+schema: mase-risk-registry/v1
+triggers:
+  untrusted_input:
+    minimum_profile: standard
+    gates: [security_review, related_tests]
+  archive_parsing:
+    minimum_profile: standard
+    gates: [security_review, related_tests]
+  concurrency:
+    minimum_profile: standard
+    gates: [integration_tests]
+  external_dependency:
+    minimum_profile: standard
+    gates: [integration_tests]
+  persistence:
+    minimum_profile: standard
+    gates: [integration_tests]
+  irreversible_write:
+    minimum_profile: standard
+    gates: [security_review]
+  authentication:
+    minimum_profile: strict
+    gates: [api_contract, security_review, full_regression, independent_review]
+  authorization:
+    minimum_profile: strict
+    gates: [api_contract, security_review, full_regression, independent_review]
+  secrets:
+    minimum_profile: strict
+    gates: [security_review, credential_scan, independent_review]
+  payment:
+    minimum_profile: strict
+    gates: [api_contract, full_regression, security_review, independent_review]
+  regulated:
+    minimum_profile: strict
+    gates: [full_regression, security_review, independent_review]
+  migration:
+    minimum_profile: strict
+    gates: [full_regression, rollback_verification, security_review, independent_review]
+  ui_change:
+    minimum_profile: lite
+    gates: [p0_e2e]

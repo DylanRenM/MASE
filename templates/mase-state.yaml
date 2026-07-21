@@ -2,16 +2,25 @@
 schema: mase-project/v2
 profile: standard
 stack: generic
+toolchains: []
 phase: draft
 
-project_type:
+product:
   has_ui: false
   ui_platform: null
+
+impact:
+  ui_changed: false
+  paths: []
 
 risk:
   triggers: []
   capabilities: {}
 
 gates: {}
+# automatic evidence 只能由 `mase gate run` 生成；人工验收使用 `mase gate manual`。
 evidence: []
+dependencies: []
+conflicts_with: []
+blockers: []
 capabilities: []

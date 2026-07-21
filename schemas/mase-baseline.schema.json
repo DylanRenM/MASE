@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://measures.local/schemas/mase-baseline-v1.json",
+  "title": "MASE Brownfield baseline",
+  "type": "object",
+  "required": ["schema", "command", "failures"],
+  "properties": {
+    "schema": {"const": "mase-baseline/v1"},
+    "command": {"type": "string", "minLength": 1},
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["test_id", "signature", "gate", "first_seen", "owner", "expires", "remediation_change"],
+        "properties": {
+          "test_id": {"type": "string", "minLength": 1},
+          "signature": {"type": "string", "minLength": 1},
+          "gate": {"type": "string", "minLength": 1},
+          "message": {"type": "string"},
+          "first_seen": {"type": "string", "format": "date"},
+          "owner": {"type": "string", "minLength": 1},
+          "expires": {"type": "string", "format": "date"},
+          "remediation_change": {"type": "string", "minLength": 1},
+          "reason": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -32,3 +32,5 @@ e2e/sandbox/
 
 # Local-only (bazi-encyclopedia backup)
 bazi-encyclopedia/
+.mase-backup/
+.mase/cache/

@@ -39,6 +39,14 @@ class ReportGenerator:
         self.model = model
         self._base_url = base_url
         self._api_key = api_key
+        self._client = None  # 延迟初始化
+
+    def _get_client(self):
+        """获取 OpenAI 客户端实例（复用）。"""
+        if self._client is None:
+            from openai import OpenAI
+            self._client = OpenAI(base_url=self._base_url, api_key=self._api_key)
+        return self._client
 
     def generate(self, title: str, description: str,
                  top_k_stories: list[dict], similarities: list[float],
@@ -69,6 +77,10 @@ class ReportGenerator:
             }
         """
         top_matches = self._format_top_matches(top_k_stories, similarities)
+
+        # 无参考基准时直接返回降级报告
+        if not top_k_stories:
+            return self._degraded_result(weighted_avg, top_matches)
 
         # 构建 prompt
         baseline_details = ""
@@ -129,9 +141,7 @@ class ReportGenerator:
         Raises:
             Exception: 调用失败时抛出。
         """
-        from openai import OpenAI
-
-        client = OpenAI(base_url=self._base_url, api_key=self._api_key)
+        client = self._get_client()
         response = client.chat.completions.create(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],

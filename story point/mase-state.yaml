@@ -20,7 +20,7 @@ technical:
     e2e: "Playwright"
 
 phase:
-  current: "design"
+  current: "build"
   history:
     - phase: "proposal"
       completed_at: "2026-07-21"
@@ -29,12 +29,16 @@ phase:
         - "docs/superpowers/specs/2026-07-21-story-point-estimator-design.md"
     - phase: "design"
       started_at: "2026-07-21"
+      completed_at: "2026-07-21"
       agent: "A1 (统管) via brainstorming"
       artifacts:
         - "docs/superpowers/specs/2026-07-21-story-point-estimator-design.md"
         - "mase-state.yaml"
         - "tasks.md"
         - "contract.md"
+    - phase: "build"
+      started_at: "2026-07-21"
+      agent: "A3 (开发)"
 
 capabilities:
   - id: "C1"
@@ -60,7 +64,9 @@ gates:
     reviewed_by: "user"
     reviewed_at: "2026-07-21"
   design:
-    status: "pending_review"
+    status: "passed"
+    reviewed_by: "user"
+    reviewed_at: "2026-07-21"
     checklist:
       - item: "tech-feasibility.md"
         status: "n/a"
@@ -72,12 +78,12 @@ gates:
         status: "done"
         note: "docs/superpowers/specs/2026-07-21-story-point-estimator-design.md"
       - item: "contract.md"
-        status: "pending"
+        status: "done"
       - item: "specs gherkin"
-        status: "pending"
-        note: "Gherkin 验收场景将嵌入 contract.md"
+        status: "done"
+        note: "嵌入 contract.md 第3章，4 Feature × 12 Scenario"
       - item: "tasks.md"
-        status: "pending"
+        status: "done"
   build:
     status: "not_started"
   verify:

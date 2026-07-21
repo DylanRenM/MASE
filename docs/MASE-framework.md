@@ -14,7 +14,7 @@ MASE 用可验收需求、风险验证、契约、TDD 和 E2E 保证质量，同
 | Standard | UI、文件、外部依赖、并发、持久化 | Lite + focused design + API contract | capability 评审/安扫；最终全量门禁 |
 | Strict | 鉴权、支付、监管、不可逆迁移 | 完整可行性、架构、详细设计、契约 | 独立多轮评审与全量回归 |
 
-Profile 的机器定义在 `profiles/*.yaml`。Capability 遇到高风险可局部升级，不能借 Profile 降低已触发的硬门禁。
+Profile 的机器定义在 `profiles/*.yaml`，标准风险注册表在 `profiles/risks.yaml`。GatePlan 同时考虑基础 Profile、风险触发器、`product.has_ui` 与 `impact.ui_changed`；Capability 可局部升级，不能借 Profile 删除已触发的硬门禁。
 
 ## 流程
 
@@ -30,7 +30,7 @@ Profile 的机器定义在 `profiles/*.yaml`。Capability 遇到高风险可局�
    ├─ capability: integration + review + risk scan
    └─ final: full applicable suite + P0 E2E
    ↓
-结构化证据 → release → archive snapshot
+可执行/人工结构化证据 → complete → archive snapshot
 ```
 
 阶段仍可标为 draft/proposal/design/build/verify/retro/release，但它们是状态，不是强制暂停点。无新增用户决策时自动继续。
@@ -41,9 +41,11 @@ Profile 的机器定义在 `profiles/*.yaml`。Capability 遇到高风险可局�
 - UI 交互变化在开发前确认参考原型；无 UI 和内部重构不需要原型。
 - 未知工具链、外部依赖和高风险边界先做可重跑 POC。
 - API/公共协议契约测试必须通过。
-- UI P0 E2E 必须 100%，Sandbox 必须恢复一致。
+- 产品有 UI 且 change 修改 UI 时，P0 E2E 必须 100%；Sandbox 必须恢复一致。
 - Bug 先有失败证据和根因，再系统修复与补测。
 - 迁移、覆盖和删除前备份。
+- 自动 passed 必须来自 Gate Runner；输入、日志或制品变化会使证据失效。
+- API/P0/凭据/数据安全硬门禁不得通过普通 Brownfield 基线绕过。
 
 ## 单一事实来源
 
@@ -53,10 +55,13 @@ Profile 的机器定义在 `profiles/*.yaml`。Capability 遇到高风险可局�
 | 工程规则 | `project-rules.md` |
 | Profile 策略 | `profiles/*.yaml` |
 | Change 状态/门禁证据 | `mase-state.yaml` |
+| Brownfield 遗留失败债务 | `.mase/baseline.yaml` |
 | 工作完成事实 | `tasks.md` |
 | 验收行为 | `specs/*/spec.md` |
 
 IDE 规则、验证摘要、追踪矩阵和 master 都是生成物。`openspec/master/` 仅在 release/archive 生成快照，不在 Design 阶段与 change 双写。
+
+主 `stack` 是项目的执行/构建骨架，只允许 generic、python、swift；SwiftUI、Flutter、Dart、Kotlin、Flask 等辅助技术写入 `toolchains`。`mase status` 无参数时汇总全部非 archived change，并诊断依赖环、缺失依赖、显式互斥、影响路径冲突、损坏状态与过期基线。
 
 ## Agent 路由
 

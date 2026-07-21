@@ -8,33 +8,103 @@
     "schema": {"const": "mase-project/v2"},
     "profile": {"enum": ["lite", "standard", "strict"]},
     "stack": {"enum": ["generic", "python", "swift"]},
+    "toolchains": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
     "phase": {
       "enum": ["draft", "proposal", "design", "build", "verify", "retro", "release", "complete", "archived"]
+    },
+    "product": {
+      "type": "object",
+      "properties": {
+        "has_ui": {"type": "boolean"},
+        "ui_platform": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "impact": {
+      "type": "object",
+      "properties": {
+        "ui_changed": {"type": "boolean"},
+        "paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": true
     },
     "risk": {
       "type": "object",
       "required": ["triggers"],
       "properties": {
-        "triggers": {"type": "array", "items": {"type": "string"}},
+        "triggers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "capabilities": {"type": "object"}
       },
       "additionalProperties": true
     },
-    "gates": {"type": "object", "additionalProperties": {"type": "string"}},
+    "gates": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": ["pending", "passed", "passed_with_baseline", "failed", "skipped", "stale", "blocked"]
+      }
+    },
     "evidence": {
       "type": "array",
       "items": {
         "type": "object",
         "required": ["gate", "result"],
         "properties": {
-          "gate": {"type": "string"},
-          "result": {"enum": ["passed", "failed", "skipped", "pending"]},
-          "path": {"type": "string"},
-          "at": {"type": "string"}
+          "gate": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["automatic", "manual", "legacy"]},
+          "result": {"enum": ["passed", "failed", "skipped", "pending", "stale", "passed_with_baseline"]},
+          "at": {"type": "string"},
+          "duration_seconds": {"type": "number", "minimum": 0},
+          "exit_code": {"type": "integer"},
+          "command": {"type": "array", "items": {"type": "string"}},
+          "platform": {"type": "string"},
+          "commit": {"type": ["string", "null"]},
+          "worktree": {"type": "string"},
+          "input_digest": {"type": "string"},
+          "inputs": {"type": "array", "items": {"type": "string"}},
+          "log_path": {"type": "string"},
+          "artifacts": {"type": "object", "additionalProperties": {"type": "string"}},
+          "actor": {"type": "string"},
+          "subject": {"type": "string"},
+          "reference": {"type": "string"},
+          "path": {"type": "string"}
         },
+        "allOf": [
+          {
+            "if": {"properties": {"kind": {"const": "automatic"}}, "required": ["kind"]},
+            "then": {
+              "required": [
+                "at", "duration_seconds", "exit_code", "command", "platform",
+                "commit", "worktree", "input_digest", "log_path"
+              ]
+            }
+          },
+          {
+            "if": {"properties": {"kind": {"const": "manual"}}, "required": ["kind"]},
+            "then": {"required": ["at", "actor", "subject", "reference"]}
+          }
+        ],
         "additionalProperties": true
       }
-    }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["change"],
+        "properties": {
+          "change": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
+          "phase": {"enum": ["draft", "proposal", "design", "build", "verify", "retro", "release", "complete", "archived"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "conflicts_with": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "blockers": {"type": "array", "items": {"type": "object"}},
+    "capabilities": {"type": "array", "items": {"type": "string"}}
   },
   "additionalProperties": true
 }

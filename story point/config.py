@@ -29,7 +29,7 @@ class AppConfig:
     top_k: int = 3
     database_path: str = "data/storypoint.db"
     faiss_index_path: str = "data/faiss_baseline.index"
-    flask_secret_key: str = "dev-secret-key"
+    flask_secret_key: str = ""  # 必须由环境变量提供
 
 
 def load_config() -> tuple[EmbeddingConfig, ChatConfig, AppConfig]:
@@ -57,7 +57,7 @@ def load_config() -> tuple[EmbeddingConfig, ChatConfig, AppConfig]:
         top_k=int(os.getenv("TOP_K", "3")),
         database_path=os.getenv("DATABASE_PATH", "data/storypoint.db"),
         faiss_index_path=os.getenv("FAISS_INDEX_PATH", "data/faiss_baseline.index"),
-        flask_secret_key=os.getenv("FLASK_SECRET_KEY", "dev-secret-key"),
+        flask_secret_key=_require("FLASK_SECRET_KEY"),
     )
 
     return embedding, chat, app

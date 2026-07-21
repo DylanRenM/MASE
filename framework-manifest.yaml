@@ -1,5 +1,5 @@
 schema: mase-framework/v2
-version: 2.0.0
+version: 2.1.0
 license: MIT
 
 canonical:
@@ -20,6 +20,8 @@ ide_adapters:
 
 runtime:
   - project-rules.md
+  - requirements-runtime.txt
+  - requirements-offline.txt
   - profiles
   - schemas
   - templates
