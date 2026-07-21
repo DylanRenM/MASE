@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事点估算助手</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                         "Microsoft YaHei", sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        h1 { font-size: 1.5rem; margin-bottom: 16px; color: #1a1a2e; }
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 240px;
+            gap: 16px;
+        }
+        .panel {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .panel h2 { font-size: 1rem; margin-bottom: 12px; color: #555; }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+        .btn-primary { background: #4361ee; color: #fff; }
+        .btn-primary:hover { background: #3a56d4; }
+        .btn-secondary { background: #e9ecef; color: #333; }
+        .btn-secondary:hover { background: #dee2e6; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.875rem; margin-bottom: 4px; color: #666; }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .status { font-size: 0.8rem; padding: 8px; border-radius: 4px; margin-top: 8px; }
+        .status-ok { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .status-info { background: #d1ecf1; color: #0c5460; }
+        .report-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        .estimate-badge {
+            display: inline-block;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4361ee;
+            background: #eef0ff;
+            padding: 8px 24px;
+            border-radius: 8px;
+        }
+        .match-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.8rem; }
+        .match-table th, .match-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        .match-table th { color: #888; font-weight: 500; }
+        .history-list { font-size: 0.8rem; }
+        .history-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .history-item:hover { color: #4361ee; }
+        .file-upload { margin: 8px 0; }
+        .progress-steps { font-size: 0.8rem; color: #666; margin: 8px 0; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 故事点估算助手</h1>
+        <div class="layout">
+            <!-- 左侧主区域 -->
+            <div>
+                <!-- 基准故事管理 -->
+                <div class="panel" id="baseline-panel">
+                    <h2>📤 基准故事管理</h2>
+                    <div id="baseline-controls">
+                        <button class="btn btn-secondary" onclick="downloadTemplate()">📥 下载模板</button>
+                        <input type="file" id="file-input" accept=".xlsx,.xls" class="hidden"
+                               onchange="handleUpload(this)">
+                        <button class="btn btn-secondary" onclick="document.getElementById('file-input').click()">
+                            📤 上传Excel
+                        </button>
+                    </div>
+                    <div id="upload-status" class="status status-info hidden"></div>
+                    <div id="preview-section" class="hidden">
+                        <div id="preview-content"></div>
+                        <div style="margin-top: 8px;">
+                            <button class="btn btn-primary" onclick="confirmBaseline('replace')">🔄 全量替换</button>
+                            <button class="btn btn-secondary" onclick="confirmBaseline('append')">➕ 追加合并</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新需求估算 -->
+                <div class="panel" style="margin-top: 16px;" id="estimate-panel">
+                    <h2>🚀 新需求估算</h2>
+                    <div class="form-group">
+                        <label for="story-title">故事标题</label>
+                        <input type="text" id="story-title" placeholder="如：微信扫码登录">
+                    </div>
+                    <div class="form-group">
+                        <label for="story-desc">故事描述</label>
+                        <textarea id="story-desc" rows="3" placeholder="详细描述功能点..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" id="estimate-btn" disabled
+                            onclick="doEstimate()">🔮 开始估算</button>
+                    <div id="estimate-progress" class="progress-steps hidden"></div>
+                    <div id="estimate-result"></div>
+                </div>
+            </div>
+
+            <!-- 右侧估算历史 -->
+            <div>
+                <div class="panel" id="history-panel">
+                    <h2>📋 估算历史</h2>
+                    <div id="history-list" class="history-list">
+                        <div style="color: #999; font-size: 0.8rem;">暂无记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── 模板下载 ──
+        function downloadTemplate() {
+            window.location.href = '/template/download';
+        }
+
+        // ── 文件上传 ──
+        function handleUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showStatus('upload-status', '正在解析文件...', 'info');
+
+            fetch('/baseline/upload', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        showPreview(data);
+                    } else {
+                        showStatus('upload-status', '❌ ' + data.errors.join('<br>'), 'error');
+                    }
+                })
+                .catch(e => showStatus('upload-status', '❌ 上传失败: ' + e.message, 'error'));
+        }
+
+        function showPreview(data) {
+            const section = document.getElementById('preview-section');
+            const content = document.getElementById('preview-content');
+
+            let html = `<p style="font-size:0.875rem;">已解析 <b>${data.rows.length}</b> 条故事</p>`;
+            html += '<p style="font-size:0.8rem;color:#666;">点数分布：';
+            for (const [pt, count] of Object.entries(data.points_distribution)) {
+                html += `<span style="margin-right:8px;">${pt}点: ${count}条</span>`;
+            }
+            html += '</p>';
+
+            content.innerHTML = html;
+            section.classList.remove('hidden');
+            document.getElementById('upload-status').classList.add('hidden');
+        }
+
+        function confirmBaseline(action) {
+            fetch('/baseline/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    showStatus('upload-status', `✓ 已加载 ${data.count} 条基准故事`, 'ok');
+                    document.getElementById('preview-section').classList.add('hidden');
+                    document.getElementById('estimate-btn').disabled = false;
+                } else {
+                    showStatus('upload-status', '❌ ' + data.errors.join('<br>'), 'error');
+                }
+            });
+        }
+
+        // ── 估算 ──
+        function doEstimate() {
+            const title = document.getElementById('story-title').value.trim();
+            const desc = document.getElementById('story-desc').value.trim();
+
+            if (!title || !desc) {
+                alert('请填写故事标题和描述');
+                return;
+            }
+
+            const progress = document.getElementById('estimate-progress');
+            progress.classList.remove('hidden');
+            progress.innerHTML = '🔄 正在分析新需求...';
+
+            fetch('/estimate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, description: desc })
+            })
+            .then(r => r.json())
+            .then(data => {
+                progress.classList.add('hidden');
+                showReport(data);
+                loadHistory();
+            })
+            .catch(e => {
+                progress.innerHTML = '❌ ' + e.message;
+            });
+        }
+
+        function showReport(data) {
+            const container = document.getElementById('estimate-result');
+            let html = '<div class="report-card">';
+
+            // 推荐点数
+            html += `<div style="text-align:center;margin-bottom:12px;">
+                <div style="font-size:0.8rem;color:#888;">推荐点数</div>
+                <div class="estimate-badge">${data.estimate}</div>
+                <div style="font-size:0.8rem;color:#888;">置信区间: ${data.confidence_min} ~ ${data.confidence_max}</div>
+            </div>`;
+
+            // 降级标记
+            if (data.degraded) {
+                html += '<div class="status status-info" style="margin-bottom:8px;">⚠️ LLM 不可用，以下为数值估算结果</div>';
+            }
+
+            // 参考基准
+            if (data.top_matches && data.top_matches.length > 0) {
+                html += '<h3 style="font-size:0.875rem;margin-bottom:4px;">🔍 参考基准</h3>';
+                html += '<table class="match-table"><tr><th>ID</th><th>标题</th><th>点数</th><th>相似度</th></tr>';
+                for (const m of data.top_matches) {
+                    html += `<tr><td>${m.id}</td><td>${m.title}</td><td>${m.points}</td><td>${m.similarity}%</td></tr>`;
+                }
+                html += '</table>';
+            }
+
+            // 估算依据
+            if (data.reasoning) {
+                html += `<h3 style="font-size:0.875rem;margin:12px 0 4px;">📝 估算依据</h3>`;
+                html += `<p style="font-size:0.8rem;color:#555;">${data.reasoning}</p>`;
+            }
+
+            // 风险提示
+            if (data.risk_notes) {
+                html += `<h3 style="font-size:0.875rem;margin:12px 0 4px;">⚠️ 风险提示</h3>`;
+                html += `<p style="font-size:0.8rem;color:#856404;background:#fff3cd;padding:8px;border-radius:4px;">${data.risk_notes}</p>`;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ── 估算历史 ──
+        function loadHistory() {
+            fetch('/history')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('history-list');
+                    if (!data.length) {
+                        container.innerHTML = '<div style="color:#999;font-size:0.8rem;">暂无记录</div>';
+                        return;
+                    }
+                    let html = '';
+                    for (const item of data) {
+                        html += `<div class="history-item">${item.title} → <b>${item.estimate}</b> 点</div>`;
+                    }
+                    container.innerHTML = html;
+                });
+        }
+
+        function showStatus(id, message, type) {
+            const el = document.getElementById(id);
+            el.className = `status status-${type}`;
+            el.innerHTML = message;
+            el.classList.remove('hidden');
+        }
+
+        // 初始化
+        loadHistory();
+    </script>
+</body>
+</html>
