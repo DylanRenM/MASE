@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import os
 import platform
 import re
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -53,6 +55,11 @@ def redact_secrets(value: str) -> str:
 
 
 def _inside(root: Path, relative: str) -> Path:
+    normalized_parts = str(relative).replace("\\", "/").split("/")
+    if Path(relative).is_absolute():
+        raise GovernanceError(f"path must be project-relative: {relative}", code="path")
+    if ".." in normalized_parts:
+        raise GovernanceError(f"path escapes project root: {relative}", code="path")
     candidate = (root / relative).resolve()
     try:
         candidate.relative_to(root.resolve())
@@ -72,15 +79,33 @@ def _hash_file(path: Path) -> str:
 def _path_digest(root: Path, relative_paths: Iterable[str]) -> str:
     digest = hashlib.sha256()
     for relative in sorted(dict.fromkeys(str(item) for item in relative_paths)):
-        path = _inside(root, relative)
         digest.update(relative.encode("utf-8"))
-        if not path.exists():
+        wildcard = min(
+            (relative.find(char) for char in "*[?" if char in relative),
+            default=len(relative),
+        )
+        prefix = relative[:wildcard].rstrip("/") or "."
+        base = _inside(root, prefix)
+        if wildcard < len(relative):
+            candidates = []
+            if base.exists():
+                search_root = base if base.is_dir() else base.parent
+                candidates = [
+                    item
+                    for item in (search_root, *search_root.rglob("*"))
+                    if fnmatch.fnmatchcase(item.relative_to(root).as_posix(), relative)
+                ]
+        else:
+            candidates = [base] if base.exists() else []
+        if not candidates:
             digest.update(b"\0missing\0")
             continue
-        entries = [path]
-        if path.is_dir():
-            entries = sorted(item for item in path.rglob("*") if ".git" not in item.parts)
-        for entry in entries:
+        entries = []
+        for candidate in candidates:
+            entries.append(candidate)
+            if candidate.is_dir():
+                entries.extend(candidate.rglob("*"))
+        for entry in sorted(set(item for item in entries if ".git" not in item.parts)):
             resolved_relative = entry.relative_to(root).as_posix()
             digest.update(b"\0" + resolved_relative.encode("utf-8") + b"\0")
             if entry.is_symlink():
@@ -90,6 +115,12 @@ def _path_digest(root: Path, relative_paths: Iterable[str]) -> str:
             elif entry.is_dir():
                 digest.update(b"directory")
     return digest.hexdigest()
+
+
+def path_digest(root: PathInput, relative_paths: Iterable[str]) -> str:
+    """Public safe digest used by gate planning and candidate freezing."""
+
+    return _path_digest(Path(root).expanduser().resolve(), relative_paths)
 
 
 def _git_value(root: Path, args: Sequence[str]) -> Optional[str]:
@@ -126,12 +157,46 @@ def _atomic_write_yaml(path: Path, payload: Mapping) -> None:
         raise
 
 
-def _append_evidence(state_path: Path, record: EvidenceRecord) -> None:
+def _append_evidence(state_path: Path, record: EvidenceRecord, retention: int = 3) -> None:
     payload = load_yaml_document(state_path)
     evidence = payload.setdefault("evidence", [])
     if not isinstance(evidence, list):
         raise GovernanceError("evidence must be an array", path=state_path, code="schema")
     evidence.append(record.to_dict())
+    scope = record.scope or "change"
+    matching = [
+        index
+        for index, item in enumerate(evidence)
+        if str(item.get("gate", "")) == record.gate
+        and str(item.get("scope", "change")) == scope
+    ]
+    limit = max(1, int(retention))
+    if len(matching) > limit:
+        selected = {matching[-1]}
+        latest_pass = next(
+            (
+                index for index in reversed(matching)
+                if str(evidence[index].get("result", ""))
+                in {"passed", "passed_with_baseline", "skipped"}
+            ),
+            None,
+        )
+        latest_failure = next(
+            (
+                index for index in reversed(matching)
+                if str(evidence[index].get("result", "")) == "failed"
+            ),
+            None,
+        )
+        for index in (latest_pass, latest_failure):
+            if index is not None and len(selected) < limit:
+                selected.add(index)
+        for index in reversed(matching):
+            if len(selected) >= limit:
+                break
+            selected.add(index)
+        for index in reversed([item for item in matching if item not in selected]):
+            evidence.pop(index)
     gates = payload.setdefault("gates", {})
     if not isinstance(gates, dict):
         raise GovernanceError("gates must be a mapping", path=state_path, code="schema")
@@ -147,6 +212,15 @@ def run_gate(
     command: Sequence[str],
     inputs: Optional[Iterable[str]] = None,
     artifacts: Optional[Iterable[str]] = None,
+    *,
+    scope: str = "change",
+    candidate_id: str = "",
+    test_digest: str = "",
+    execution_signature: str = "",
+    execution_id: Optional[str] = None,
+    reused_from: str = "",
+    retention: int = 3,
+    stream_output: bool = False,
 ) -> EvidenceRecord:
     """Execute a gate and atomically append its evidence to the change state."""
 
@@ -164,14 +238,34 @@ def run_gate(
         _inside(root, relative)
 
     started = time.monotonic()
-    completed = subprocess.run(
-        [str(item) for item in command],
-        cwd=root,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=False,
-    )
+    if stream_output:
+        process = subprocess.Popen(
+            [str(item) for item in command],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+        )
+        chunks = []
+        assert process.stdout is not None
+        for chunk in process.stdout:
+            chunks.append(chunk)
+            sys.stdout.write(chunk)
+            sys.stdout.flush()
+        returncode = process.wait()
+        output = "".join(chunks)
+    else:
+        completed = subprocess.run(
+            [str(item) for item in command],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        returncode = completed.returncode
+        output = completed.stdout or ""
     duration = time.monotonic() - started
     timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     safe_gate = re.sub(r"[^A-Za-z0-9_.-]+", "-", gate).strip("-") or "gate"
@@ -181,7 +275,7 @@ def run_gate(
     )
     log_path = _inside(root, relative_log.as_posix())
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_path.write_text(redact_secrets(completed.stdout or ""), encoding="utf-8")
+    log_path.write_text(redact_secrets(output), encoding="utf-8")
 
     commit, worktree = _git_snapshot(root)
     artifact_digests: dict[str, str] = {}
@@ -193,10 +287,10 @@ def run_gate(
     record = EvidenceRecord(
         gate=str(gate),
         kind="automatic",
-        result="passed" if completed.returncode == 0 else "failed",
+        result="passed" if returncode == 0 else "failed",
         at=timestamp,
         duration_seconds=duration,
-        exit_code=completed.returncode,
+        exit_code=returncode,
         command=tuple(redact_secrets(str(item)) for item in command),
         platform=f"{platform.system()} {platform.release()} · Python {platform.python_version()}",
         commit=commit,
@@ -205,8 +299,14 @@ def run_gate(
         inputs=input_paths,
         log_path=relative_log.as_posix(),
         artifacts=artifact_digests,
+        scope=str(scope or "change"),
+        candidate_id=str(candidate_id or ""),
+        test_digest=str(test_digest or ""),
+        execution_signature=str(execution_signature or ""),
+        execution_id=str(execution_id or uuid.uuid4().hex),
+        reused_from=str(reused_from or ""),
     )
-    _append_evidence(state, record)
+    _append_evidence(state, record, retention=retention)
     return record
 
 

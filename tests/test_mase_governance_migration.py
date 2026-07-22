@@ -5,6 +5,7 @@ import yaml
 
 from mase_cli.commands import update_project
 from mase_cli.baseline import approve_candidates, collect_candidates, load_baseline
+from mase_cli.gates import load_gate_definitions
 from mase_cli.state import ChangeState
 
 
@@ -75,6 +76,20 @@ def test_governance_migration_dry_run_previews_metadata_state_toolchains_and_evi
     assert not (tmp_path / ".mase-backup").exists()
 
 
+def test_governance_migration_previews_and_creates_canonical_gate_template(tmp_path):
+    legacy_project(tmp_path)
+
+    changes = update_project.check_updates(tmp_path, FRAMEWORK)
+    gate_change = next(item for item in changes if item["component"] == ".mase/gates.yaml")
+    assert gate_change["action"] == "create"
+    assert "legacy mode" in gate_change["reason"]
+
+    update_project.apply_updates([gate_change], tmp_path, framework_home=FRAMEWORK)
+    payload = yaml.safe_load((tmp_path / ".mase" / "gates.yaml").read_text())
+    assert payload["schema"] == "mase-gates/v1"
+    assert load_gate_definitions(tmp_path).legacy is True
+
+
 def test_governance_migration_is_backed_up_valid_and_idempotent(tmp_path):
     change = legacy_project(tmp_path)
     changes = migration_changes(tmp_path)
@@ -82,7 +97,7 @@ def test_governance_migration_is_backed_up_valid_and_idempotent(tmp_path):
     update_project.apply_updates(changes, tmp_path, framework_home=FRAMEWORK)
 
     marker = yaml.safe_load((tmp_path / ".mase.yaml").read_text(encoding="utf-8"))["mase"]
-    assert marker["version"] == "2.1.0"
+    assert marker["version"] == "2.3.0"
     assert marker["stack"] == "swift"
     assert marker["toolchains"] == ["dart", "flutter", "kotlin", "swiftui"]
     state = ChangeState.load(change / "mase-state.yaml")

@@ -1,0 +1,191 @@
+schema: mase-project/v2
+profile: standard
+stack: generic
+toolchains:
+- python
+phase: complete
+product:
+  has_ui: false
+  ui_platform: null
+impact:
+  ui_changed: false
+  paths:
+  - mase_cli/context.py
+  - mase_cli/commands/metrics.py
+  - mase_cli/commands/check_project.py
+  - mase_cli/commands/update_project.py
+  - mase_cli/evidence.py
+  - mase_cli/main.py
+  - profiles/**
+  - framework-manifest.yaml
+  - project-rules.md
+  - agents/**
+  - docs/**
+  - tests/**
+risk:
+  triggers:
+  - persistence
+  capabilities:
+    context_routing:
+      profile: standard
+      triggers:
+      - persistence
+      paths:
+      - mase_cli/context.py
+      - mase_cli/commands/metrics.py
+    concise_gate_evidence:
+      profile: standard
+      triggers:
+      - persistence
+      paths:
+      - mase_cli/evidence.py
+      - mase_cli/main.py
+    review_routing:
+      profile: standard
+      paths:
+      - profiles/**
+gates:
+  api_contract: passed
+  integration_tests: passed
+  related_tests: passed
+  full_regression: passed
+evidence:
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-22T14:40:18.303551Z'
+  duration_seconds: 26.114810542
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: 83a5f368300fc03ddd174911704ff355fe0ca648ee7602a096c6444e6ffeac33
+  input_digest: c29b3a6a5c037f12718ddf731058b2c3016919455f8000fa2b04a5db86a28ebb
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  log_path: .mase/evidence/optimize-context-token-routing/related_tests-20260722T144018Z-e37d9a1c.log
+  test_digest: 088839e9e0b1eaab5e3f2c04ff8bd152704398715933979f187d21d7ac1fcfc0
+  execution_signature: 628885116f10e4884c12c8480aa4d6f4491afe4399c9ea064ef4a9719e365360
+  execution_id: 0b20d89486fc4a9e9cda565c42fd641e
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-07-22T14:40:45.609080Z'
+  duration_seconds: 25.415596
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: efd84def1172b6b8c6dc29c90bc978bc5532d1782dc781f3fa976987d70cdba2
+  input_digest: f3d6e5e0a4164e9a974b28d493019a05d91078a24238c29fd9289c8df440738c
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  log_path: .mase/evidence/optimize-context-token-routing/api_contract-20260722T144045Z-64daee2d.log
+  test_digest: 3a5b3bb1e487dcd867fcd534319f2b2c8b6dc01bc2d82b6e4948f299de7a1d83
+  execution_signature: ac3db0dde621a7a244f5a5b92208920617be4b67dabde13cac824c7ef98aa333
+  execution_id: 303e6ff293c0486f8b4b4a779f93f104
+- gate: integration_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-22T14:40:50.944456Z'
+  duration_seconds: 4.27382175
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: f55209684044f6813b5b82c313cd7c9d924fa510d1ed54610bbac71d1b471b99
+  input_digest: ca3bba980d3d5f333850da25683f3234c4d1cfe26b051eb7e0267c955a633540
+  inputs:
+  - mase_cli
+  - templates
+  - framework-manifest.yaml
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  log_path: .mase/evidence/optimize-context-token-routing/integration_tests-20260722T144050Z-2bba0d22.log
+  test_digest: fa57bba9209d5703a7fd3a9d94008fa14c50fe5f4da0a39f472cf3f982fed1aa
+  execution_signature: 6c2c0e9c464438c29b72fa52a756d1a1542d9b07621e1c96ba363eb67793e800
+  execution_id: 08d3ffffc9f54947acbba8f28ba0cffa
+- gate: full_regression
+  kind: automatic
+  result: passed
+  at: '2026-07-22T14:42:47.847867Z'
+  duration_seconds: 60.219278416
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: 24e457de1fd80a75625d4b8aa827cbe6d8e5c4e502620e76e68c79c416144dd5
+  input_digest: b0d59ebeacd7a57759b50c4109b86a558a47a5106bb27dd2be4bc1c10b0dc9e0
+  inputs:
+  - mase_cli
+  - profiles
+  - schemas
+  - templates
+  - tests
+  - pyproject.toml
+  - framework-manifest.yaml
+  - project-rules.md
+  log_path: .mase/evidence/optimize-context-token-routing/full_regression-20260722T144247Z-b1a64041.log
+  candidate_id: fc713d71331cff0d
+  test_digest: af7f0b2bd342822f2fa8e6a9fda610570f911f30d3108379ea4184c0866727c3
+  execution_signature: 11bdf960463c7d7749fd9ef05412d61710f233fa26812dcf55cfac3522865694
+  execution_id: cd880bcfc3174bcd9d0c8ec8cfd5d6a2
+dependencies: []
+conflicts_with: []
+blockers: []
+candidate:
+  id: fc713d71331cff0d
+  created_at: '2026-07-22T14:41:37.286724Z'
+  input_digest: e9f5f301abb3ec3649506488d3c1ca3cb7ead2ca6aaf65062cfa9981ae657126
+  inputs:
+  - .mase/gates.yaml
+  - framework-manifest.yaml
+  - mase_cli
+  - openspec/changes/optimize-context-token-routing/design.md
+  - openspec/changes/optimize-context-token-routing/proposal.md
+  - openspec/changes/optimize-context-token-routing/specs
+  - openspec/changes/optimize-context-token-routing/tasks.md
+  - profiles
+  - project-rules.md
+  - pyproject.toml
+  - schemas
+  - templates
+  - tests

@@ -10,10 +10,12 @@ description: MASE v2 quality agent — independent, risk-routed review, verifica
 | Context | Review mode |
 |---|---|
 | Lite, small low-risk diff | one diff-only review |
-| Standard or upgraded capability | capability-boundary code + attack-surface review |
-| Strict, security or irreversible change | independent multi-round review |
+| Standard or upgraded capability | capability-boundary code review; attack-surface review only when risk-triggered |
+| Strict, security or irreversible change | one independent review; repeat only on objection, candidate change or stale evidence |
 
 Review only affected Specs, contracts, code, tests and diff. Do not reload unrelated capability documents or training/history content.
+
+An independent reviewer may confirm “no objection” without a formal report. That confirmation ends the review unless the subject changes or evidence becomes stale.
 
 ## Verification
 

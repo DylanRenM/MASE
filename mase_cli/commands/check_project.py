@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any, List, Union
 
 from mase_cli.schema import GovernanceError, ProjectMetadata
-from mase_cli.state import ChangeState
+from mase_cli.state import ChangeState, inspect_change_status
+from mase_cli.gates import load_gate_definitions
 
 
 @dataclass(frozen=True)
@@ -72,6 +73,27 @@ def inspect_project(project_dir: Union[str, Path] = ".") -> ProjectReport:
         _exists(root, "project-rules.md"),
         _exists(root, "openspec/changes"),
     ]
+    gate_definition = root / ".mase" / "gates.yaml"
+    if gate_definition.exists():
+        try:
+            definitions = load_gate_definitions(root)
+        except (GovernanceError, ValueError) as exc:
+            common.append(CheckItem(".mase/gates.yaml", False, True, str(exc)))
+        else:
+            if definitions.legacy:
+                common.append(CheckItem(
+                    ".mase/gates.yaml", False, False,
+                    "empty template; legacy ad-hoc gate mode remains active; candidate freeze, "
+                    "exact reuse, covers and overlap diagnostics are unavailable",
+                ))
+            else:
+                common.append(CheckItem(".mase/gates.yaml", True, True, "valid"))
+    else:
+        common.append(CheckItem(
+            ".mase/gates.yaml", False, False,
+            "legacy ad-hoc gate mode; candidate freeze, exact reuse, covers and "
+            "overlap diagnostics are unavailable; run mase update --dry-run",
+        ))
     stack_items: List[CheckItem] = []
     if stack == "python":
         stack_items.extend((_exists(root, "pyproject.toml"), _exists(root, "src"), _exists(root, "tests")))
@@ -101,10 +123,16 @@ def inspect_project(project_dir: Union[str, Path] = ".") -> ProjectReport:
             relative = state_path.relative_to(root).as_posix()
             try:
                 ChangeState.load(state_path)
+                status = inspect_change_status(change)
             except (GovernanceError, ValueError) as exc:
                 state_items.append(CheckItem(relative, False, True, str(exc)))
             else:
-                state_items.append(CheckItem(relative, True, True, "valid"))
+                state_items.append(CheckItem(
+                    relative,
+                    status.consistent,
+                    True,
+                    "valid" if status.consistent else "; ".join(status.issues),
+                ))
     return ProjectReport(root, stack, profile, tuple(common + stack_items + state_items))
 
 

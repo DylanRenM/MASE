@@ -32,8 +32,9 @@ test_schedule:
     - security_review
     - independent_review
   final:
+    - candidate_freeze
     - full_unit
     - full_integration
     - full_contract
     - full_e2e
-review: independent-multi-round
+review: independent-single-pass-on-objection

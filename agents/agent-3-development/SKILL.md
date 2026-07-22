@@ -29,7 +29,7 @@ For each work package read only its `reads`: current Spec, related public interf
 
 ### Capability boundary
 
-Run relevant integration tests, code review and risk-triggered security review. Commit a reversible vertical work package.
+Run relevant integration tests, code review and risk-triggered security review. Do not perform a deep security review solely because the base Profile is Standard. Commit a reversible vertical work package.
 
 ### Final boundary
 

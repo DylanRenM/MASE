@@ -185,13 +185,14 @@ def test_all_tasks_with_pending_gates_is_ready_for_gate(tmp_path):
     assert report.complete == report.total == 1
 
 
-def test_completed_gate_set_in_release_is_ready_to_complete(tmp_path):
+def test_handwritten_passed_gate_in_release_requires_fresh_evidence(tmp_path):
     change = tmp_path / "openspec" / "changes" / "demo"
     write_state(change, phase="release", gates={"api_contract": "passed"})
 
     report = status.get_status(tmp_path, "demo")
 
-    assert report.lifecycle == "ready_to_complete"
+    assert report.lifecycle == "ready_for_gate"
+    assert report.effective_gates["api_contract"] == "stale"
 
 
 def test_status_rejects_unsafe_change_path(tmp_path):

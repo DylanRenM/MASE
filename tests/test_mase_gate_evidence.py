@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 
 import yaml
+import pytest
 
+from mase_cli import main as cli
 from mase_cli.evidence import (
     assess_evidence,
     record_manual_evidence,
@@ -141,3 +143,41 @@ def test_manual_evidence_only_satisfies_manual_gate(tmp_path):
     )
     assert invalid.result == "failed"
     assert invalid.freshness == "invalid"
+
+
+def test_gate_cli_is_concise_by_default_and_keeps_complete_log(tmp_path, capsys):
+    state = state_file(tmp_path)
+    marker = "NOISY_OUTPUT_" * 500
+
+    cli.main([
+        "gate", "run", "related_tests", "--dir", str(tmp_path),
+        "--change", "demo", "--", "python3", "-c", f"print('{marker}')",
+    ])
+
+    captured = capsys.readouterr()
+    assert marker not in captured.out
+    record = ChangeState.load(state).evidence[-1]
+    assert marker in (tmp_path / record.log_path).read_text(encoding="utf-8")
+    assert record.log_path in captured.out
+
+
+def test_gate_cli_failure_prints_bounded_excerpt_and_verbose_streams(tmp_path, capsys):
+    state = state_file(tmp_path)
+    marker = "FAILURE_DETAIL_" * 600
+
+    with pytest.raises(SystemExit):
+        cli.main([
+            "gate", "run", "related_tests", "--dir", str(tmp_path),
+            "--change", "demo", "--", "python3", "-c",
+            f"print('{marker}'); raise SystemExit(2)",
+        ])
+    concise = capsys.readouterr().out
+    assert "FAILURE_DETAIL_" in concise
+    assert len(concise) < 6000
+
+    cli.main([
+        "gate", "run", "related_tests", "--dir", str(tmp_path),
+        "--change", "demo", "--verbose", "--", "python3", "-c",
+        "print('LIVE_PROGRESS')",
+    ])
+    assert "LIVE_PROGRESS" in capsys.readouterr().out

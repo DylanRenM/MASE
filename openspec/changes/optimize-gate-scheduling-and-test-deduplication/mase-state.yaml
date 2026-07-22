@@ -1,0 +1,225 @@
+schema: mase-project/v2
+profile: standard
+stack: generic
+toolchains:
+- python
+phase: complete
+product:
+  has_ui: false
+  ui_platform: null
+impact:
+  ui_changed: false
+  paths:
+  - mase_cli/**
+  - profiles/**
+  - schemas/**
+  - templates/**
+  - tests/**
+  - docs/**
+  - project-rules.md
+  - framework-manifest.yaml
+risk:
+  triggers:
+  - persistence
+  - external_dependency
+  capabilities:
+    stage_aware_gate_planning:
+      profile: standard
+      triggers:
+      - persistence
+      paths:
+      - mase_cli/gates.py
+      - mase_cli/main.py
+    evidence_freshness_and_reuse:
+      profile: standard
+      triggers:
+      - persistence
+      paths:
+      - mase_cli/evidence.py
+      - mase_cli/state.py
+    capability_scoped_gate_plan:
+      profile: standard
+      paths:
+      - mase_cli/risk.py
+      - mase_cli/profiles.py
+gates:
+  api_contract: passed
+  integration_tests: passed
+  related_tests: passed
+  security_review: passed
+  full_regression: passed
+  independent_review: passed
+evidence:
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-21T15:44:49.636007Z'
+  duration_seconds: 18.150474541
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: 1f14c77d181df2939c564b4ce1a38abc989573602fb383f367367351b5f99ad9
+  input_digest: 916ab84553c0a9990652552491aa982358b1aa59764658fec2a8c8fd75b7e3ec
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  log_path: .mase/evidence/optimize-gate-scheduling-and-test-deduplication/related_tests-20260721T154449Z-2f13e581.log
+  test_digest: 5e4d7e3e5770229fa8583722cae4bfd95ae4b3902a447a6ea39b5c95aad7dc6f
+  execution_signature: b9af318eb13e3596643907d5d3e77a8ea8ef11368cc9855ab459c59c6acf54b6
+  execution_id: 62db3ba9722949b79ae339f86d6e16c8
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-07-21T15:45:11.918668Z'
+  duration_seconds: 15.552445250000002
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: 945aa9fffa1c02ceb94ef6b9b651c73d94e02838eab8dc49c3d82ba6e0d3b72b
+  input_digest: d0da510de4d00d66cc0e445f188ed0c1d46ed023e929f03ec64a236121c1507b
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  log_path: .mase/evidence/optimize-gate-scheduling-and-test-deduplication/api_contract-20260721T154511Z-faa60995.log
+  test_digest: 3a5b3bb1e487dcd867fcd534319f2b2c8b6dc01bc2d82b6e4948f299de7a1d83
+  execution_signature: 2816ee12a3360dde2de97a6a95b841f3b36fa148e602c06515d2f0e8bf93200c
+  execution_id: 7cc40a4eb5564a32a7697b3dfc238c36
+- gate: integration_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-21T15:45:24.957348Z'
+  duration_seconds: 2.913300208
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: 81c0ed2d875b1f0a032a8ffb43a6be44f8ac508dd28ac5beeeba91197ac327ff
+  input_digest: 24a97db56bf410ce222bd8721355fd6137c87095a9e0c4fab6cb60d74c34677a
+  inputs:
+  - mase_cli
+  - templates
+  - framework-manifest.yaml
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  log_path: .mase/evidence/optimize-gate-scheduling-and-test-deduplication/integration_tests-20260721T154524Z-68399d23.log
+  test_digest: fa57bba9209d5703a7fd3a9d94008fa14c50fe5f4da0a39f472cf3f982fed1aa
+  execution_signature: 38d6eccbf6fa3b0547d02474d86bdad179001b769a99e88ac93e92a1aa2652bc
+  execution_id: 7a5b8d327a21419abd4695257bd28dd8
+- gate: security_review
+  kind: automatic
+  result: passed
+  at: '2026-07-21T15:45:33.575201Z'
+  duration_seconds: 1.7237387499999999
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_evidence.py::test_gate_runner_redacts_persisted_command_environment_and_log
+  - tests/test_mase_cli_operations.py::test_gate_cli_rejects_unsafe_change_before_running_command
+  - tests/test_mase_cli_operations.py::test_install_rejects_manifest_path_traversal
+  - tests/test_mase_gate_planning.py::test_gate_loader_validates_schema_and_rejects_escaping_inputs
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: 766eafd71209dee247b0f14b4ba879929c3368d41729f0b41f5ec5d3cfeb4aa4
+  input_digest: 548163400f88590f600c76dd2f543c38e3e73f25be1a671cd43dc0222af0fe31
+  inputs:
+  - mase_cli/evidence.py
+  - mase_cli/gates.py
+  - mase_cli/main.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_gate_planning.py
+  log_path: .mase/evidence/optimize-gate-scheduling-and-test-deduplication/security_review-20260721T154533Z-354a9dca.log
+  test_digest: a4d21c80a484373e70e04bac50d83ccc25bffd8e2074b245ad847eec8d21a036
+  execution_signature: b2a36986f8a48c080a748a7035878ef21ad0e53c6091f50f3b73b20e573abed7
+  execution_id: 224e4fa8902841b2a17512f99a4ddd13
+- gate: independent_review
+  kind: manual
+  result: passed
+  at: '2026-07-21T21:13:40.150944Z'
+  duration_seconds: 0.0
+  actor: user
+  subject: mase-2.2-gate-scheduling
+  reference: user-confirmation-2026-07-22
+- gate: full_regression
+  kind: automatic
+  result: passed
+  at: '2026-07-21T21:14:28.397897Z'
+  duration_seconds: 9.062977958
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 638f8c21a78a35f810742bd62d94bb6b057d9678
+  worktree: 74ecae52a2cc3e480d6c214b22b61efb537ea1d5dc9a2c32c1b032bc14063db7
+  input_digest: 0266d3e4dea2e75af6a299d32a4ac2e9472bdce41f24172731ceeadf6ef0e098
+  inputs:
+  - mase_cli
+  - profiles
+  - schemas
+  - templates
+  - tests
+  - pyproject.toml
+  - framework-manifest.yaml
+  - project-rules.md
+  log_path: .mase/evidence/optimize-gate-scheduling-and-test-deduplication/full_regression-20260721T211428Z-6dce8e06.log
+  candidate_id: c7789df4acc64985
+  test_digest: af7f0b2bd342822f2fa8e6a9fda610570f911f30d3108379ea4184c0866727c3
+  execution_signature: c4e1f494e1dfa657a6f78efc3f41843e646da64dd079b3da14a4f802b3612f91
+  execution_id: 5947217b3eaf4bb09373eda59005bdbe
+dependencies: []
+conflicts_with: []
+blockers: []
+candidate:
+  id: c7789df4acc64985
+  created_at: '2026-07-21T21:14:10.291953Z'
+  input_digest: 65b9ee7a4ad434a642741cd77aab22874c18b3122c765ad0f6496ee9f12c7d49
+  inputs:
+  - .mase/gates.yaml
+  - framework-manifest.yaml
+  - mase_cli
+  - openspec/changes/optimize-gate-scheduling-and-test-deduplication/design.md
+  - openspec/changes/optimize-gate-scheduling-and-test-deduplication/proposal.md
+  - openspec/changes/optimize-gate-scheduling-and-test-deduplication/specs
+  - openspec/changes/optimize-gate-scheduling-and-test-deduplication/tasks.md
+  - profiles
+  - project-rules.md
+  - pyproject.toml
+  - schemas
+  - templates
+  - tests

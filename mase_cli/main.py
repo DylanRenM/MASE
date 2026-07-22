@@ -1,6 +1,7 @@
 """MASE v2 command-line entry point."""
 
 import argparse
+import json
 import sys
 
 from mase_cli import __version__
@@ -14,6 +15,13 @@ from mase_cli.commands import (
     update_project,
 )
 from mase_cli.evidence import record_manual_evidence, run_gate
+from mase_cli.gates import (
+    execute_defined_gate,
+    freeze_candidate,
+    load_gate_definitions,
+    plan_change,
+)
+from mase_cli.context import build_context_plan
 from mase_cli.schema import GovernanceError
 
 
@@ -59,6 +67,17 @@ def build_parser():
     measure.add_argument("--input-tokens", type=int)
     measure.add_argument("--output-tokens", type=int)
     measure.add_argument("--cache-tokens", type=int)
+    measure.add_argument("--usage-file")
+    measure.add_argument("--tool-output-characters", type=int, default=0)
+
+    context = sub.add_parser("context", help="规划受预算和排除规则约束的 Agent 上下文")
+    context_sub = context.add_subparsers(dest="context_command", required=True)
+    context_plan = context_sub.add_parser("plan", help="生成当前 change 的上下文文件计划")
+    context_plan.add_argument("--change", required=True)
+    context_plan.add_argument("--dir", "-d", default=".")
+    context_plan.add_argument("--read", action="append", default=[])
+    context_plan.add_argument("--allow-excluded", action="store_true")
+    _add_json(context_plan)
 
     update = sub.add_parser("update", help="预览或应用非破坏框架迁移")
     update.add_argument("--check", dest="check_only", action="store_true")
@@ -79,6 +98,8 @@ def build_parser():
     gate_run.add_argument("--state")
     gate_run.add_argument("--input", action="append", default=[])
     gate_run.add_argument("--artifact", action="append", default=[])
+    gate_run.add_argument("--scope", default="change")
+    gate_run.add_argument("--verbose", action="store_true", help="流式显示完整门禁输出")
     gate_run.add_argument("command_args", nargs="*")
     gate_manual = gate_sub.add_parser("manual", help="记录允许人工完成的门禁证据")
     gate_manual.add_argument("gate")
@@ -88,6 +109,14 @@ def build_parser():
     gate_manual.add_argument("--actor", required=True)
     gate_manual.add_argument("--subject", required=True)
     gate_manual.add_argument("--reference", required=True)
+    gate_plan = gate_sub.add_parser("plan", help="按阶段显示可执行、可复用和延后的门禁")
+    gate_plan.add_argument("--change", required=True)
+    gate_plan.add_argument("--dir", "-d", default=".")
+    _add_json(gate_plan)
+    gate_freeze = gate_sub.add_parser("freeze", help="冻结最终候选版本")
+    gate_freeze.add_argument("--change", required=True)
+    gate_freeze.add_argument("--dir", "-d", default=".")
+    _add_json(gate_freeze)
 
     return parser
 
@@ -98,7 +127,7 @@ def _state_path(args):
     root = Path(args.dir).expanduser().resolve()
     if Path(args.change).name != args.change or args.change in {".", ".."}:
         raise GovernanceError("change name must be a single safe path component", code="invalid_name")
-    if args.state:
+    if getattr(args, "state", None):
         candidate = (root / args.state).resolve()
     else:
         candidate = root / "openspec" / "changes" / args.change / "mase-state.yaml"
@@ -136,7 +165,34 @@ def _dispatch(args):
                 "output": args.output_tokens or 0,
                 "cache": args.cache_tokens or 0,
             }
-        return metrics.run(args.files, token_usage)
+        return metrics.run(
+            args.files,
+            token_usage,
+            usage_file=args.usage_file,
+            tool_output_characters=args.tool_output_characters,
+        )
+    elif args.command == "context":
+        report = build_context_plan(
+            args.dir,
+            args.change,
+            explicit_reads=args.read,
+            allow_excluded=args.allow_excluded,
+        )
+        if args.json:
+            print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+        else:
+            print(
+                f"Context plan: {report.change} · profile={report.profile} · "
+                f"files={len(report.included)} · characters={report.characters}"
+            )
+            for item in report.included:
+                suffix = " [override]" if item.override else ""
+                print(f"  + {item.path}: {item.reason}{suffix}")
+            for item in report.excluded:
+                print(f"  - {item.path}: {item.reason}")
+            if report.over_budget:
+                print(f"  ! context proxy budget exceeded: {', '.join(report.budget_reasons)}")
+        return report
     elif args.command == "update":
         return update_project.run(args)
     elif args.command == "install":
@@ -147,12 +203,70 @@ def _dispatch(args):
             command = list(args.command_args)
             if command and command[0] == "--":
                 command.pop(0)
-            record = run_gate(root, state, args.gate, command, args.input, args.artifact)
-        else:
+            definitions = load_gate_definitions(root, required=False)
+            if definitions.legacy:
+                print(
+                    "mase: warning: .mase/gates.yaml missing; running in ad-hoc compatibility mode",
+                    file=sys.stderr,
+                )
+                record = run_gate(
+                    root, state, args.gate, command, args.input, args.artifact,
+                    scope=args.scope,
+                    stream_output=args.verbose,
+                )
+                reused = False
+            else:
+                execution = execute_defined_gate(
+                    root,
+                    args.change,
+                    args.gate,
+                    explicit_command=command or None,
+                    explicit_inputs=args.input or None,
+                    explicit_artifacts=args.artifact or None,
+                    scope=args.scope,
+                    stream_output=args.verbose,
+                )
+                record = execution.record
+                reused = execution.reused
+        elif args.gate_command == "manual":
             record = record_manual_evidence(
                 state, args.gate, args.actor, args.subject, args.reference
             )
-        print(f"{record.result}: {record.gate} ({record.kind})")
+            reused = False
+        elif args.gate_command == "plan":
+            report = plan_change(root, args.change)
+            if args.json:
+                print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+            else:
+                print(f"Gate plan: {report.change} · profile={report.profile}")
+                for stage, checks in report.test_schedule.items():
+                    print(f"  schedule {stage:10} {', '.join(checks)}")
+                for instance in report.instances.values():
+                    print(
+                        f"  {instance.name:24} {instance.stage:10} "
+                        f"{instance.status:10} {instance.reason}; next: {instance.next_action}"
+                    )
+                for diagnostic in report.diagnostics:
+                    print(f"  ! {diagnostic.code}: {diagnostic.message}")
+            return report
+        else:
+            candidate = freeze_candidate(root, args.change)
+            if args.json:
+                print(json.dumps({"candidate_id": candidate.id, **candidate.to_dict()}, ensure_ascii=False, indent=2))
+            else:
+                print(f"frozen candidate: {candidate.id}")
+            return candidate
+        suffix = " [cache hit]" if reused else ""
+        print(
+            f"{record.result}: {record.gate} ({record.kind}){suffix}; "
+            f"duration={record.duration_seconds:.2f}s; log={record.log_path or '-'}"
+        )
+        if record.result != "passed" and record.log_path:
+            log_path = root / record.log_path
+            if log_path.is_file():
+                excerpt = log_path.read_text(encoding="utf-8", errors="replace")[-4000:]
+                print("--- bounded failure excerpt ---")
+                print(excerpt)
         if record.result != "passed":
             raise SystemExit(EXIT_INCONSISTENT)
         return record

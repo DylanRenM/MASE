@@ -11,11 +11,9 @@ required_artifacts:
 hard_gates:
   - api_contract
   - p0_e2e
-  - security_review
 capability_gates:
   - related_tests
   - integration_tests
-  - security_review
 test_schedule:
   micro:
     - related_unit
@@ -23,8 +21,8 @@ test_schedule:
   capability:
     - related_integration
     - code_review
-    - security_review
   final:
+    - candidate_freeze
     - full_unit
     - full_integration
     - full_contract

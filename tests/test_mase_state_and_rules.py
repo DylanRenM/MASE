@@ -59,6 +59,32 @@ def test_state_collects_structured_gate_evidence(tmp_path):
     assert state.evidence[0]["path"] == "reports/unit.json"
 
 
+def test_failed_required_gate_is_inconsistent(tmp_path):
+    change = tmp_path / "openspec" / "changes" / "failed-gate"
+    change.mkdir(parents=True)
+    (change / "mase-state.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "schema": "mase-project/v2",
+                "profile": "lite",
+                "stack": "generic",
+                "phase": "verify",
+                "risk": {"triggers": []},
+                "gates": {"api_contract": "failed"},
+                "evidence": [],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    (change / "tasks.md").write_text("- [x] done\n", encoding="utf-8")
+
+    report = inspect_change_status(change)
+
+    assert report.consistent is False
+    assert any("api_contract=failed" in issue for issue in report.issues)
+
+
 def test_rule_adapters_share_source_hash_and_are_deterministic(tmp_path):
     source = tmp_path / "project-rules.md"
     source.write_text("# Core rules\n\nR01: confirm requirements\n")

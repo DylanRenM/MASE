@@ -40,6 +40,7 @@ mase check      合规检查
 mase status     多 change portfolio；--change 查看详情
 mase gate       运行自动门禁或记录结构化人工证据
 mase metrics    真实 Token 或 context proxy
+mase context plan --change my-change --json
 mase update     非破坏迁移，支持 --dry-run
 mase install    按 manifest 安装运行时
 ```
@@ -48,6 +49,7 @@ mase install    按 manifest 安装运行时
 
 ```bash
 mase gate run api_contract --change my-change --input src --input tests -- python3 -m pytest -q tests
+# 人工调试需要完整实时输出时再增加 --verbose
 ```
 
 现行规范见 [docs/MASE-framework.md](docs/MASE-framework.md)，使用说明见 [docs/user-guide.md](docs/user-guide.md)。

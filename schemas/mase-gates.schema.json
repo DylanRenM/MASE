@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://measures.local/schemas/mase-gates-v1.json",
+  "title": "MASE canonical gate definitions",
+  "type": "object",
+  "required": ["schema", "gates"],
+  "properties": {
+    "schema": {"const": "mase-gates/v1"},
+    "retention": {"type": "integer", "minimum": 1, "maximum": 20},
+    "overlap_warning_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+    "gates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["stage", "command"],
+        "properties": {
+          "stage": {"enum": ["micro", "capability", "final"]},
+          "command": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "minItems": 1
+          },
+          "inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "tests": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "covers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "candidate_bound": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

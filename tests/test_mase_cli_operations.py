@@ -1,8 +1,9 @@
+import json
 from pathlib import Path
 
 import pytest
 
-from mase_cli.commands import doctor, install_framework, metrics, status, update_project
+from mase_cli.commands import check_project, doctor, install_framework, metrics, status, update_project
 from mase_cli import main as cli
 
 
@@ -31,6 +32,35 @@ def test_metrics_distinguishes_real_tokens_from_context_proxy(tmp_path):
     assert proxy["characters"] == 11
     assert actual["kind"] == "actual_tokens"
     assert actual["tokens"]["input"] == 100
+
+
+def test_metrics_usage_precedence_and_tool_output_proxy(tmp_path, monkeypatch):
+    source = tmp_path / "a.md"
+    usage = tmp_path / "usage.json"
+    source.write_text("hello", encoding="utf-8")
+    usage.write_text(
+        json.dumps({"input": 30, "output": 4, "cache": 12}), encoding="utf-8"
+    )
+    monkeypatch.setenv("MASE_INPUT_TOKENS", "99")
+    monkeypatch.setenv("MASE_OUTPUT_TOKENS", "88")
+    monkeypatch.setenv("MASE_CACHE_TOKENS", "77")
+
+    from_file = metrics.collect_metrics(files=[source], usage_file=usage)
+    explicit = metrics.collect_metrics(
+        files=[source],
+        token_usage={"input": 1, "output": 2, "cache": 3},
+        usage_file=usage,
+    )
+    proxy = metrics.collect_metrics(
+        files=[source], tool_output_characters=123, environ={}
+    )
+
+    assert from_file["tokens"] == {"input": 30, "output": 4, "cache": 12}
+    assert from_file["source"] == "usage_file"
+    assert explicit["tokens"]["input"] == 1
+    assert explicit["source"] == "explicit"
+    assert proxy["tool_output_characters"] == 123
+    assert proxy["kind"] == "context_proxy"
 
 
 def test_status_returns_non_success_for_inconsistent_change(tmp_path):
@@ -143,3 +173,31 @@ def test_gate_cli_rejects_unsafe_change_before_running_command(tmp_path, capsys)
 
     assert exit_info.value.code == cli.EXIT_NOT_FOUND
     assert "Traceback" not in capsys.readouterr().err
+
+
+def test_project_check_explains_unavailable_gate_optimizations(tmp_path):
+    (tmp_path / ".mase.yaml").write_text(
+        "mase:\n  version: 2.2.0\n  project: demo\n  profile: standard\n  stack: generic\n",
+        encoding="utf-8",
+    )
+    for relative in ("README.md", ".gitignore", "project-rules.md"):
+        (tmp_path / relative).write_text("ok", encoding="utf-8")
+    (tmp_path / "openspec" / "changes").mkdir(parents=True)
+
+    report = check_project.inspect_project(tmp_path)
+    item = next(item for item in report.items if item.path == ".mase/gates.yaml")
+
+    assert item.required is False
+    assert "candidate freeze" in item.message
+    assert "exact reuse" in item.message
+
+    (tmp_path / ".mase").mkdir()
+    (tmp_path / ".mase" / "gates.yaml").write_text(
+        "schema: mase-gates/v1\ngates: {}\n", encoding="utf-8"
+    )
+    empty_report = check_project.inspect_project(tmp_path)
+    empty_item = next(
+        item for item in empty_report.items if item.path == ".mase/gates.yaml"
+    )
+    assert "candidate freeze" in empty_item.message
+    assert "overlap diagnostics" in empty_item.message

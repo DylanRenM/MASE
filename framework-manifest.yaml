@@ -1,16 +1,22 @@
 schema: mase-framework/v2
-version: 2.1.0
+version: 2.3.0
 license: MIT
 
 canonical:
   rules: project-rules.md
   package: pyproject.toml
   state_template: templates/mase-state.yaml
+  gate_template: templates/gates.yaml
   spec_template: templates/specs/_capability_/spec.md
 
 profiles:
   directory: profiles
   default: standard
+
+context_budgets:
+  lite: {input_tokens: 8000, max_files: 12, max_characters: 32000}
+  standard: {input_tokens: 16000, max_files: 24, max_characters: 64000}
+  strict: {input_tokens: 24000, max_files: 36, max_characters: 96000}
 
 ide_adapters:
   - AGENTS.md
@@ -40,7 +46,17 @@ default_context_excludes:
   - node_modules
   - openspec/master
   - openspec/archive
+  - openspec/changes/archive
+  - openspec/changes/_archived
   - openspec/changes/*/poc
+  - .mase/evidence
+  - e2e/playwright-report
+  - e2e/test-results
+  - logs
+  - data
+  - output
+  - reports
+  - coverage
   - docs/archive
   - docs/superpowers
   - history

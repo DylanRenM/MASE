@@ -1,0 +1,6 @@
+# 项目门禁的唯一执行定义。请按项目测试结构填写；空定义保持兼容，
+# `mase gate plan` 会指出必需但尚未定义的 gate。
+schema: mase-gates/v1
+retention: 3
+overlap_warning_threshold: 0.8
+gates: {}

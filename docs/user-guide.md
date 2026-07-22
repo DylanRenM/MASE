@@ -37,9 +37,14 @@ Profile 选择：本地 MVP 用 Lite；UI/文件/并发用 Standard；鉴权/支
 | `mase status [--json]` | 汇总所有活动 change、依赖、冲突与基线债务 |
 | `mase status --change NAME` | 从 state+tasks 检查单个 change 一致性 |
 | `mase gate run GATE --change NAME -- COMMAND...` | 执行门禁并原子记录可复现证据 |
+| `mase gate run ... --verbose -- COMMAND...` | 人工调试时流式显示完整门禁输出 |
+| `mase gate plan --change NAME [--json]` | 查看 runnable/reusable/deferred/stale 门禁和重复测试诊断 |
+| `mase gate freeze --change NAME` | 在前置门禁完成后冻结最终候选 |
 | `mase gate manual GATE --change NAME ...` | 记录允许人工完成的结构化证据 |
 | `mase metrics FILE...` | 报告上下文代理指标 |
 | `mase metrics ... --input-tokens N` | 记录平台提供的真实 Token |
+| `mase metrics ... --usage-file usage.json` | 读取平台导出的 input/output/cache Token |
+| `mase context plan --change NAME --read PATH --json` | 生成不包含文件正文的上下文计划 |
 | `mase update --dry-run` | 预览 v1.3→v2 迁移 |
 | `mase install --dry-run` | 查看框架将分发的资源 |
 
@@ -49,8 +54,19 @@ Profile 选择：本地 MVP 用 Lite；UI/文件/并发用 Standard；鉴权/支
 2. 记录 Profile、主 stack、toolchains、风险、产品属性与本次影响面到 `mase-state.yaml`，由此推导 GatePlan。
 3. 只生成 Profile/风险需要的设计产物。
 4. 将工作拆成纵向任务，每项声明 `reads` 和 `verify`。
-5. RED→GREEN→REFACTOR 只跑相关测试；Capability 和最终边界再扩大验证。
-6. 用 Gate Runner 生成自动 evidence；输入、日志或制品变化后重新执行 stale 门禁。归档时生成 master 快照。
+5. RED→GREEN→REFACTOR 只跑相关测试；Capability 边界运行互不重复的 integration/security/P0。
+6. 先完成轻量人工确认，再用 `mase gate freeze` 固定最终候选；只对该候选运行 final 全量门禁。
+7. 用 Gate Runner 生成自动 evidence；仅受影响输入、日志、制品或候选变化后重新执行 stale 门禁。完整签名未变时 Runner 复用 evidence，归档时生成 master 快照。
+
+## 门禁定义与去重
+
+`.mase/gates.yaml` 为 gate 的 stage、command、inputs、artifacts、tests、covers 和 candidate 绑定的唯一执行源。初始化/迁移生成的空模板仍保持 legacy ad-hoc 兼容，填入首个 gate 后才启用 canonical 执行。`inputs` 和 Capability `paths` 可使用项目根内 glob；摘要按实际命中文件计算。`related_tests` 与 `integration_tests` 必须选择不同边界；相同 selector/command 会由 `mase gate plan` 告警。不同 gate 不因命令偶然相同而自动互认，只有 `covers` 显式声明且来源输入、制品和候选绑定覆盖目标时才共享一次执行。
+
+Gate Runner 默认 concise：完整脱敏输出写入 `.mase/evidence`，终端只显示结果、耗时、日志路径和有限失败末尾。人工调试长任务需要实时进度时使用 `--verbose`；两种模式产生相同的证据语义。
+
+`mase gate plan` 同时输出生效 Profile 的 micro/capability/final 调度和每个 gate 的 `next_action`。final 的任务、缺失定义和未通过的 non-final 前置条件会先显示，只有这些条件满足后才建议 freeze。
+
+final gate 不应在 Build 中用于“看看是否全绿”。先运行 micro/capability，处理人工意见并冻结候选；候选后生产代码、测试、规格或门禁定义发生变化时解冻，再修复受影响门禁。失败驱动的重跑属于必要验证，成功候选未变化时的重复全量测试才应被消除。
 
 ## 状态不一致
 
@@ -66,10 +82,12 @@ Profile 选择：本地 MVP 用 Lite；UI/文件/并发用 Standard；鉴权/支
 
 ## Token 节约
 
+- 读取前运行 `mase context plan --change NAME --read RELATED_PATH --json`，按计划而不是全仓扫描加载文件。
 - 每个任务只读当前 Spec、相关接口/测试、diff 和交接摘要。
 - Skill 先读短路由器，只加载命中的 reference。
-- 默认排除 history、training、framework 演示、产品实例和归档。
-- 没有平台 usage 时，字符数只能称为 context proxy。
+- 默认排除 history、training、framework 演示、产品实例、OpenSpec 归档、`.mase/evidence`、日志、报告和数据目录。
+- 平台可通过显式参数、usage JSON 或 `MASE_INPUT_TOKENS`/`MASE_OUTPUT_TOKENS`/`MASE_CACHE_TOKENS` 提供真实用量；没有 usage 时，字符数只能称为 context proxy。
+- Standard 仅在风险命中时做深度安全评审；Strict 独立评审无异议时一轮结束。
 
 ## 兼容说明
 

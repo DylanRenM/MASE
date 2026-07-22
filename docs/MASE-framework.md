@@ -11,8 +11,8 @@ MASE 用可验收需求、风险验证、契约、TDD 和 E2E 保证质量，同
 | Profile | 适用范围 | 默认产物 | 评审/测试节奏 |
 |---|---|---|---|
 | Lite | 本地工具、MVP、小变更 | change、Specs、tasks | diff-only；相关测试；最终 P0/API 门禁 |
-| Standard | UI、文件、外部依赖、并发、持久化 | Lite + focused design + API contract | capability 评审/安扫；最终全量门禁 |
-| Strict | 鉴权、支付、监管、不可逆迁移 | 完整可行性、架构、详细设计、契约 | 独立多轮评审与全量回归 |
+| Standard | UI、文件、外部依赖、并发、持久化 | Lite + focused design + API contract | capability 评审；风险命中时安扫；最终全量门禁 |
+| Strict | 鉴权、支付、监管、不可逆迁移 | 完整可行性、架构、详细设计、契约 | 一轮独立评审；有异议/变化时追加；全量回归 |
 
 Profile 的机器定义在 `profiles/*.yaml`，标准风险注册表在 `profiles/risks.yaml`。GatePlan 同时考虑基础 Profile、风险触发器、`product.has_ui` 与 `impact.ui_changed`；Capability 可局部升级，不能借 Profile 删除已触发的硬门禁。
 
@@ -28,7 +28,7 @@ Profile 的机器定义在 `profiles/*.yaml`，标准风险注册表在 `profile
 纵向工作包 TDD
    ├─ micro: related unit + contract
    ├─ capability: integration + review + risk scan
-   └─ final: full applicable suite + P0 E2E
+   └─ final: freeze candidate → one full applicable suite + P0 E2E
    ↓
 可执行/人工结构化证据 → complete → archive snapshot
 ```
@@ -45,6 +45,7 @@ Profile 的机器定义在 `profiles/*.yaml`，标准风险注册表在 `profile
 - Bug 先有失败证据和根因，再系统修复与补测。
 - 迁移、覆盖和删除前备份。
 - 自动 passed 必须来自 Gate Runner；输入、日志或制品变化会使证据失效。
+- final gate 必须绑定已冻结候选；相同执行只有完整签名 fresh 时复用。
 - API/P0/凭据/数据安全硬门禁不得通过普通 Brownfield 基线绕过。
 
 ## 单一事实来源
@@ -55,6 +56,7 @@ Profile 的机器定义在 `profiles/*.yaml`，标准风险注册表在 `profile
 | 工程规则 | `project-rules.md` |
 | Profile 策略 | `profiles/*.yaml` |
 | Change 状态/门禁证据 | `mase-state.yaml` |
+| 门禁阶段、命令、输入和测试集合 | `.mase/gates.yaml` |
 | Brownfield 遗留失败债务 | `.mase/baseline.yaml` |
 | 工作完成事实 | `tasks.md` |
 | 验收行为 | `specs/*/spec.md` |
@@ -77,6 +79,8 @@ Lite 可由一个工作 Agent 连续执行；Standard/Strict 才需要更多独�
 单个工作包默认只加载当前 Spec、相关接口/测试、diff 和最近交接摘要。历史、培训、归档、其他产品和未命中的 Skill reference 默认排除。详细排除列表见 manifest。
 
 平台提供 usage 时记录 input/output/cache Token；否则只报告文件数和字符数代理，不能把估算称为 Token。
+
+`mase context plan` 在实际读取前给出纳入/排除原因和 Profile 软预算。完整测试输出写入脱敏 evidence 日志；Agent 默认只接收状态、耗时、有限失败摘要和日志路径，人工需要实时进度时显式使用 `mase gate run --verbose`。
 
 ## 产物策略
 

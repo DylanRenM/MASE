@@ -4,7 +4,7 @@ Date: 2026-07-21 (Asia/Shanghai)
 
 ## Framework gates
 
-- `python3 -m pytest -q tests`: **83 passed**.
+- `python3 -m pytest -q tests`: **86 passed** after the Pilot-driven missing-state and failed-hard-gate diagnostics were added.
 - `npm test`: **1 file / 9 tests passed**.
 - `openspec validate strengthen-mase-evidence-governance --strict`: **valid**.
 - `python3 -m mase_cli.main check --dir .`: **PASS**, both migrated historical states validate.

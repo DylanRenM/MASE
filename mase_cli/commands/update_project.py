@@ -248,6 +248,17 @@ def check_updates(project_dir: PathInput = ".", framework_home: Optional[PathInp
                 )
             )
 
+    gate_template = framework / "templates" / "gates.yaml"
+    project_gates = project / ".mase" / "gates.yaml"
+    if gate_template.is_file() and not project_gates.exists():
+        changes.append(_change(
+            ".mase/gates.yaml",
+            "create",
+            "canonical gate definitions are missing; legacy mode keeps candidate freeze, exact reuse, covers and "
+            "overlap diagnostics remain unavailable until the generated template is configured",
+            source=str(gate_template),
+        ))
+
     canonical = framework / "project-rules.md"
     if canonical.exists():
         project_rules = project / "project-rules.md"

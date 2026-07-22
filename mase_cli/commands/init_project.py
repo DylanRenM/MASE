@@ -65,6 +65,9 @@ def _common_project_files(project: Path, name: str, stack: str, profile: str, ro
     )
     _write(project / ".gitignore", _render_template(root, "common/gitignore.tpl"))
     _write(project / ".env.example", "# Project environment variables\n")
+    gate_template = root / str(manifest["canonical"].get("gate_template", "templates/gates.yaml"))
+    if gate_template.is_file():
+        _write(project / ".mase" / "gates.yaml", gate_template.read_text(encoding="utf-8"))
     for directory in ("openspec/changes", "docs", "scripts"):
         (project / directory).mkdir(parents=True, exist_ok=True)
     canonical_rules = root / str(manifest["canonical"]["rules"])
@@ -89,6 +92,7 @@ def _create_python(project: Path, name: str, package: str, capabilities: Iterabl
     for subdir in ("config", "database", "utils"):
         _write(package_root / "shared" / subdir / "__init__.py")
     (project / "tests" / "integration").mkdir(parents=True, exist_ok=True)
+    (project / "tests" / "contract").mkdir(parents=True, exist_ok=True)
 
 
 def _create_swift(project: Path, name: str, root: Path) -> None:
