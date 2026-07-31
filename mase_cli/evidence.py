@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
+import json
 import os
 import platform
 import re
@@ -24,18 +25,6 @@ from mase_cli.state import EvidenceRecord
 
 
 PathInput = Union[str, os.PathLike]
-MANUAL_GATES = frozenset(
-    {
-        "reference_prototype",
-        "device_acceptance",
-        "manual_acceptance",
-        "risk_acceptance",
-        "security_review",
-        "independent_review",
-        "code_review",
-    }
-)
-
 _SECRET_PATTERNS = (
     re.compile(
         r"(?i)(\b[A-Za-z0-9_-]*(?:api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret)\b\s*[:=]\s*)([^\s,;]+)"
@@ -105,7 +94,15 @@ def _path_digest(root: Path, relative_paths: Iterable[str]) -> str:
             entries.append(candidate)
             if candidate.is_dir():
                 entries.extend(candidate.rglob("*"))
-        for entry in sorted(set(item for item in entries if ".git" not in item.parts)):
+        for entry in sorted(set(
+            item for item in entries
+            if ".git" not in item.parts
+            and not ({"__pycache__", ".pytest_cache", "node_modules"} & set(item.parts))
+            and item.name != ".DS_Store"
+            and item.suffix != ".pyc"
+            and item.name != "mase-state.yaml"
+            and not ({".mase", "evidence"} <= set(item.parts))
+        )):
             resolved_relative = entry.relative_to(root).as_posix()
             digest.update(b"\0" + resolved_relative.encode("utf-8") + b"\0")
             if entry.is_symlink():
@@ -219,6 +216,10 @@ def run_gate(
     execution_signature: str = "",
     execution_id: Optional[str] = None,
     reused_from: str = "",
+    release_digest: str = "",
+    selected_tests: Optional[Iterable[str]] = None,
+    selection_reason: str = "",
+    selection_fallback: str = "",
     retention: int = 3,
     stream_output: bool = False,
 ) -> EvidenceRecord:
@@ -230,12 +231,28 @@ def run_gate(
         raise GovernanceError("gate command cannot be empty", code="command")
     current = load_yaml_document(state)
     validate_payload(current, "mase-state.schema.json", path=state)
+    if str(gate).startswith("release_") and current.get("release") and not release_digest:
+        from mase_cli.release import release_context_digest
+
+        release_digest = release_context_digest(current["release"])
     input_paths = tuple(str(item) for item in (inputs or ()))
     artifact_paths = tuple(str(item) for item in (artifacts or ()))
+    selected_test_ids = tuple(str(item) for item in (selected_tests or ()))
     # Validate paths before executing a potentially expensive command.
     input_digest = _path_digest(root, input_paths)
     for relative in artifact_paths:
         _inside(root, relative)
+
+    actual_execution_id = str(execution_id or uuid.uuid4().hex)
+    safe_gate = re.sub(r"[^A-Za-z0-9_.-]+", "-", gate).strip("-") or "gate"
+    change_name = state.parent.name
+    diagnostic_relative = Path(".mase") / "evidence" / change_name / (
+        f"{safe_gate}-{actual_execution_id[:12]}.diagnostic.json"
+    )
+    diagnostic_path = _inside(root, diagnostic_relative.as_posix())
+    diagnostic_path.parent.mkdir(parents=True, exist_ok=True)
+    command_environment = dict(os.environ)
+    command_environment["MASE_TEST_DIAGNOSTIC_PATH"] = str(diagnostic_path)
 
     started = time.monotonic()
     if stream_output:
@@ -246,6 +263,7 @@ def run_gate(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             bufsize=1,
+            env=command_environment,
         )
         chunks = []
         assert process.stdout is not None
@@ -263,13 +281,12 @@ def run_gate(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             check=False,
+            env=command_environment,
         )
         returncode = completed.returncode
         output = completed.stdout or ""
     duration = time.monotonic() - started
     timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    safe_gate = re.sub(r"[^A-Za-z0-9_.-]+", "-", gate).strip("-") or "gate"
-    change_name = state.parent.name
     relative_log = Path(".mase") / "evidence" / change_name / (
         f"{safe_gate}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}.log"
     )
@@ -277,12 +294,63 @@ def run_gate(
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_path.write_text(redact_secrets(output), encoding="utf-8")
 
+    diagnostic = None
+    if diagnostic_path.is_file():
+        try:
+            diagnostic = json.loads(diagnostic_path.read_text(encoding="utf-8"))
+            if not isinstance(diagnostic, dict):
+                raise ValueError("diagnostic must be an object")
+            validate_payload(
+                diagnostic,
+                "mase-test-diagnostic.schema.json",
+                path=diagnostic_path,
+            )
+            expected_final = "passed" if returncode == 0 else "failed"
+            if diagnostic.get("final_result") != expected_final:
+                raise ValueError("diagnostic final_result conflicts with command exit status")
+        except (GovernanceError, ValueError, json.JSONDecodeError) as exc:
+            diagnostic = {
+                "schema": "mase-test-diagnostic/v1",
+                "attempts": 1,
+                "first_attempt_result": "failed" if returncode else "passed",
+                "final_result": "failed" if returncode else "passed",
+                "classification": "unknown",
+                "failed_tests": [f"invalid adapter diagnostic: {type(exc).__name__}"],
+                "artifacts": [relative_log.as_posix()],
+            }
+    elif returncode != 0:
+        diagnostic = {
+            "schema": "mase-test-diagnostic/v1",
+            "attempts": 1,
+            "first_attempt_result": "failed",
+            "final_result": "failed",
+            "classification": "unknown",
+            "failed_tests": list(selected_test_ids),
+            "artifacts": [relative_log.as_posix()],
+        }
+
+    diagnostic_relative_value = ""
+    failure_classification = ""
+    first_attempt_result = "passed" if returncode == 0 else "failed"
+    attempts = 1
+    if diagnostic is not None:
+        serialized = redact_secrets(json.dumps(diagnostic, ensure_ascii=False, indent=2))
+        diagnostic_path.write_text(serialized + "\n", encoding="utf-8")
+        diagnostic_relative_value = diagnostic_relative.as_posix()
+        failure_classification = str(diagnostic.get("classification", ""))
+        first_attempt_result = str(diagnostic.get("first_attempt_result", first_attempt_result))
+        attempts = int(diagnostic.get("attempts", 1))
+
     commit, worktree = _git_snapshot(root)
     artifact_digests: dict[str, str] = {}
     for relative in artifact_paths:
         artifact = _inside(root, relative)
         if artifact.exists():
             artifact_digests[relative] = _path_digest(root, [relative])
+    if diagnostic_relative_value:
+        artifact_digests[diagnostic_relative_value] = _path_digest(
+            root, [diagnostic_relative_value]
+        )
 
     record = EvidenceRecord(
         gate=str(gate),
@@ -303,8 +371,16 @@ def run_gate(
         candidate_id=str(candidate_id or ""),
         test_digest=str(test_digest or ""),
         execution_signature=str(execution_signature or ""),
-        execution_id=str(execution_id or uuid.uuid4().hex),
+        execution_id=actual_execution_id,
         reused_from=str(reused_from or ""),
+        release_digest=str(release_digest or ""),
+        selected_tests=selected_test_ids,
+        selection_reason=str(selection_reason or ""),
+        selection_fallback=str(selection_fallback or ""),
+        diagnostic_path=diagnostic_relative_value,
+        failure_classification=failure_classification,
+        first_attempt_result=first_attempt_result,
+        attempts=attempts,
     )
     _append_evidence(state, record, retention=retention)
     return record
@@ -321,8 +397,14 @@ def assess_evidence(
     if evidence.legacy:
         return "stale"
     if evidence.kind == "manual":
-        required = (evidence.actor, evidence.subject, evidence.reference, evidence.at)
-        return "fresh" if evidence.gate in MANUAL_GATES and all(required) else "invalid"
+        required = (
+            evidence.actor, evidence.subject, evidence.reference, evidence.at,
+            evidence.input_digest, evidence.execution_signature,
+        )
+        if evidence.result != "passed" or not all(required):
+            return "invalid"
+        paths = tuple(str(item) for item in input_paths) if input_paths is not None else evidence.inputs
+        return "fresh" if _path_digest(root, paths) == evidence.input_digest else "stale"
     if evidence.kind != "automatic" or evidence.result != "passed" or evidence.exit_code != 0:
         return "invalid"
     if not evidence.log_path or not _inside(root, evidence.log_path).is_file():
@@ -344,9 +426,50 @@ def record_manual_evidence(
     subject: str,
     reference: str,
 ) -> EvidenceRecord:
-    """Append traceable manual evidence, rejecting automatic-only gate claims."""
+    """Append subject-bound manual evidence for a canonically manual gate."""
 
-    valid = gate in MANUAL_GATES and all(str(item).strip() for item in (actor, subject, reference))
+    state = Path(state_path).expanduser().resolve()
+    root = state.parents[3]
+    from mase_cli.gates import load_gate_definitions
+    from mase_cli.release import release_context_digest
+
+    definitions = load_gate_definitions(root, required=False)
+    definition = definitions.gates.get(str(gate))
+    current = load_yaml_document(state)
+    bound_inputs = set(definition.inputs if definition else ())
+    bound_inputs.update(str(item) for item in dict(current.get("impact", {})).get("paths", []))
+    change = state.parent
+    for name in ("proposal.md", "design.md", "tasks.md", "specs"):
+        target = change / name
+        if target.exists():
+            bound_inputs.add(target.relative_to(root).as_posix())
+    inputs = tuple(sorted(bound_inputs))
+    input_digest = _path_digest(root, inputs)
+    candidate_id = str(dict(current.get("candidate", {})).get("id", ""))
+    release_digest = (
+        release_context_digest(current["release"])
+        if str(gate).startswith("release_") and current.get("release") else ""
+    )
+    valid = (
+        definition is not None
+        and definition.mode == "manual"
+        and all(str(item).strip() for item in (actor, subject, reference))
+    )
+    signature_payload = {
+        "gate": str(gate),
+        "inputs": list(inputs),
+        "input_digest": input_digest,
+        "scope": "change",
+        "candidate_id": candidate_id,
+        "release_digest": release_digest,
+        "actor": str(actor).strip(),
+        "subject": str(subject).strip(),
+        "reference": str(reference).strip(),
+        "decision": "passed" if valid else "failed",
+    }
+    execution_signature = hashlib.sha256(json.dumps(
+        signature_payload, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")).hexdigest()
     record = EvidenceRecord(
         gate=str(gate),
         kind="manual",
@@ -355,7 +478,12 @@ def record_manual_evidence(
         actor=redact_secrets(str(actor)),
         subject=redact_secrets(str(subject)),
         reference=str(reference),
+        input_digest=input_digest,
+        inputs=inputs,
+        candidate_id=candidate_id,
+        release_digest=release_digest,
+        execution_signature=execution_signature,
         freshness="fresh" if valid else "invalid",
     )
-    _append_evidence(Path(state_path).expanduser().resolve(), record)
+    _append_evidence(state, record)
     return replace(record, freshness="fresh" if valid else "invalid")

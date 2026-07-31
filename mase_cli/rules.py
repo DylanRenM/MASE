@@ -28,9 +28,11 @@ class RuleChange:
 
 
 class RuleSynchronizer:
-    def __init__(self, source: Union[str, Path]):
+    def __init__(self, source: Union[str, Path], *, source_text: Optional[str] = None):
         self.source = Path(source)
-        self.source_text = self.source.read_text(encoding="utf-8")
+        self.source_text = (
+            self.source.read_text(encoding="utf-8") if source_text is None else source_text
+        )
         self.source_hash = hashlib.sha256(self.source_text.encode("utf-8")).hexdigest()
 
     def render(self, target: str) -> str:
@@ -39,8 +41,13 @@ class RuleSynchronizer:
             "Before changing or reviewing this project, read `project-rules.md`. "
             "It is the only maintained rule source.\n\n"
             "Hard minimum: confirm user-visible behavior; test before implementation; "
+            "analyze impact before historical behavior changes and reconcile the actual diff; "
             "keep API contracts and P0 E2E green; diagnose root causes; back up before "
-            "destructive migration. Load detailed docs and Skill references only when the "
+            "destructive migration. For releases, bind an immutable artifact identity, verify "
+            "live consumer behavior, and retain tested recovery through observation. "
+            "Keep product code, data, backups, demos, and generated caches outside the MASE "
+            "framework repository. "
+            "Load detailed docs and Skill references only when the "
             "current Profile, risk, or task routes to them.\n"
         )
         body_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()

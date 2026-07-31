@@ -14,7 +14,7 @@
         "type": "object",
         "required": ["stage", "command"],
         "properties": {
-          "stage": {"enum": ["micro", "capability", "final"]},
+          "stage": {"enum": ["analysis", "micro", "capability", "final", "release_artifact", "release_preflight", "release_live", "release_observe"]},
           "command": {
             "type": "array",
             "items": {"type": "string", "minLength": 1},
@@ -23,9 +23,19 @@
           "inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
           "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
           "tests": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "test_tiers": {
+            "type": "array",
+            "items": {"enum": ["unit", "contract", "integration", "ui_contract", "p0_journey", "p1_regression"]},
+            "minItems": 1,
+            "uniqueItems": true
+          },
           "covers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
           "capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-          "candidate_bound": {"type": "boolean"}
+          "candidate_bound": {"type": "boolean"},
+          "mode": {"enum": ["automatic", "manual"]},
+          "effect": {"enum": ["read-only", "local-write", "external-write"]},
+          "required_authority": {"enum": ["read-only", "release"]},
+          "requires": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
         },
         "additionalProperties": false
       }

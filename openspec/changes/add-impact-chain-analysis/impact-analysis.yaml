@@ -1,0 +1,320 @@
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: commit:8888c8f
+  diff_digest: pending
+  spec_inputs:
+  - openspec/changes/add-impact-chain-analysis/specs
+  contract_inputs:
+  - schemas/mase-impact-analysis.schema.json
+  - schemas/mase-impact-scan.schema.json
+  - schemas/mase-state.schema.json
+  - schemas/mase-gates.schema.json
+adapter:
+  name: generic-manifest
+  version: '1.0'
+  rules_digest: impact-policy-v1
+  confidence: high
+  inputs:
+  - mase_cli
+  - schemas
+  - templates
+change_points:
+- id: impact-runtime
+  path: mase_cli/impact.py
+  symbol: impact policy and artifact workflow
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: false
+- id: cli-contract
+  path: mase_cli/main.py
+  symbol: mase impact command group
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: state-gate-policy
+  path: mase_cli/state.py
+  symbol: ChangeState and status derivation
+  change_type: business_semantics
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: gate-planning
+  path: mase_cli/gates.py
+  symbol: analysis-stage planning and candidate freeze
+  change_type: business_semantics
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: schema-contract
+  path: schemas/mase-state.schema.json
+  symbol: impact_analysis state contract
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: process-policy
+  path: project-rules.md
+  symbol: R13 impact-chain governance
+  change_type: business_semantics
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+approved_paths:
+- .mase/gates.yaml
+- README.md
+- AGENTS.md
+- CLAUDE.md
+- CONVENTIONS.md
+- .github/copilot-instructions.md
+- agents/agent-1-orchestrator/SKILL.md
+- agents/agent-2-requirements/SKILL.md
+- agents/agent-3-development/SKILL.md
+- agents/agent-4-quality/SKILL.md
+- docs/MASE-framework.md
+- docs/design-principles.md
+- docs/glossary.md
+- docs/project-structure-spec.md
+- docs/user-guide.md
+- framework-manifest.yaml
+- mase_cli/impact.py
+- mase_cli/main.py
+- mase_cli/risk.py
+- mase_cli/state.py
+- mase_cli/gates.py
+- mase_cli/rules.py
+- mase_cli/commands/check_project.py
+- mase_cli/commands/init_project.py
+- mase_cli/commands/update_project.py
+- profiles/lite.yaml
+- profiles/standard.yaml
+- profiles/strict.yaml
+- profiles/risks.yaml
+- project-rules.md
+- schemas/mase-impact-analysis.schema.json
+- schemas/mase-impact-scan.schema.json
+- schemas/mase-state.schema.json
+- schemas/mase-gates.schema.json
+- scripts/verify_mase_training_deck.py
+- templates/impact-analysis.yaml
+- templates/mase-state.yaml
+- templates/gates.yaml
+- templates/contract.md
+- tests/test_mase_impact_analysis.py
+- tests/test_mase_cli_operations.py
+- tests/test_mase_cli_stacks.py
+- tests/test_mase_training_deck.py
+- training/mase-framework/mase-training-v2.3.yaml
+- training/mase-framework/MASE框架培训讲义V2.3.pptx
+callers:
+- id: cli-dispatch
+  path: mase_cli/main.py
+  symbol: build_parser/_dispatch
+  depth: 1
+  first_party: true
+  via: direct import and command dispatch
+  capability: impact_governance
+- id: state-loader
+  path: mase_cli/state.py
+  symbol: ChangeState.load/inspect_change_status
+  depth: 1
+  first_party: true
+  via: direct policy derivation
+  capability: impact_governance
+- id: gate-planner
+  path: mase_cli/gates.py
+  symbol: plan_change/freeze_candidate/execute_defined_gate
+  depth: 1
+  first_party: true
+  via: direct state and artifact binding
+  capability: impact_governance
+- id: project-check
+  path: mase_cli/commands/check_project.py
+  symbol: inspect_project
+  depth: 2
+  first_party: true
+  via: change status validation
+  capability: impact_governance
+- id: project-init
+  path: mase_cli/commands/init_project.py
+  symbol: _common_project_files
+  depth: 2
+  first_party: true
+  via: canonical template distribution
+  capability: impact_governance
+- id: project-update
+  path: mase_cli/commands/update_project.py
+  symbol: check_updates
+  depth: 2
+  first_party: true
+  via: non-destructive template adoption
+  capability: impact_governance
+- id: rule-sync
+  path: mase_cli/rules.py
+  symbol: RuleSynchronizer
+  depth: 2
+  first_party: true
+  via: generated IDE adapters
+  capability: impact_governance
+implicit_channels:
+- kind: serialization
+  status: discovered
+  risk: controlled
+  evidence: JSON Schema and YAML round-trip tests cover state and impact artifacts
+  path: schemas
+- kind: configuration_spi
+  status: discovered
+  risk: controlled
+  evidence: framework manifest and gate/profile YAML are versioned inputs
+  path: framework-manifest.yaml
+- kind: generated_registration
+  status: discovered
+  risk: controlled
+  evidence: RuleSynchronizer regenerates IDE adapters from project-rules.md
+  path: mase_cli/rules.py
+- kind: reflection
+  status: checked_empty
+  risk: controlled
+  evidence: no reflection-based CLI or schema registration found
+- kind: proxy_aop
+  status: checked_empty
+  risk: controlled
+  evidence: framework runtime has no proxy/AOP dispatch
+- kind: message_event
+  status: checked_empty
+  risk: controlled
+  evidence: MASE CLI does not register message consumers
+- kind: scheduled_job
+  status: checked_empty
+  risk: controlled
+  evidence: MASE CLI does not register scheduled jobs
+- kind: async_callback
+  status: checked_empty
+  risk: controlled
+  evidence: impact workflow is synchronous
+boundaries:
+- id: mase-impact-cli
+  kind: cli
+  path: mase_cli/main.py
+  depth: 1
+- id: installed-schema-interface
+  kind: other
+  path: schemas/mase-impact-analysis.schema.json
+  depth: 1
+terminations:
+- branch: cli-dispatch
+  reason: system_boundary
+  depth: 1
+- branch: installed-schema-interface
+  reason: system_boundary
+  depth: 1
+- branch: generated-project-files
+  reason: repository_boundary
+  depth: 2
+classification:
+  level: L3
+  reasons:
+  - adds public CLI and versioned Schema contracts
+  - changes GatePlan and candidate-freeze process semantics
+decision:
+  status: proceed
+  strategy: additive versioned schemas, optional state field for legacy reads, mandatory
+    classification in the new template
+verification:
+  test_types:
+  - unit
+  - contract_differential
+  - integration
+  - full_chain_smoke
+  - rollback_verification
+  tests:
+  - tests/test_mase_impact_analysis.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_governance_models.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_training_deck.py
+  fixture_sources:
+  - existing deterministic MASE framework tests
+  - temporary adopting-project fixtures
+  expected_differences:
+  - new mase impact CLI commands are available
+  - new changes begin with undecided impact classification
+  - analysis-stage gates precede later stages when impact analysis applies
+  side_effect_isolation: temporary project roots; no production or Pilot files are
+    read or written
+  normalization:
+  - temporary paths and timestamps are asserted structurally
+recovery:
+  strategy: revert the impact-chain framework change and regenerate IDE adapters/training
+    deck
+  data_compatibility: existing states remain readable because impact_analysis is optional;
+    newly generated fields can be removed on rollback
+  stop_conditions:
+  - existing API contract or GatePlan regression
+  - candidate freeze becomes stale immediately after creation
+  - framework distribution or repository-boundary audit fails
+reconciliation:
+  status: matched
+  actual_diff_digest: 01cf6282513f108481863276ce29800c2c99478750bc3f41a4bad1c255e48a90
+  actual_paths:
+  - .mase/gates.yaml
+  - README.md
+  - AGENTS.md
+  - CLAUDE.md
+  - CONVENTIONS.md
+  - .github/copilot-instructions.md
+  - agents/agent-1-orchestrator/SKILL.md
+  - agents/agent-2-requirements/SKILL.md
+  - agents/agent-3-development/SKILL.md
+  - agents/agent-4-quality/SKILL.md
+  - docs/MASE-framework.md
+  - docs/design-principles.md
+  - docs/glossary.md
+  - docs/project-structure-spec.md
+  - docs/user-guide.md
+  - framework-manifest.yaml
+  - mase_cli/impact.py
+  - mase_cli/main.py
+  - mase_cli/risk.py
+  - mase_cli/state.py
+  - mase_cli/gates.py
+  - mase_cli/rules.py
+  - mase_cli/commands/check_project.py
+  - mase_cli/commands/init_project.py
+  - mase_cli/commands/update_project.py
+  - profiles/lite.yaml
+  - profiles/standard.yaml
+  - profiles/strict.yaml
+  - profiles/risks.yaml
+  - project-rules.md
+  - schemas/mase-impact-analysis.schema.json
+  - schemas/mase-impact-scan.schema.json
+  - schemas/mase-state.schema.json
+  - schemas/mase-gates.schema.json
+  - scripts/verify_mase_training_deck.py
+  - templates/impact-analysis.yaml
+  - templates/mase-state.yaml
+  - templates/gates.yaml
+  - templates/contract.md
+  - tests/test_mase_impact_analysis.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  unplanned_paths: []
+residual_risks:
+- language-specific call-graph completeness remains the responsibility of project
+  adapters
+- generic/manual fallback reports lower confidence and cannot prove dynamic callers

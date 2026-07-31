@@ -1,5 +1,17 @@
 schema: mase-risk-registry/v1
 triggers:
+  historical_behavior_change:
+    minimum_profile: lite
+    gates: [impact_analysis, impact_reconcile, related_tests, contract_differential]
+  hidden_dependency:
+    minimum_profile: standard
+    gates: [impact_analysis, impact_reconcile, impact_review, integration_tests]
+  public_contract_change:
+    minimum_profile: standard
+    gates: [impact_analysis, impact_reconcile, api_contract, architecture_review, full_chain_smoke, rollback_verification]
+  architecture_coupling:
+    minimum_profile: standard
+    gates: [architecture_review, impact_review]
   untrusted_input:
     minimum_profile: standard
     gates: [security_review, related_tests]
@@ -39,3 +51,21 @@ triggers:
   ui_change:
     minimum_profile: lite
     gates: [p0_e2e]
+  cross_platform_deployment:
+    minimum_profile: standard
+    gates: [release_target_preflight]
+  runtime_config_change:
+    minimum_profile: standard
+    gates: [release_target_preflight, integration_tests]
+  stateful_upgrade:
+    minimum_profile: standard
+    gates: [release_target_preflight, release_recovery_readiness, integration_tests]
+  public_network_exposure:
+    minimum_profile: strict
+    gates: [release_target_preflight, release_live_verification, security_review, independent_review]
+  multi_service_release:
+    minimum_profile: standard
+    gates: [release_target_preflight, release_live_verification, integration_tests]
+  infrastructure_change:
+    minimum_profile: strict
+    gates: [release_target_preflight, rollback_verification, security_review, independent_review]

@@ -41,32 +41,61 @@ Profile 选择：本地 MVP 用 Lite；UI/文件/并发用 Standard；鉴权/支
 | `mase gate plan --change NAME [--json]` | 查看 runnable/reusable/deferred/stale 门禁和重复测试诊断 |
 | `mase gate freeze --change NAME` | 在前置门禁完成后冻结最终候选 |
 | `mase gate manual GATE --change NAME ...` | 记录允许人工完成的结构化证据 |
+| `mase impact classify KIND [--machine-consumed]` | 判定历史变更是否必须执行影响分析 |
+| `mase impact scan --input adapter-result.yaml` | 校验语言/工具链扫描适配器输出 |
+| `mase impact validate --change NAME` | 校验影响产物、分级、阈值和状态摘要绑定 |
+| `mase impact status --change NAME [--json]` | 查看调用方/边界数量、等级、决策和复扫状态 |
+| `mase impact reconcile --change NAME --actual-path PATH --actual-diff-digest DIGEST` | 用实际差异复扫计划范围 |
+| `mase impact render --change NAME` | 从唯一结构化产物生成影响、测试和回滚三份视图 |
+| `mase release plan --context release-context.yaml [--date DATE] [--json]` | 校验 Release Overlay 并生成只读、pending 发布计划 |
+| `mase release status --change NAME [--json]` | 报告 `artifact_ready`、`live_verified`、`observed` 等发布证据状态 |
 | `mase metrics FILE...` | 报告上下文代理指标 |
 | `mase metrics ... --input-tokens N` | 记录平台提供的真实 Token |
 | `mase metrics ... --usage-file usage.json` | 读取平台导出的 input/output/cache Token |
 | `mase context plan --change NAME --read PATH --json` | 生成不包含文件正文的上下文计划 |
 | `mase update --dry-run` | 预览 v1.3→v2 迁移 |
 | `mase install --dry-run` | 查看框架将分发的资源 |
+| `python3 scripts/audit_repository_boundary.py` | 阻断产品、旧资料和生成缓存混入 MASE 框架仓库 |
 
 ## 开发方式
 
 1. 对已有需求、原型和测试做差异分析；一次批量确认真正的冲突。
-2. 记录 Profile、主 stack、toolchains、风险、产品属性与本次影响面到 `mase-state.yaml`，由此推导 GatePlan。
-3. 只生成 Profile/风险需要的设计产物。
-4. 将工作拆成纵向任务，每项声明 `reads` 和 `verify`。
-5. RED→GREEN→REFACTOR 只跑相关测试；Capability 边界运行互不重复的 integration/security/P0。
-6. 先完成轻量人工确认，再用 `mase gate freeze` 固定最终候选；只对该候选运行 final 全量门禁。
-7. 用 Gate Runner 生成自动 evidence；仅受影响输入、日志、制品或候选变化后重新执行 stale 门禁。完整签名未变时 Runner 复用 evidence，归档时生成 master 快照。
+2. 记录 Profile、主 stack、toolchains、风险、产品属性与本次影响面到 `mase-state.yaml`，由此推导 GatePlan；需要显式审计框架版本时，增加 `framework_contract` 并使用 `installed-cli-and-versioned-schemas` 接口，不引用相邻源码仓库。
+3. 修改历史行为时先建立 `impact-analysis.yaml`，扫描显性调用方与隐性依赖；纯注释、格式或非机器消费文案也必须留下豁免分类证据。
+4. 超过 10 个第一方调用方、达到 3 个系统边界、三层仍未收敛或隐性依赖不可控时，等待人工选择版本隔离、特性开关、拆分或终止。
+5. 只生成 Profile/风险需要的设计产物。
+6. 将工作拆成纵向任务，每项声明 `reads` 和 `verify`。
+7. RED→GREEN→REFACTOR 只跑相关测试；Capability 边界先按实际 diff 复扫影响范围，再运行互不重复的 integration/security/P0。
+8. 先完成轻量人工确认，再用 `mase gate freeze` 固定最终候选；只对该候选运行 final 全量门禁。
+9. 用 Gate Runner 生成自动 evidence；仅受影响输入、日志、制品或候选变化后重新执行 stale 门禁。完整签名未变时 Runner 复用 evidence，归档时生成 master 快照。
+
+## 影响链分析
+
+`impact-analysis.yaml` 是唯一事实源，记录对比基线、修改点、调用方、隐性通道、系统边界、递归终止、L1/L2/L3、测试数据、允许差异、决策和回滚。`mase impact render` 生成《影响范围说明书》《测试范围确认单》《回滚方案》，不要手工维护三套事实。
+
+只有签名、业务语义、异常、副作用、幂等、并发、事务、缓存、持久化、超时和重试都不变时，内部实现才能只追踪直接调用方。契约或语义变化递归到系统边界；达到三层仍未到边界时产生架构耦合告警，不能把深度上限当成“分析完成”。没有频率证据或仍有未验证隐性通道时至少按 L2。
+
+新旧差异契约应优先使用历史测试或受控样本。生产来源必须授权、脱敏和最小化；两版运行要隔离副作用并规范化时间、随机数等非确定性输出。未在 Spec 中确认的差异按疑似误伤处理。
 
 ## 门禁定义与去重
 
-`.mase/gates.yaml` 为 gate 的 stage、command、inputs、artifacts、tests、covers 和 candidate 绑定的唯一执行源。初始化/迁移生成的空模板仍保持 legacy ad-hoc 兼容，填入首个 gate 后才启用 canonical 执行。`inputs` 和 Capability `paths` 可使用项目根内 glob；摘要按实际命中文件计算。`related_tests` 与 `integration_tests` 必须选择不同边界；相同 selector/command 会由 `mase gate plan` 告警。不同 gate 不因命令偶然相同而自动互认，只有 `covers` 显式声明且来源输入、制品和候选绑定覆盖目标时才共享一次执行。
+`.mase/gates.yaml` 为 gate 的 stage、command、inputs、artifacts、tests、covers 和 candidate 绑定的唯一执行源。`analysis` 阶段用于设计前影响门禁；`impact_reconcile` 位于 capability 阶段并在候选冻结前完成。初始化/迁移生成的空模板仍保持 legacy ad-hoc 兼容，填入首个 gate 后才启用 canonical 执行。`inputs` 和 Capability `paths` 可使用项目根内 glob；摘要按实际命中文件计算。`related_tests` 与 `integration_tests` 必须选择不同边界；相同 selector/command 会由 `mase gate plan` 告警。不同 gate 不因命令偶然相同而自动互认，只有 `covers` 显式声明且来源输入、制品和候选绑定覆盖目标时才共享一次执行。
 
 Gate Runner 默认 concise：完整脱敏输出写入 `.mase/evidence`，终端只显示结果、耗时、日志路径和有限失败末尾。人工调试长任务需要实时进度时使用 `--verbose`；两种模式产生相同的证据语义。
 
 `mase gate plan` 同时输出生效 Profile 的 micro/capability/final 调度和每个 gate 的 `next_action`。final 的任务、缺失定义和未通过的 non-final 前置条件会先显示，只有这些条件满足后才建议 freeze。
 
 final gate 不应在 Build 中用于“看看是否全绿”。先运行 micro/capability，处理人工意见并冻结候选；候选后生产代码、测试、规格或门禁定义发生变化时解冻，再修复受影响门禁。失败驱动的重跑属于必要验证，成功候选未变化时的重复全量测试才应被消除。
+
+## 发布软件
+
+计划打包、发布、部署、线上验证或恢复时，从 `templates/release-context.yaml` 建立平台中立的 Release Overlay，并使用 `release-software` Skill。发布覆盖层不取代 Profile：它组合 `intent`、`authority`、不可变制品身份/来源、目标、rollout、状态迁移、接口、外部能力、恢复和观察，风险触发器仍可把 Standard 升级为 Strict。
+
+先运行 `mase release plan --context release-context.yaml` 检查矛盾与生成 pending runbook；read-only 权限下不得构建、上传、停服、切流、发布、修改基础设施或恢复。实际命令仍由项目的 `.mase/gates.yaml` 和 CI/CD/平台脚本定义；release gate 必须显式声明 `mode`、`effect`、`required_authority` 和 `requires`，MASE CLI 不充当生产部署器。
+
+状态只能按 fresh evidence 递进：`planned → candidate_ready → artifact_ready → target_ready → live_verified → observed`。最终包的 commit 或 manifest 正确并不能单独证明交付内容正确；`artifact_ready` 不能宣称上线。运行进程、容器 Ready 或 HTTP 200 也不能单独证明真实能力；`live_verified` 必须核对线上制品身份并通过声明的消费者路径。观察期完成前保留上一版、备份和恢复控制，恢复后重新验证才报告 `recovered`。
+
+通用顺序是：尽量在影响前完成制品、运行时、配置、密钥、状态、staging 与恢复预检；再按受控 blast radius 发布；然后验证身份、接口、外部能力和真实 P0 路径；最后完成观察并清理。Windows/PowerShell、Linux、容器编排、Serverless、Registry、桌面/移动端和 App Store 只是按需 adapter，不进入通用默认清单。新增管理端口、共享主机重启或远程控制服务属于独立基础设施 change，不随应用发布静默扩权。
 
 ## 状态不一致
 
@@ -94,3 +123,7 @@ final gate 不应在 Build 中用于“看看是否全绿”。先运行 micro/c
 - `mase init NAME -p package -c cap...` 继续按 Python 项目工作。
 - v1.3 master 和历史文档不会自动删除；v2 停止开发期双写。
 - 安装、更新和删除前始终可先使用 `--dry-run`。
+
+## 框架仓库维护
+
+MASE 仓库只保存过程框架及其现行文档、测试和 MASE 培训材料。采用项目必须放在同级独立根目录；通用培训、研究演示、历史备份和产品数据也不放入 MASE。根目录 `pytest` 只运行 `tests/`，提交前再运行 repository boundary audit，确保未知顶层目录、非现行资料、嵌套仓库与生成缓存没有回流。

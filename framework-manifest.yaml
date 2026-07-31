@@ -7,6 +7,8 @@ canonical:
   package: pyproject.toml
   state_template: templates/mase-state.yaml
   gate_template: templates/gates.yaml
+  test_manifest_template: templates/tests.yaml
+  impact_analysis_template: templates/impact-analysis.yaml
   spec_template: templates/specs/_capability_/spec.md
 
 profiles:
@@ -57,13 +59,7 @@ default_context_excludes:
   - output
   - reports
   - coverage
-  - docs/archive
-  - docs/superpowers
-  - history
   - training
-  - .frontend-slides
-  - framework
-  - examples
 
 generated:
   - AGENTS.md

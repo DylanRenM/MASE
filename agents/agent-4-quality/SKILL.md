@@ -19,8 +19,14 @@ An independent reviewer may confirm “no objection” without a formal report. 
 
 ## Verification
 
+- Verify that impact analysis distinguishes discovered, checked-empty and unverified channels; a depth-three stop without a boundary requires human disposition and cannot be called complete.
+- L1 requires affected-caller unit plus isolated old/new differential contract evidence; L2 adds applicable integration and human impact review; L3 adds architecture review, full-chain smoke, rollout stop conditions and rollback readiness.
+- Reject AI-only approval when callers exceed 10, boundaries reach 3, depth-three traversal is unresolved or hidden dependencies are uncontrolled. Re-review after objection, subject/diff expansion or stale evidence.
 - API/public protocol contracts: 100% when applicable.
-- UI P0 E2E: 100%; sandbox restore must match snapshot.
+- UI P0 journey: 100% when UI changed; select by Capability/test manifest and conservatively run all P0 journeys when an impacted UI path is unmapped. UI contract and P1 remain visible but are not promoted into the hard gate merely to increase test count.
+- Browser evidence must bind isolated fixture identity, actual selected tests and adapter diagnostics. Retry passes are flaky, not first-attempt passes; never auto-ignore them or auto-approve selector/visual-baseline updates.
+- Applicable property/model tests supplement deterministic examples and remain traceable to an accepted Spec; review rejects invented idempotency, Round-trip, default-value or compatibility semantics.
+- A property failure is reproducible only when its Property ID, tool/version, seed or equivalent replay parameters and minimized counterexample are preserved. A passing random rerun does not close the defect; retain material counterexamples as deterministic regressions.
 - P1 is Profile/project policy, not an automatic global blocker.
 - Reports must cite structured evidence from canonical state.
 
@@ -36,4 +42,4 @@ Load the matching reference path from `skills/bug-fixer/` only after triage. Do 
 
 ## Retro
 
-Run a full retrospective only after meaningful defects, material design deviation or a scheduled release. Generate test and Token metrics automatically; keep human analysis focused on causes and policy changes.
+Run a full retrospective only after meaningful defects, material design deviation or a scheduled release. Generate P0 first-pass/flaky/duration/Capability-coverage/failure-classification metrics and Token metrics automatically; keep human analysis focused on causes and policy changes. Manual regression time is only a real metric when its source is recorded, otherwise label it as a proxy.

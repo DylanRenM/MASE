@@ -3,7 +3,25 @@ schema: mase-project/v2
 profile: standard
 stack: generic
 toolchains: []
+framework_contract:
+  name: MASE
+  version: 2.3.0
+  interface: installed-cli-and-versioned-schemas
 phase: draft
+
+# 仅在计划、打包、发布、部署、线上验证或恢复时声明 Release Overlay。
+# release:
+#   schema: mase-release/v1
+#   intent: deploy
+#   authority: read-only
+#   artifact: {kind: image, identity: registry/app@sha256:..., provenance: commit:...}
+#   target: {kind: orchestrator, environment: production, platform: linux}
+#   rollout: {strategy: rolling, max_impact: one-replica}
+#   state: {classes: [], migration: none}
+#   interfaces: [http-api]
+#   external_capabilities: []
+#   recovery: {strategies: [traffic-reversal]}
+#   observation: {signals: [error-rate], window: 15m}
 
 product:
   has_ui: false
@@ -13,12 +31,28 @@ impact:
   ui_changed: false
   paths: []
 
+# 每个新 change 在设计前必须完成分类；历史行为变化填充完整影响分析，
+# 纯注释/格式/非机器消费文案记录结构化豁免。
+impact_analysis:
+  applicability: undecided
+  reconciliation: pending
+# 历史行为变化示例：
+#   applicability: required
+#   level: L2
+#   decision: proceed
+#   artifact: impact-analysis.yaml
+#   artifact_digest: sha256:...
+#   baseline_digest: commit:...
+#   diff_digest: sha256:...
+#   reconciliation: pending
+
 risk:
   triggers: []
   capabilities: {}
 
 gates: {}
-# automatic evidence 只能由 `mase gate run` 生成；人工验收使用 `mase gate manual`。
+# automatic evidence 只能由 `mase gate run` 生成；只有 `.mase/gates.yaml`
+# 声明 `mode: manual` 的 gate 才能使用 `mase gate manual`，且证据绑定当前输入/候选/发布上下文。
 evidence: []
 dependencies: []
 conflicts_with: []

@@ -7,6 +7,9 @@ import os
 from pathlib import Path
 from typing import Iterable, Mapping, Optional, Union
 
+from mase_cli.schema import load_yaml_document
+from mase_cli.test_selection import load_test_manifest
+
 
 TOKEN_ENVIRONMENT = {
     "input": "MASE_INPUT_TOKENS",
@@ -76,6 +79,90 @@ def collect_metrics(
         "characters": characters,
         "tool_output_characters": max(0, int(tool_output_characters or 0)),
         "note": "No platform token usage was supplied; characters are not tokens.",
+    }
+
+
+def collect_test_automation_metrics(
+    project_root: Union[str, Path],
+    *,
+    manual_regression_minutes: Optional[float] = None,
+    manual_regression_source: str = "",
+) -> dict:
+    root = Path(project_root).expanduser().resolve()
+    manifest = load_test_manifest(root, required=False)
+    ui_tiers = {"ui_contract", "p0_journey", "p1_regression"}
+    eligible_capabilities = {
+        capability
+        for item in manifest.tests
+        if item.tier in ui_tiers
+        for capability in item.capabilities
+    }
+    covered_capabilities = {
+        capability
+        for item in manifest.tests
+        if item.tier == "p0_journey"
+        for capability in item.capabilities
+    }
+    records = []
+    changes = root / "openspec" / "changes"
+    if changes.is_dir():
+        for state_path in sorted(changes.glob("*/mase-state.yaml")):
+            payload = load_yaml_document(state_path)
+            records.extend(
+                item
+                for item in payload.get("evidence", [])
+                if item.get("gate") == "p0_e2e" and item.get("kind") == "automatic"
+            )
+    with_attempts = [item for item in records if item.get("first_attempt_result")]
+    first_passes = sum(
+        1 for item in with_attempts if item.get("first_attempt_result") == "passed"
+    )
+    flaky = sum(1 for item in records if item.get("failure_classification") == "flaky")
+    failures = [item for item in records if item.get("result") == "failed"]
+    classified_failures = sum(
+        1
+        for item in failures
+        if item.get("failure_classification")
+        not in (None, "", "unknown")
+    )
+
+    def ratio(numerator: int, denominator: int):
+        return round(numerator / denominator, 4) if denominator else None
+
+    if manual_regression_minutes is not None:
+        if manual_regression_minutes < 0:
+            raise ValueError("manual regression minutes cannot be negative")
+        if not manual_regression_source.strip():
+            raise ValueError("manual regression source is required for an actual metric")
+        manual = {
+            "kind": "actual",
+            "minutes": float(manual_regression_minutes),
+            "source": manual_regression_source.strip(),
+        }
+    else:
+        manual = {
+            "kind": "unavailable",
+            "note": "No sourced manual regression duration was supplied; no proxy was invented.",
+        }
+    return {
+        "kind": "actual_test_evidence",
+        "p0": {
+            "runs": len(records),
+            "first_pass_rate": ratio(first_passes, len(with_attempts)),
+            "flaky_rate": ratio(flaky, len(records)),
+            "duration_seconds": round(sum(float(item.get("duration_seconds", 0) or 0) for item in records), 3),
+            "classified_failure_rate": ratio(classified_failures, len(failures)),
+        },
+        "capability_journey_coverage": {
+            "covered": len(covered_capabilities),
+            "eligible": len(eligible_capabilities),
+            "rate": ratio(len(covered_capabilities), len(eligible_capabilities)),
+        },
+        "manual_regression": manual,
+        "sources": {
+            "manifest": str(manifest.path.relative_to(root)) if not manifest.legacy else "missing",
+            "evidence": "openspec/changes/*/mase-state.yaml",
+        },
     }
 
 

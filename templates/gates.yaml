@@ -4,3 +4,21 @@ schema: mase-gates/v1
 retention: 3
 overlap_warning_threshold: 0.8
 gates: {}
+# impact_classification:
+#   stage: analysis
+#   command: [mase, impact, classify, runtime, --change, "{change}"]
+#   inputs: [openspec/changes]
+# impact_analysis:
+#   stage: analysis
+#   command: [mase, impact, validate, --change, "{change}"]
+#   inputs: [openspec/changes]
+# impact_reconcile:
+#   stage: capability
+#   command: [mase, impact, status, --change, "{change}", --require-matched]
+#   inputs: [openspec/changes, src, tests]
+# 动态浏览器门禁示例：测试 ID/selector/path 定义在 `.mase/tests.yaml`。
+# p0_e2e:
+#   stage: capability
+#   command: [npx, playwright, test, "{selected_tests}", --workers=1]
+#   inputs: [src, templates, e2e]
+#   test_tiers: [p0_journey]

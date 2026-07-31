@@ -22,12 +22,17 @@ capability_gates:
   - security_review
   - independent_review
 test_schedule:
+  analysis:
+    - impact_classification
+    - impact_analysis
   micro:
     - related_unit
     - related_contract
     - related_integration
   capability:
+    - impact_reconcile
     - capability_regression
+    - related_ui_contract
     - code_review
     - security_review
     - independent_review
@@ -36,5 +41,5 @@ test_schedule:
     - full_unit
     - full_integration
     - full_contract
-    - full_e2e
+    - p0_journey
 review: independent-single-pass-on-objection

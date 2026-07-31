@@ -68,6 +68,24 @@ def _common_project_files(project: Path, name: str, stack: str, profile: str, ro
     gate_template = root / str(manifest["canonical"].get("gate_template", "templates/gates.yaml"))
     if gate_template.is_file():
         _write(project / ".mase" / "gates.yaml", gate_template.read_text(encoding="utf-8"))
+    test_manifest_template = root / str(
+        manifest["canonical"].get("test_manifest_template", "templates/tests.yaml")
+    )
+    if test_manifest_template.is_file():
+        _write(
+            project / ".mase" / "tests.yaml",
+            test_manifest_template.read_text(encoding="utf-8"),
+        )
+    impact_template = root / str(
+        manifest["canonical"].get(
+            "impact_analysis_template", "templates/impact-analysis.yaml"
+        )
+    )
+    if impact_template.is_file():
+        _write(
+            project / ".mase" / "impact-analysis.template.yaml",
+            impact_template.read_text(encoding="utf-8"),
+        )
     for directory in ("openspec/changes", "docs", "scripts"):
         (project / directory).mkdir(parents=True, exist_ok=True)
     canonical_rules = root / str(manifest["canonical"]["rules"])

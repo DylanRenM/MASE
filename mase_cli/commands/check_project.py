@@ -10,6 +10,7 @@ from typing import Any, List, Union
 from mase_cli.schema import GovernanceError, ProjectMetadata
 from mase_cli.state import ChangeState, inspect_change_status
 from mase_cli.gates import load_gate_definitions
+from mase_cli.test_selection import load_test_manifest
 
 
 @dataclass(frozen=True)
@@ -94,6 +95,29 @@ def inspect_project(project_dir: Union[str, Path] = ".") -> ProjectReport:
             "legacy ad-hoc gate mode; candidate freeze, exact reuse, covers and "
             "overlap diagnostics are unavailable; run mase update --dry-run",
         ))
+    test_manifest = root / ".mase" / "tests.yaml"
+    if test_manifest.exists():
+        try:
+            load_test_manifest(root)
+        except (GovernanceError, ValueError) as exc:
+            common.append(CheckItem(".mase/tests.yaml", False, True, str(exc)))
+        else:
+            common.append(CheckItem(".mase/tests.yaml", True, False, "valid"))
+    else:
+        common.append(CheckItem(
+            ".mase/tests.yaml",
+            False,
+            False,
+            "legacy static gate tests remain compatible; run mase update --dry-run "
+            "before enabling impact-selected test_tiers",
+        ))
+    impact_template = root / ".mase" / "impact-analysis.template.yaml"
+    common.append(CheckItem(
+        ".mase/impact-analysis.template.yaml",
+        impact_template.exists(),
+        False,
+        "present" if impact_template.exists() else "optional template missing; run mase update --dry-run",
+    ))
     stack_items: List[CheckItem] = []
     if stack == "python":
         stack_items.extend((_exists(root, "pyproject.toml"), _exists(root, "src"), _exists(root, "tests")))

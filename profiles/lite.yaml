@@ -9,18 +9,24 @@ required_artifacts:
 hard_gates:
   - api_contract
   - p0_e2e
+  - full_regression
 capability_gates:
   - related_tests
 test_schedule:
+  analysis:
+    - impact_classification
+    - impact_analysis
   micro:
     - related_unit
     - related_contract
   capability:
+    - impact_reconcile
     - related_integration
+    - related_ui_contract
     - attack_surface_triage
   final:
     - full_unit
     - full_integration
     - api_contract
-    - p0_e2e
+    - p0_journey
 review: diff-only

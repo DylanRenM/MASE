@@ -9,8 +9,9 @@ description: MASE v2 router — select a Profile, maintain canonical change stat
 
 1. Read `project-rules.md`, the active change `mase-state.yaml`, and `profiles/<profile>.yaml`.
 2. Select `lite`, `standard`, or `strict`. Risk triggers may upgrade one capability but never downgrade the base process.
-3. Route user-visible requirements to Agent 2, design/build to Agent 3, and risk/quality boundaries to Agent 4.
-4. Continue autonomously between gates. Ask the user only for blocking product decisions or new authority.
+3. Classify historical-code changes and require fresh impact analysis before routing design/build; threshold decisions stay with an authorized human.
+4. Route user-visible requirements to Agent 2, impact/design/build to Agent 3, and risk/quality boundaries to Agent 4.
+5. Continue autonomously between gates. Ask the user only for blocking product decisions or new authority.
 
 ## Profile routing
 
@@ -36,6 +37,8 @@ Read required gates from the effective Profile. The following remain hard whenev
 - API/public protocol contract tests: 100%.
 - UI P0 E2E: 100% and sandbox restored.
 - Failed tests, unresolved P0 defects, destructive migration without backup: block.
+- Historical behavior change without fresh `impact_analysis`, or verification/freeze without matched `impact_reconcile`: block.
+- More than 10 first-party callers, at least 3 system boundaries, unresolved depth-three traversal or uncontrolled hidden dependencies: require human architecture disposition; AI cannot approve.
 
 P1, full independent review, complete design documents and full E2E frequency are Profile/risk decisions.
 

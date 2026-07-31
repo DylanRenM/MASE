@@ -13,8 +13,87 @@
       "items": {"type": "string", "minLength": 1},
       "uniqueItems": true
     },
+    "framework_contract": {
+      "type": "object",
+      "required": ["name", "version", "interface"],
+      "properties": {
+        "name": {"const": "MASE"},
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "interface": {"const": "installed-cli-and-versioned-schemas"}
+      },
+      "additionalProperties": false
+    },
     "phase": {
       "enum": ["draft", "proposal", "design", "build", "verify", "retro", "release", "complete", "archived"]
+    },
+    "release": {
+      "type": "object",
+      "required": [
+        "schema", "intent", "authority", "artifact", "target", "rollout",
+        "state", "interfaces", "external_capabilities", "recovery", "observation"
+      ],
+      "properties": {
+        "schema": {"const": "mase-release/v1"},
+        "intent": {"enum": ["plan", "package", "publish", "deploy", "verify", "recover"]},
+        "authority": {"enum": ["read-only", "release"]},
+        "artifact": {
+          "type": "object",
+          "required": ["kind", "identity"],
+          "properties": {
+            "kind": {"type": "string", "minLength": 1},
+            "identity": {"type": "string", "minLength": 1},
+            "provenance": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "target": {
+          "type": "object",
+          "required": ["kind", "environment"],
+          "properties": {
+            "kind": {"type": "string", "minLength": 1},
+            "environment": {"type": "string", "minLength": 1},
+            "platform": {"type": "string"},
+            "identifier": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "rollout": {
+          "type": "object",
+          "required": ["strategy"],
+          "properties": {
+            "strategy": {"type": "string", "minLength": 1},
+            "max_impact": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "state": {
+          "type": "object",
+          "required": ["classes", "migration"],
+          "properties": {
+            "classes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "migration": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "interfaces": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "external_capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "recovery": {
+          "type": "object",
+          "required": ["strategies"],
+          "properties": {"strategies": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}},
+          "additionalProperties": false
+        },
+        "observation": {
+          "type": "object",
+          "required": ["signals", "window"],
+          "properties": {
+            "signals": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "window": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     },
     "product": {
       "type": "object",
@@ -31,6 +110,59 @@
         "paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
       },
       "additionalProperties": true
+    },
+    "impact_analysis": {
+      "type": "object",
+      "required": ["applicability"],
+      "properties": {
+        "applicability": {"enum": ["undecided", "required", "exempt"]},
+        "level": {"enum": ["L1", "L2", "L3"]},
+        "decision": {
+          "enum": [
+            "proceed", "architecture-review-required", "version-isolation",
+            "feature-flag", "split-change", "terminate"
+          ]
+        },
+        "artifact": {"type": "string", "minLength": 1},
+        "artifact_digest": {"type": "string", "minLength": 1},
+        "baseline_digest": {"type": "string", "minLength": 1},
+        "diff_digest": {"type": "string", "minLength": 1},
+        "reconciliation": {"enum": ["pending", "matched", "expanded", "exempt"]},
+        "exemption": {
+          "type": "object",
+          "required": ["kind", "evidence"],
+          "properties": {
+            "kind": {"enum": ["comments", "formatting", "non_machine_wording"]},
+            "evidence": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["level"],
+            "properties": {
+              "level": {"enum": ["L1", "L2", "L3"]},
+              "paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+              "decision": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"applicability": {"const": "required"}}, "required": ["applicability"]},
+          "then": {"required": ["level", "decision", "artifact", "artifact_digest", "baseline_digest", "diff_digest", "reconciliation"]},
+          "else": {
+            "if": {"properties": {"applicability": {"const": "exempt"}}, "required": ["applicability"]},
+            "then": {"required": ["exemption", "reconciliation"]},
+            "else": {"required": ["reconciliation"]}
+          }
+        }
+      ],
+      "additionalProperties": false
     },
     "risk": {
       "type": "object",
@@ -89,6 +221,14 @@
           ,"execution_signature": {"type": "string"}
           ,"execution_id": {"type": "string"}
           ,"reused_from": {"type": "string"}
+          ,"release_digest": {"type": "string"}
+          ,"selected_tests": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+          ,"selection_reason": {"type": "string"}
+          ,"selection_fallback": {"type": "string"}
+          ,"diagnostic_path": {"type": "string"}
+          ,"failure_classification": {"enum": ["product", "test", "environment", "test-data", "flaky", "unknown"]}
+          ,"first_attempt_result": {"enum": ["passed", "failed"]}
+          ,"attempts": {"type": "integer", "minimum": 1}
         },
         "allOf": [
           {
@@ -102,7 +242,7 @@
           },
           {
             "if": {"properties": {"kind": {"const": "manual"}}, "required": ["kind"]},
-            "then": {"required": ["at", "actor", "subject", "reference"]}
+            "then": {"required": ["at", "actor", "subject", "reference", "input_digest", "execution_signature"]}
           }
         ],
         "additionalProperties": true

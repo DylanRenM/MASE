@@ -9,8 +9,9 @@ description: MASE v2 requirements agent — reconcile supplied sources, batch on
 
 1. Read the user-supplied requirements, prototype and tests before asking questions.
 2. Build a gap list: contradictions, missing acceptance boundaries, unsafe assumptions and decisions that materially change scope.
-3. Ask at most 3–5 related questions together. Use a documented recommended default for non-blocking gaps.
-4. If sources conflict, the user-designated requirements source wins; prototypes never silently create requirements.
+3. For a historical-code change, state whether business semantics, idempotency, side effects, errors, timing or compatibility are allowed to differ; express allowed differences as accepted Spec scenarios.
+4. Ask at most 3–5 related questions together. Use a documented recommended default for non-blocking gaps.
+5. If sources conflict, the user-designated requirements source wins; prototypes never silently create requirements.
 
 ## UI rule
 
@@ -26,7 +27,7 @@ description: MASE v2 requirements agent — reconcile supplied sources, batch on
 | Standard | Lite + risks/decisions needed by cross-cutting behavior |
 | Strict | full stakeholders, impact, non-functional and traceability inputs |
 
-Do not duplicate system-test or E2E prose in Proposal. Put acceptance behavior in Specs and reference its stable IDs from the proposal.
+Do not duplicate system-test or E2E prose in Proposal. Put acceptance behavior and allowed old/new differences in Specs; put executable Test IDs/selectors in `.mase/tests.yaml` and reference stable IDs.
 
 ## Handoff
 

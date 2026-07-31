@@ -35,6 +35,12 @@ def test_init_generic_lite_creates_only_common_mase_files(tmp_path):
     assert (project / "openspec" / "changes").is_dir()
     gate_payload = yaml.safe_load((project / ".mase" / "gates.yaml").read_text())
     assert gate_payload["schema"] == "mase-gates/v1"
+    test_payload = yaml.safe_load((project / ".mase" / "tests.yaml").read_text())
+    assert test_payload == {"schema": "mase-test-manifest/v1", "tests": []}
+    impact_template = yaml.safe_load(
+        (project / ".mase" / "impact-analysis.template.yaml").read_text()
+    )
+    assert impact_template["schema"] == "mase-impact-analysis/v1"
     assert not (project / "pyproject.toml").exists()
     assert not (project / "Package.swift").exists()
 
@@ -68,6 +74,8 @@ def test_check_supports_json_serialization(tmp_path):
     gate_item = next(item for item in payload["items"] if item["path"] == ".mase/gates.yaml")
     assert gate_item["required"] is False
     assert "legacy ad-hoc" in gate_item["message"]
+    manifest_item = next(item for item in payload["items"] if item["path"] == ".mase/tests.yaml")
+    assert manifest_item["ok"] is True
 
 
 def test_generic_check_does_not_assume_product_source_directories(tmp_path):

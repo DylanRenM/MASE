@@ -10,13 +10,20 @@ from pathlib import Path
 from typing import Any, Iterator, Mapping, Optional, Union
 
 from mase_cli.profiles import ProfileRegistry
-from mase_cli.risk import GatePlan, derive_gate_plan
+from mase_cli.risk import (
+    GatePlan,
+    RELEASE_ARTIFACT_GATES,
+    RELEASE_LIVE_GATES,
+    RELEASE_OBSERVE_GATES,
+    RELEASE_PREFLIGHT_GATES,
+    derive_gate_plan,
+)
 from mase_cli.schema import GovernanceError, load_yaml_document, validate_payload
 
 
 TASK_PATTERN = re.compile(r"^- \[(?P<done>[ xX])\] ", re.MULTILINE)
 TERMINAL_PHASES = {"complete", "archived"}
-PASSING_GATE_STATES = {"passed", "passed_with_baseline", "skipped"}
+PASSING_GATE_STATES = {"passed"}
 
 
 @dataclass(frozen=True)
@@ -47,6 +54,14 @@ class EvidenceRecord(Mapping[str, Any]):
     execution_signature: str = ""
     execution_id: str = ""
     reused_from: str = ""
+    release_digest: str = ""
+    selected_tests: tuple[str, ...] = ()
+    selection_reason: str = ""
+    selection_fallback: str = ""
+    diagnostic_path: str = ""
+    failure_classification: str = ""
+    first_attempt_result: str = ""
+    attempts: int = 0
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "EvidenceRecord":
@@ -83,6 +98,14 @@ class EvidenceRecord(Mapping[str, Any]):
             execution_signature=str(payload.get("execution_signature", "")),
             execution_id=str(payload.get("execution_id", "")),
             reused_from=str(payload.get("reused_from", "")),
+            release_digest=str(payload.get("release_digest", "")),
+            selected_tests=tuple(str(item) for item in payload.get("selected_tests", [])),
+            selection_reason=str(payload.get("selection_reason", "")),
+            selection_fallback=str(payload.get("selection_fallback", "")),
+            diagnostic_path=str(payload.get("diagnostic_path", "")),
+            failure_classification=str(payload.get("failure_classification", "")),
+            first_attempt_result=str(payload.get("first_attempt_result", "")),
+            attempts=int(payload.get("attempts", 0) or 0),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -113,6 +136,14 @@ class EvidenceRecord(Mapping[str, Any]):
             "execution_signature": self.execution_signature,
             "execution_id": self.execution_id,
             "reused_from": self.reused_from,
+            "release_digest": self.release_digest,
+            "selected_tests": list(self.selected_tests),
+            "selection_reason": self.selection_reason,
+            "selection_fallback": self.selection_fallback,
+            "diagnostic_path": self.diagnostic_path,
+            "failure_classification": self.failure_classification,
+            "first_attempt_result": self.first_attempt_result,
+            "attempts": self.attempts if self.attempts > 0 else None,
         }
         data.update({key: value for key, value in optional.items() if value not in (None, "", (), [], {})})
         if self.kind == "automatic":
@@ -136,9 +167,12 @@ class ChangeState:
     profile: str
     stack: str
     toolchains: tuple[str, ...]
+    framework_contract: dict[str, str]
     phase: str
+    release: dict[str, Any]
     product: dict[str, Any]
     impact: dict[str, Any]
+    impact_analysis: dict[str, Any]
     risk: dict[str, Any]
     gates: dict[str, str]
     evidence: tuple[EvidenceRecord, ...]
@@ -154,6 +188,10 @@ class ChangeState:
         source = Path(path)
         payload = load_yaml_document(source)
         validate_payload(payload, "mase-state.schema.json", path=source)
+        if payload.get("release"):
+            from mase_cli.release import validate_release_context
+
+            validate_release_context(payload["release"], path=source)
         product = payload.get("product")
         legacy = False
         if not isinstance(product, dict):
@@ -162,10 +200,13 @@ class ChangeState:
             legacy = bool(legacy_project_type)
         impact = payload.get("impact", {})
         impact = dict(impact) if isinstance(impact, dict) else {}
+        impact_analysis = payload.get("impact_analysis", {})
+        impact_analysis = dict(impact_analysis) if isinstance(impact_analysis, dict) else {}
         evidence = tuple(EvidenceRecord.from_dict(item) for item in payload.get("evidence", []))
         legacy = legacy or any(item.legacy for item in evidence)
         gates = {str(key): str(value) for key, value in payload.get("gates", {}).items()}
         risk = dict(payload.get("risk", {}))
+        release = dict(payload.get("release", {}))
         registry = ProfileRegistry()
         gate_plan = derive_gate_plan(
             registry,
@@ -175,6 +216,8 @@ class ChangeState:
             impact,
             gates,
             capabilities=risk.get("capabilities", {}),
+            release=release,
+            impact_analysis=impact_analysis,
         )
         return cls(
             path=source,
@@ -182,9 +225,15 @@ class ChangeState:
             profile=str(payload["profile"]),
             stack=str(payload["stack"]),
             toolchains=tuple(str(item) for item in payload.get("toolchains", [])),
+            framework_contract={
+                str(key): str(value)
+                for key, value in payload.get("framework_contract", {}).items()
+            },
             phase=str(payload["phase"]),
+            release=release,
             product=product,
             impact=impact,
+            impact_analysis=impact_analysis,
             risk=risk,
             gates=gates,
             evidence=evidence,
@@ -203,6 +252,9 @@ class StatusReport:
     profile: str
     stack: str
     phase: str
+    framework_contract: dict[str, str]
+    release: dict[str, Any]
+    release_outcome: str
     complete: int
     total: int
     lifecycle: str
@@ -212,6 +264,7 @@ class StatusReport:
     required_gates: tuple[str, ...] = ()
     dependencies: tuple[dict[str, str], ...] = ()
     impact_paths: tuple[str, ...] = ()
+    impact_analysis: dict[str, Any] = field(default_factory=dict)
     blockers: tuple[dict[str, Any], ...] = ()
     conflicts_with: tuple[str, ...] = ()
     effective_gates: dict[str, str] = field(default_factory=dict)
@@ -226,6 +279,9 @@ class StatusReport:
             "profile": self.profile,
             "stack": self.stack,
             "phase": self.phase,
+            "framework_contract": dict(self.framework_contract),
+            "release": dict(self.release),
+            "release_outcome": self.release_outcome,
             "lifecycle": self.lifecycle,
             "tasks": {"complete": self.complete, "total": self.total},
             "consistent": self.consistent,
@@ -233,6 +289,7 @@ class StatusReport:
             "required_gates": list(self.required_gates),
             "dependencies": list(self.dependencies),
             "impact_paths": list(self.impact_paths),
+            "impact_analysis": dict(self.impact_analysis),
             "blockers": list(self.blockers),
             "conflicts_with": list(self.conflicts_with),
             "evidence": [item.to_dict() for item in self.evidence],
@@ -255,6 +312,63 @@ def _lifecycle(
     return "active"
 
 
+def _release_outcome(
+    state: ChangeState, effective_gates: Mapping[str, str]
+) -> str:
+    """Derive release readiness from fresh evidence; never trust raw labels."""
+
+    if not state.release:
+        return "not_requested"
+    if str(state.release.get("intent", "")) == "plan":
+        return "planned"
+
+    required = set(state.gate_plan.required_gates)
+
+    def complete(group: tuple[str, ...]) -> bool:
+        applicable = [gate for gate in group if gate in required]
+        return bool(applicable) and all(
+            effective_gates.get(gate) in PASSING_GATE_STATES for gate in applicable
+        )
+
+    if not complete(RELEASE_ARTIFACT_GATES):
+        return "candidate_ready" if _candidate_ready(state, effective_gates) else "planned"
+    if not any(gate in required for gate in RELEASE_PREFLIGHT_GATES):
+        return "artifact_ready"
+    if not complete(RELEASE_PREFLIGHT_GATES):
+        return "artifact_ready"
+    if not complete(RELEASE_LIVE_GATES):
+        return "target_ready"
+    if not complete(RELEASE_OBSERVE_GATES):
+        return "live_verified"
+    return "recovered" if state.release.get("intent") == "recover" else "observed"
+
+
+def _candidate_ready(state: ChangeState, effective_gates: Mapping[str, str]) -> bool:
+    """Require a fresh freeze and fresh candidate-bound final evidence."""
+
+    if not state.candidate:
+        return False
+    from mase_cli.evidence import path_digest
+    from mase_cli.gates import load_gate_definitions
+
+    root = state.path.parents[3]
+    if path_digest(root, state.candidate.get("inputs", [])) != state.candidate.get("input_digest"):
+        return False
+    try:
+        definitions = load_gate_definitions(root, required=False)
+    except (GovernanceError, ValueError, OSError):
+        return False
+    final_gates = [
+        name for name, definition in definitions.gates.items()
+        if definition.stage == "final"
+        and definition.candidate_bound
+        and name in state.gate_plan.required_gates
+    ]
+    return bool(final_gates) and all(
+        effective_gates.get(name) in PASSING_GATE_STATES for name in final_gates
+    )
+
+
 def _effective_gate_states(change: Path, state: ChangeState) -> dict[str, str]:
     """Derive current gate states from the latest applicable evidence."""
 
@@ -264,12 +378,32 @@ def _effective_gate_states(change: Path, state: ChangeState) -> dict[str, str]:
     canonical_inputs: dict[str, tuple[str, ...]] = {}
     definition_scopes: dict[str, tuple[str, ...]] = {}
     candidate_bound_gates: set[str] = set()
+    manual_gates: set[str] = set()
     try:
         from mase_cli.gates import load_gate_definitions
 
         definitions = load_gate_definitions(root, required=False)
         for name, definition in definitions.gates.items():
-            canonical_inputs[name] = definition.inputs
+            inputs = set(definition.inputs)
+            if state.impact_analysis.get("applicability") == "required":
+                from mase_cli.impact import IMPACT_GATES
+
+                if name in IMPACT_GATES:
+                    relative = str(
+                        state.impact_analysis.get("artifact", "impact-analysis.yaml")
+                    )
+                    artifact = state.path.parent / relative
+                    try:
+                        inputs.add(artifact.relative_to(root).as_posix())
+                    except ValueError:
+                        pass
+            if definition.mode == "manual":
+                inputs.update(str(item) for item in state.impact.get("paths", []))
+                for artifact in ("proposal.md", "design.md", "tasks.md", "specs"):
+                    target = change / artifact
+                    if target.exists():
+                        inputs.add(target.relative_to(root).as_posix())
+            canonical_inputs[name] = tuple(sorted(inputs))
             applicable_scopes = tuple(
                 scope
                 for scope in definition.capabilities
@@ -279,6 +413,8 @@ def _effective_gate_states(change: Path, state: ChangeState) -> dict[str, str]:
             definition_scopes[name] = applicable_scopes
             if definition.candidate_bound:
                 candidate_bound_gates.add(name)
+            if definition.mode == "manual":
+                manual_gates.add(name)
             for scope in applicable_scopes:
                 capability = state.gate_plan.capability_plans.get(scope)
                 scoped = tuple(dict.fromkeys(definition.inputs + (capability.paths if capability else ())))
@@ -303,6 +439,11 @@ def _effective_gate_states(change: Path, state: ChangeState) -> dict[str, str]:
         latest[key] = record
 
     names = set(state.gates) | set(state.gate_plan.required_gates) | set(latest)
+    current_release_digest = ""
+    if state.release:
+        from mase_cli.release import release_context_digest
+
+        current_release_digest = release_context_digest(state.release)
     effective: dict[str, str] = {}
     for gate in sorted(names):
         record = latest.get(gate)
@@ -313,11 +454,19 @@ def _effective_gate_states(change: Path, state: ChangeState) -> dict[str, str]:
         if record.result in {"failed", "pending", "stale"}:
             effective[gate] = record.result
             continue
+        base_gate = gate.split("@", 1)[0]
+        if record.kind == "manual" and base_gate not in manual_gates:
+            effective[gate] = "invalid"
+            continue
         inputs = canonical_inputs.get(gate, record.inputs)
         freshness = assess_evidence(record, root, inputs)
         if freshness != "fresh":
             effective[gate] = freshness
-        elif gate.split("@", 1)[0] in candidate_bound_gates and (
+        elif base_gate.startswith("release_") and (
+            not record.release_digest or record.release_digest != current_release_digest
+        ):
+            effective[gate] = "stale"
+        elif base_gate in candidate_bound_gates and (
             not candidate_is_fresh
             or not record.candidate_id
             or record.candidate_id != state.candidate.get("id")
@@ -355,6 +504,27 @@ def inspect_change_status(change_dir: Union[str, Path]) -> StatusReport:
     complete = sum(marker.lower() == "x" for marker in matches)
     effective_gates = _effective_gate_states(change, state)
     issues: list[str] = []
+    if state.impact_analysis:
+        if state.impact_analysis.get("applicability") == "undecided":
+            if state.phase not in {"draft", "proposal"}:
+                issues.append("impact classification is undecided")
+        elif state.impact_analysis.get("applicability") == "required":
+            try:
+                from mase_cli.impact import impact_status
+
+                impact_report = impact_status(change)
+            except (GovernanceError, ValueError, OSError) as exc:
+                issues.append(f"impact analysis invalid: {exc}")
+            else:
+                issues.extend(f"impact analysis: {item}" for item in impact_report.issues)
+                if impact_report.reconciliation == "expanded":
+                    issues.append("impact reconciliation is expanded")
+                elif impact_report.reconciliation != "matched" and state.phase in {
+                    "verify", "retro", "release", "complete", "archived"
+                }:
+                    issues.append(
+                        f"impact reconciliation is {impact_report.reconciliation}"
+                    )
     if total and complete == total and state.phase in {"draft", "proposal", "design", "build"}:
         issues.append(f"all tasks are complete but phase is {state.phase}")
     if complete < total and state.phase in TERMINAL_PHASES:
@@ -363,6 +533,23 @@ def inspect_change_status(change_dir: Union[str, Path]) -> StatusReport:
         issues.append("missing required gates: " + ", ".join(state.gate_plan.missing_gates))
     if state.gate_plan.unknown_triggers:
         issues.append("unknown risk triggers: " + ", ".join(state.gate_plan.unknown_triggers))
+    artifact_paths = {
+        "change": change,
+        "proposal": change / "proposal.md",
+        "design": change / "design.md",
+        "specs": change / "specs",
+        "tasks": change / "tasks.md",
+        "tech_feasibility": change / "tech-feasibility.md",
+        "architecture": change / "architecture.md",
+        "detailed_design": change / "detailed-design.md",
+    }
+    missing_artifacts = [
+        artifact for artifact in state.gate_plan.required_artifacts
+        if artifact not in state.gate_plan.required_gates
+        and (artifact not in artifact_paths or not artifact_paths[artifact].exists())
+    ]
+    if missing_artifacts:
+        issues.append("missing required artifacts: " + ", ".join(missing_artifacts))
     blocking_gates = [
         f"{gate}={effective_gates.get(gate)}"
         for gate in state.gate_plan.required_gates
@@ -370,22 +557,37 @@ def inspect_change_status(change_dir: Union[str, Path]) -> StatusReport:
     ]
     if blocking_gates:
         issues.append("blocking required gates: " + ", ".join(blocking_gates))
+    if state.phase in TERMINAL_PHASES:
+        incomplete_gates = [
+            f"{gate}={effective_gates.get(gate, 'pending')}"
+            for gate in state.gate_plan.required_gates
+            if effective_gates.get(gate) not in PASSING_GATE_STATES
+        ]
+        if incomplete_gates:
+            issues.append("terminal phase has incomplete required gates: " + ", ".join(incomplete_gates))
     if state.blockers:
         issues.append(f"{len(state.blockers)} blocker(s) remain")
+    lifecycle = _lifecycle(state, complete, total, effective_gates)
+    if missing_artifacts and total > 0 and complete == total:
+        lifecycle = "ready_for_gate"
     return StatusReport(
         change=change.name,
         profile=state.gate_plan.profile,
         stack=state.stack,
         phase=state.phase,
+        framework_contract=state.framework_contract,
+        release=state.release,
+        release_outcome=_release_outcome(state, effective_gates),
         complete=complete,
         total=total,
-        lifecycle=_lifecycle(state, complete, total, effective_gates),
+        lifecycle=lifecycle,
         consistent=not issues,
         issues=tuple(issues),
         evidence=state.evidence,
         required_gates=state.gate_plan.required_gates,
         dependencies=state.dependencies,
         impact_paths=tuple(str(item) for item in state.impact.get("paths", [])),
+        impact_analysis=state.impact_analysis,
         blockers=state.blockers,
         conflicts_with=state.conflicts_with,
         effective_gates=effective_gates,

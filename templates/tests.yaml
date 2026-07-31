@@ -1,0 +1,11 @@
+# Capability 到测试集合的唯一清单。selector 是传给项目 runner 的不透明参数。
+schema: mase-test-manifest/v1
+tests: []
+
+# - id: account-login
+#   tier: p0_journey
+#   runner: playwright
+#   selectors: [e2e/tests/auth.spec.js]
+#   capabilities: [auth]
+#   paths: [templates/login.html, src/auth/**]
+#   acceptance: 用户使用有效账号登录并进入受保护页面

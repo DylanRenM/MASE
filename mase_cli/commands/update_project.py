@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 import shutil
 import sys
@@ -21,6 +22,16 @@ REQUIRED_GITIGNORE_ENTRIES = ["e2e/sandbox/", ".mase-backup/", ".mase/cache/"]
 SANDBOX_SUBDIRS = ["uploads", "exports", "logs", "snapshots", "backups"]
 PathInput = Union[str, Path]
 ALLOWED_STACKS = {"generic", "python", "swift"}
+CORE_RULES_PATTERN = re.compile(
+    r"<!-- MASE:CORE:START source_hash=(?P<hash>[0-9a-f]{64}) -->\n"
+    r"(?P<body>.*?)<!-- MASE:CORE:END -->",
+    re.DOTALL,
+)
+EXTENSION_RULES_PATTERN = re.compile(
+    r"<!-- MASE:PROJECT-EXTENSIONS:START -->\n"
+    r"(?P<body>.*?)<!-- MASE:PROJECT-EXTENSIONS:END -->",
+    re.DOTALL,
+)
 
 
 def _version(framework: Path) -> str:
@@ -38,6 +49,59 @@ def _read(path: Path) -> str:
 
 def _render_yaml(payload: dict) -> str:
     return yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
+
+
+def _rule_sections(text: str) -> Optional[tuple[str, str, str]]:
+    core = CORE_RULES_PATTERN.search(text)
+    extensions = EXTENSION_RULES_PATTERN.search(text)
+    if not core and not extensions:
+        return None
+    if not core or not extensions:
+        raise GovernanceError("project rules contain incomplete MASE section markers", code="conflict")
+    body = core.group("body")
+    actual = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    if actual != core.group("hash"):
+        raise GovernanceError(
+            "generated MASE core rule section was modified outside the project extension block",
+            code="conflict",
+        )
+    return body, extensions.group("body"), actual
+
+
+def _render_rule_sections(core: str, extensions: str) -> str:
+    digest = hashlib.sha256(core.encode("utf-8")).hexdigest()
+    return (
+        f"<!-- MASE:CORE:START source_hash={digest} -->\n"
+        f"{core}<!-- MASE:CORE:END -->\n\n"
+        "<!-- MASE:PROJECT-EXTENSIONS:START -->\n"
+        f"{extensions}<!-- MASE:PROJECT-EXTENSIONS:END -->\n"
+    )
+
+
+def _merge_project_rules(current: str, incoming: str) -> tuple[str, Optional[str], str]:
+    """Return action, desired text and reason without overwriting ambiguous rules."""
+
+    if current == incoming:
+        return "none", current, "canonical rules are current"
+    try:
+        incoming_sections = _rule_sections(incoming)
+        current_sections = _rule_sections(current)
+    except GovernanceError as exc:
+        return "conflict", None, str(exc)
+    if incoming_sections is None:
+        incoming_core = incoming if incoming.endswith("\n") else incoming + "\n"
+    else:
+        incoming_core = incoming_sections[0]
+    if current_sections is None:
+        return (
+            "conflict",
+            None,
+            "legacy project rules differ from the incoming core and cannot be merged safely",
+        )
+    desired = _render_rule_sections(incoming_core, current_sections[1])
+    if desired == current:
+        return "none", current, "canonical rules are current"
+    return "update", desired, "canonical core rules changed; project extensions preserved"
 
 
 def _normalize_stack(value: object, project: Path) -> tuple[str, list[str]]:
@@ -259,14 +323,46 @@ def check_updates(project_dir: PathInput = ".", framework_home: Optional[PathInp
             source=str(gate_template),
         ))
 
+    test_manifest_template = framework / "templates" / "tests.yaml"
+    project_tests = project / ".mase" / "tests.yaml"
+    if test_manifest_template.is_file() and not project_tests.exists():
+        changes.append(_change(
+            ".mase/tests.yaml",
+            "create",
+            "Capability-to-test manifest is missing; create the versioned empty template "
+            "before promoting dynamic P0 selection",
+            source=str(test_manifest_template),
+        ))
+
+    impact_analysis_template = framework / "templates" / "impact-analysis.yaml"
+    project_impact_template = project / ".mase" / "impact-analysis.template.yaml"
+    if impact_analysis_template.is_file() and not project_impact_template.exists():
+        changes.append(_change(
+            ".mase/impact-analysis.template.yaml",
+            "create",
+            "impact-chain analysis template is missing; existing change artifacts are not modified",
+            source=str(impact_analysis_template),
+        ))
+
     canonical = framework / "project-rules.md"
     if canonical.exists():
         project_rules = project / "project-rules.md"
+        desired_rules = _read(canonical)
         if not project_rules.exists():
             changes.append(_change("project-rules.md", "create", "canonical rules missing", source=str(canonical)))
-        elif _read(project_rules) != _read(canonical):
-            changes.append(_change("project-rules.md", "update", "canonical rules changed", source=str(canonical)))
-        sync = RuleSynchronizer(canonical)
+        else:
+            action, merged, reason = _merge_project_rules(_read(project_rules), _read(canonical))
+            if action == "update":
+                desired_rules = str(merged)
+                changes.append(_change(
+                    "project-rules.md", "update", reason, content=desired_rules
+                ))
+            elif action == "conflict":
+                desired_rules = _read(project_rules)
+                changes.append(_change("project-rules.md", "conflict", reason))
+            else:
+                desired_rules = str(merged)
+        sync = RuleSynchronizer(project_rules, source_text=desired_rules)
         for item in sync.plan(project):
             relative = str(item.path.relative_to(project))
             if item.action != "none":

@@ -11,6 +11,7 @@ For each work package read only its `reads`: current Spec, related public interf
 
 ## Risk-first design
 
+0. Before designing a historical behavior change, create/validate `impact-analysis.yaml`: scan direct callers plus serialization, proxy/AOP, reflection, configuration/SPI, messages/jobs and async callbacks; disclose unverified channels and stop at declared boundaries. Internal implementation may stop at direct callers only when signature, semantics, exceptions, side effects, idempotency, concurrency, transaction, cache, persistence, timeout and retry behavior all remain unchanged.
 1. Reuse proven platform/library capability before introducing dependencies.
 2. Run a repeatable POC only for unknown toolchains, external dependencies or high-risk behavior.
 3. Create artifacts required by the effective Profile:
@@ -24,12 +25,14 @@ For each work package read only its `reads`: current Spec, related public interf
 ### Micro loop
 
 1. Write the smallest failing behavior or contract test and observe RED.
-2. Implement the minimal coherent behavior with required runtime boundary checks.
-3. Run related unit and contract tests; refactor while green.
+2. When the contract has a large input space, parsing/serialization, numeric boundaries, a state machine, untrusted input, concurrency invariants or compatibility changes, define a traceable property plan before implementation: Property ID, source Spec/Scenario, valid/invalid domains, boundaries, oracle and isolation.
+3. Keep canonical business examples and known regressions deterministic. Use property/model tests as additional coverage, never as a source of undeclared idempotency, Round-trip or compatibility semantics.
+4. Implement the minimal coherent behavior with required runtime boundary checks.
+5. Run related unit and contract tests; refactor while green.
 
 ### Capability boundary
 
-Run relevant integration tests, code review and risk-triggered security review. Do not perform a deep security review solely because the base Profile is Standard. Commit a reversible vertical work package.
+Reconcile the actual diff with the approved impact analysis. New change points/callers/boundaries return work to analysis/design. Then run L1/L2/L3-selected unit, differential contract, integration/full-chain tests, code review and risk-triggered security review. Do not perform a deep security review solely because the base Profile is Standard. Commit a reversible vertical work package.
 
 ### Final boundary
 
@@ -37,4 +40,4 @@ Run the Profile's full unit/integration/contract suite and applicable UI P0 E2E.
 
 ## Completion evidence
 
-Record command, result, timestamp and report path in `mase-state.yaml`. Generated verification summaries may present this evidence but never replace it.
+Record command, result, timestamp and report path in `mase-state.yaml`. For a property failure, ensure the gate log or artifact also preserves the Property ID, tool/version, replay seed or equivalent parameters and minimized counterexample. Generated verification summaries may present this evidence but never replace it.

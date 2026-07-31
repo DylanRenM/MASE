@@ -1,0 +1,42 @@
+# Change 内的影响链分析唯一事实源；三份 Markdown 视图由 `mase impact render` 生成。
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: commit:BASE
+  diff_digest: pending
+  spec_inputs: []
+  contract_inputs: []
+adapter:
+  name: generic-manifest
+  version: "1.0"
+  rules_digest: pending
+  confidence: low
+  inputs: []
+change_points: []
+approved_paths: []
+callers: []
+implicit_channels:
+  - {kind: serialization, status: unverified, risk: controlled}
+  - {kind: proxy_aop, status: unverified, risk: controlled}
+  - {kind: reflection, status: unverified, risk: controlled}
+  - {kind: configuration_spi, status: unverified, risk: controlled}
+  - {kind: async_callback, status: unverified, risk: controlled}
+boundaries: []
+terminations: []
+classification: {level: L2, reasons: [通用适配器尚未验证隐性调用通道]}
+decision: {status: proceed, strategy: scoped-change}
+verification:
+  test_types: [unit, contract_differential]
+  tests: []
+  fixture_sources: [historical-test]
+  expected_differences: []
+  side_effect_isolation: 待确认
+recovery:
+  strategy: 回退到修改前候选版本
+  data_compatibility: 待确认
+reconciliation:
+  status: pending
+  actual_diff_digest: ""
+  actual_paths: []
+  unplanned_paths: []
+residual_risks: []

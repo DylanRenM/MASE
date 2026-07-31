@@ -1,0 +1,31 @@
+schema: mase-release/v1
+intent: plan
+authority: read-only
+
+artifact:
+  kind: archive
+  identity: replace-with-immutable-artifact-identity
+  provenance: replace-with-source-or-attestation
+
+target:
+  kind: vm
+  environment: production
+  platform: generic
+
+rollout:
+  strategy: in-place
+  max_impact: unknown
+
+state:
+  classes: []
+  migration: none
+
+interfaces: []
+external_capabilities: []
+
+recovery:
+  strategies: []
+
+observation:
+  signals: []
+  window: replace-with-observation-window

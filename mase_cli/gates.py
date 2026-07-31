@@ -21,9 +21,15 @@ from mase_cli.evidence import (
 from mase_cli.profiles import ProfileRegistry
 from mase_cli.schema import GovernanceError, load_yaml_document, validate_payload
 from mase_cli.state import ChangeState, EvidenceRecord, PASSING_GATE_STATES, inspect_change_status
+from mase_cli.test_selection import (
+    TestSelection,
+    load_test_manifest,
+    select_tests,
+)
 
 
 PathInput = Union[str, Path]
+DEVELOPMENT_PRE_FINAL_STAGES = {"analysis", "micro", "capability"}
 
 
 @dataclass(frozen=True)
@@ -34,9 +40,14 @@ class GateDefinition:
     inputs: tuple[str, ...] = ()
     artifacts: tuple[str, ...] = ()
     tests: tuple[str, ...] = ()
+    test_tiers: tuple[str, ...] = ()
     covers: tuple[str, ...] = ()
     capabilities: tuple[str, ...] = ()
     candidate_bound: bool = False
+    mode: str = "automatic"
+    effect: str = "read-only"
+    required_authority: str = "read-only"
+    requires: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -66,8 +77,11 @@ class PlannedGate:
     reason: str
     scope: str = "change"
     next_action: str = ""
+    selected_tests: tuple[str, ...] = ()
+    selection_reason: str = ""
+    selection_fallback: str = ""
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "gate": self.name,
             "scope": self.scope,
@@ -75,6 +89,9 @@ class PlannedGate:
             "status": self.status,
             "reason": self.reason,
             "next_action": self.next_action,
+            "selected_tests": list(self.selected_tests),
+            "selection_reason": self.selection_reason,
+            "selection_fallback": self.selection_fallback,
         }
 
 
@@ -170,12 +187,24 @@ def load_gate_definitions(project_root: PathInput, required: bool = True) -> Gat
             inputs=tuple(str(item) for item in raw.get("inputs", [])),
             artifacts=tuple(str(item) for item in raw.get("artifacts", [])),
             tests=tuple(str(item) for item in raw.get("tests", [])),
+            test_tiers=tuple(str(item) for item in raw.get("test_tiers", [])),
             covers=tuple(str(item) for item in raw.get("covers", [])),
             capabilities=tuple(str(item) for item in raw.get("capabilities", [])),
             candidate_bound=bool(raw.get("candidate_bound", False)),
+            mode=str(raw.get("mode", "automatic")),
+            effect=str(raw.get("effect", "read-only")),
+            required_authority=str(raw.get("required_authority", "read-only")),
+            requires=tuple(str(item) for item in raw.get("requires", [])),
         )
         for relative in definition.inputs + definition.artifacts:
             _validate_relative(root, relative)
+        if definition.test_tiers and "{selected_tests}" not in definition.command:
+            raise GovernanceError(
+                f"gate {definition.name} declares test_tiers but command does not consume "
+                "{selected_tests}",
+                path=path,
+                code="schema",
+            )
         gates[definition.name] = definition
     for definition in gates.values():
         if definition.name in definition.covers:
@@ -191,6 +220,30 @@ def load_gate_definitions(project_root: PathInput, required: bool = True) -> Gat
                 path=path,
                 code="schema",
             )
+        unknown_requires = [name for name in definition.requires if name not in gates]
+        if unknown_requires:
+            raise GovernanceError(
+                f"gate {definition.name} requires undefined gates: {', '.join(unknown_requires)}",
+                path=path,
+                code="schema",
+            )
+        if definition.stage.startswith("release_"):
+            raw = payload["gates"][definition.name]
+            required_fields = {"mode", "effect", "required_authority", "requires"}
+            missing_fields = sorted(required_fields - set(raw))
+            if missing_fields:
+                raise GovernanceError(
+                    f"release gate {definition.name} must explicitly declare: "
+                    + ", ".join(missing_fields),
+                    path=path,
+                    code="schema",
+                )
+            if definition.effect != "read-only" and definition.required_authority != "release":
+                raise GovernanceError(
+                    f"effectful release gate {definition.name} must require release authority",
+                    path=path,
+                    code="schema",
+                )
     return GateDefinitions(
         path,
         gates,
@@ -244,19 +297,22 @@ def plan_change(project_root: PathInput, change_name: str) -> GatePlanReport:
     definitions = load_gate_definitions(root, required=False)
     report = inspect_change_status(change)
     state = ChangeState.load(change / "mase-state.yaml")
-    profile = ProfileRegistry().get(report.profile)
-    test_schedule = {
-        str(stage): tuple(str(item) for item in checks)
-        for stage, checks in profile.test_schedule.items()
-    }
+    test_schedule = dict(state.gate_plan.test_schedule)
     missing_required_definitions = tuple(
         gate for gate in report.required_gates if gate not in definitions.gates
     )
-    incomplete_non_final = tuple(
+    incomplete_development = tuple(
         gate
         for gate in report.required_gates
         if gate in definitions.gates
-        and definitions.gates[gate].stage != "final"
+        and definitions.gates[gate].stage in DEVELOPMENT_PRE_FINAL_STAGES
+        and report.effective_gates.get(gate) not in PASSING_GATE_STATES
+    )
+    incomplete_analysis = tuple(
+        gate
+        for gate in report.required_gates
+        if gate in definitions.gates
+        and definitions.gates[gate].stage == "analysis"
         and report.effective_gates.get(gate) not in PASSING_GATE_STATES
     )
     instances = {}
@@ -278,9 +334,27 @@ def plan_change(project_root: PathInput, change_name: str) -> GatePlanReport:
         else:
             scopes = ("change",)
         for scope in scopes:
+            selection = _selection_for_gate(root, definition, state, scope)
             instance_key = name if scope == "change" else f"{name}@{scope}"
             effective = report.effective_gates.get(instance_key, "pending")
-            if definition.stage == "final" and not report.all_tasks_done:
+            if definition.stage.startswith("release_") and name not in report.required_gates:
+                status, reason = "blocked", "release gate is not selected by the active overlay and intent"
+                next_action = "enable an applicable Release Overlay intent"
+            elif definition.stage != "analysis" and incomplete_analysis:
+                first = incomplete_analysis[0]
+                status = "deferred"
+                reason = "required analysis gates are not fresh: " + ", ".join(
+                    incomplete_analysis
+                )
+                next_action = f"mase gate run {first} --change {change_name}"
+            elif definition.mode == "manual":
+                if effective in PASSING_GATE_STATES:
+                    status, reason = "reusable", "fresh manual evidence is available"
+                    next_action = "none"
+                else:
+                    status, reason = "manual", "gate requires declared manual evidence"
+                    next_action = f"mase evidence add --gate {name} --change {change_name}"
+            elif definition.stage == "final" and not report.all_tasks_done:
                 status, reason = "deferred", "tasks are not complete"
                 next_action = "complete remaining tasks"
             elif definition.stage == "final" and missing_required_definitions:
@@ -290,17 +364,17 @@ def plan_change(project_root: PathInput, change_name: str) -> GatePlanReport:
                     + ", ".join(missing_required_definitions)
                 )
                 next_action = "define missing gates in .mase/gates.yaml"
-            elif definition.stage == "final" and incomplete_non_final:
-                first = incomplete_non_final[0]
+            elif definition.stage == "final" and incomplete_development:
+                first = incomplete_development[0]
                 status = "deferred"
-                reason = "required non-final gates are not fresh: " + ", ".join(
-                    incomplete_non_final
+                reason = "required development gates are not fresh: " + ", ".join(
+                    incomplete_development
                 )
                 next_action = f"mase gate run {first} --change {change_name}"
                 first_definition = definitions.gates[first]
                 if first_definition.capabilities:
                     next_action += f" --scope {first_definition.capabilities[0]}"
-            elif definition.stage == "final" and definition.candidate_bound:
+            elif definition.candidate_bound:
                 freshness = candidate_freshness(root, change_name)
                 if freshness != "fresh":
                     status, reason = "deferred", f"candidate freeze is {freshness}"
@@ -325,6 +399,9 @@ def plan_change(project_root: PathInput, change_name: str) -> GatePlanReport:
             instances[instance_key] = PlannedGate(
                 name, definition.stage, status, reason, scope=scope,
                 next_action=next_action,
+                selected_tests=selection.test_ids if selection else (),
+                selection_reason=selection.reason if selection else "",
+                selection_fallback=selection.fallback if selection else "",
             )
     diagnostics = [*_overlap_diagnostics(definitions), *scope_diagnostics]
     for required_gate in report.required_gates:
@@ -354,6 +431,12 @@ def _candidate_inputs(root: Path, change: Path, definitions: GateDefinitions) ->
         if target.exists():
             inputs.add(target.relative_to(root).as_posix())
     inputs.add(definitions.path.relative_to(root).as_posix())
+    manifest = root / ".mase" / "tests.yaml"
+    if manifest.is_file():
+        inputs.add(manifest.relative_to(root).as_posix())
+    impact_artifact = change / "impact-analysis.yaml"
+    if impact_artifact.is_file():
+        inputs.add(impact_artifact.relative_to(root).as_posix())
     return tuple(sorted(inputs))
 
 
@@ -363,6 +446,21 @@ def freeze_candidate(project_root: PathInput, change_name: str) -> Candidate:
     definitions = load_gate_definitions(root, required=True)
     report = inspect_change_status(change)
     state = ChangeState.load(change / "mase-state.yaml")
+    if state.impact_analysis.get("applicability") == "required":
+        from mase_cli.impact import impact_status
+
+        impact_report = impact_status(change)
+        if not impact_report.consistent:
+            raise GovernanceError(
+                "cannot freeze candidate; impact analysis is inconsistent: "
+                + "; ".join(impact_report.issues),
+                code="blocked",
+            )
+        if impact_report.reconciliation != "matched":
+            raise GovernanceError(
+                f"cannot freeze candidate; impact reconciliation is {impact_report.reconciliation}",
+                code="blocked",
+            )
     if not report.all_tasks_done:
         raise GovernanceError("cannot freeze candidate while tasks remain", code="blocked")
     if state.blockers:
@@ -376,18 +474,19 @@ def freeze_candidate(project_root: PathInput, change_name: str) -> Candidate:
             + ", ".join(sorted(missing_definitions)),
             code="blocked",
         )
-    non_final = {
+    development_gates = {
         gate
         for gate in report.required_gates
-        if gate in definitions.gates and definitions.gates[gate].stage != "final"
+        if gate in definitions.gates
+        and definitions.gates[gate].stage in DEVELOPMENT_PRE_FINAL_STAGES
     }
     incomplete = [
-        gate for gate in sorted(non_final)
+        gate for gate in sorted(development_gates)
         if report.effective_gates.get(gate) not in PASSING_GATE_STATES
     ]
     if incomplete:
         raise GovernanceError(
-            "cannot freeze candidate; non-final gates are not fresh: " + ", ".join(incomplete),
+            "cannot freeze candidate; development gates are not fresh: " + ", ".join(incomplete),
             code="blocked",
         )
     inputs = _candidate_inputs(root, change, definitions)
@@ -415,7 +514,7 @@ def _test_digest(tests: Sequence[str]) -> str:
 
 def _execution_signature(
     command: Sequence[str], input_digest: str, test_digest: str,
-    candidate_id: str, scope: str,
+    candidate_id: str, scope: str, release_digest: str = "",
 ) -> str:
     payload = {
         "command": list(command),
@@ -423,6 +522,7 @@ def _execution_signature(
         "test_digest": test_digest,
         "candidate_id": candidate_id,
         "scope": scope,
+        "release_digest": release_digest,
         "platform": f"{platform.system()} {platform.release()} · Python {platform.python_version()}",
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
@@ -445,9 +545,75 @@ def _scoped_inputs(
             f"gate {definition.name} is not applicable to capability {scope}",
             code="conflict",
         )
-    return tuple(dict.fromkeys(
-        definition.inputs + (capability.paths if capability else ())
-    ))
+    inputs = definition.inputs + (capability.paths if capability else ())
+    if state.impact_analysis.get("applicability") == "required":
+        from mase_cli.impact import IMPACT_GATES
+
+        if definition.name in IMPACT_GATES:
+            relative = state.impact_analysis.get("artifact", "impact-analysis.yaml")
+            artifact = state.path.parent / str(relative)
+            inputs += (artifact.relative_to(state.path.parents[3]).as_posix(),)
+    return tuple(dict.fromkeys(inputs))
+
+
+def _selection_for_gate(
+    root: Path,
+    definition: GateDefinition,
+    state: ChangeState,
+    scope: str,
+) -> Optional[TestSelection]:
+    if not definition.test_tiers:
+        return None
+    manifest = load_test_manifest(root, required=False)
+    if manifest.legacy:
+        return TestSelection(
+            test_ids=definition.tests,
+            selectors=definition.tests,
+            tiers=definition.test_tiers,
+            reason="legacy_static_tests",
+            fallback="legacy_static_tests",
+        )
+    return select_tests(
+        manifest,
+        tiers=definition.test_tiers,
+        impact_paths=tuple(str(item) for item in state.impact.get("paths", [])),
+        capability_scope=None if scope == "change" else scope,
+        ui_changed=bool(state.impact.get("ui_changed", False)),
+    )
+
+
+def _selected_inputs(root: Path, selection: Optional[TestSelection]) -> tuple[str, ...]:
+    if selection is None:
+        return ()
+    values = []
+    manifest = root / ".mase" / "tests.yaml"
+    if manifest.is_file():
+        values.append(manifest.relative_to(root).as_posix())
+    for selector in selection.selectors:
+        candidate = root / selector
+        if candidate.exists():
+            values.append(selector)
+    return tuple(dict.fromkeys(values))
+
+
+def _materialize_command(
+    definition: GateDefinition,
+    selection: Optional[TestSelection],
+    change_name: str,
+) -> tuple[str, ...]:
+    if definition.test_tiers and (selection is None or not selection.selectors):
+        raise GovernanceError(
+            f"gate {definition.name} selected no tests for tiers: "
+            + ", ".join(definition.test_tiers),
+            code="blocked",
+        )
+    command = []
+    for item in definition.command:
+        if item == "{selected_tests}":
+            command.extend(selection.selectors if selection else ())
+        else:
+            command.append(item.replace("{change}", change_name))
+    return tuple(command)
 
 
 def _coverage_plan(
@@ -531,19 +697,72 @@ def execute_defined_gate(
         definition = definitions.gates[gate_name]
     except KeyError as exc:
         raise GovernanceError(f"gate is not defined: {gate_name}", code="not_found") from exc
+    if definition.mode != "automatic":
+        raise GovernanceError(
+            f"gate {gate_name} is manual and cannot be executed by Gate Runner",
+            code="conflict",
+        )
     if explicit_command and tuple(explicit_command) != definition.command:
         raise GovernanceError("explicit command conflicts with canonical gate definition", code="conflict")
     state = ChangeState.load(change / "mase-state.yaml")
-    scoped_inputs = _scoped_inputs(definition, state, scope)
+    if definition.stage != "analysis":
+        current_status = inspect_change_status(change)
+        incomplete_analysis = [
+            required
+            for required in state.gate_plan.required_gates
+            if required in definitions.gates
+            and definitions.gates[required].stage == "analysis"
+            and current_status.effective_gates.get(required) not in PASSING_GATE_STATES
+        ]
+        if incomplete_analysis:
+            raise GovernanceError(
+                "required analysis gates are not fresh: "
+                + ", ".join(sorted(incomplete_analysis)),
+                code="blocked",
+            )
+    if definition.stage.startswith("release_"):
+        if not state.release or gate_name not in state.gate_plan.required_gates:
+            raise GovernanceError(
+                f"release gate {gate_name} is not applicable to the active Release Overlay and intent",
+                code="blocked",
+            )
+        authority = str(state.release.get("authority", "read-only"))
+        if definition.required_authority == "release" and authority != "release":
+            raise GovernanceError(
+                f"release gate {gate_name} requires release authority; current authority is {authority}",
+                code="authority",
+            )
+        if definition.effect != "read-only" and authority == "read-only":
+            raise GovernanceError(
+                f"read-only authority cannot execute effectful release gate {gate_name}",
+                code="authority",
+            )
+        status = inspect_change_status(change)
+        incomplete = [
+            required for required in definition.requires
+            if status.effective_gates.get(required) not in PASSING_GATE_STATES
+        ]
+        if incomplete:
+            raise GovernanceError(
+                f"release gate {gate_name} requires fresh predecessor evidence: "
+                + ", ".join(incomplete),
+                code="blocked",
+            )
+    selection = _selection_for_gate(root, definition, state, scope)
+    scoped_inputs = tuple(dict.fromkeys(
+        _scoped_inputs(definition, state, scope) + _selected_inputs(root, selection)
+    ))
     if explicit_inputs and tuple(explicit_inputs) != scoped_inputs:
         raise GovernanceError("explicit inputs conflict with canonical gate definition", code="conflict")
     if explicit_artifacts and tuple(explicit_artifacts) != definition.artifacts:
         raise GovernanceError("explicit artifacts conflict with canonical gate definition", code="conflict")
 
     candidate_id = ""
-    if definition.stage == "final" and definition.candidate_bound:
+    if definition.candidate_bound:
         if candidate_freshness(root, change_name) != "fresh":
-            raise GovernanceError("final gate requires a fresh frozen candidate", code="blocked")
+            raise GovernanceError(
+                f"{definition.stage} gate requires a fresh frozen candidate", code="blocked"
+            )
         candidate_id = str(ChangeState.load(change / "mase-state.yaml").candidate.get("id", ""))
 
     coverage = _coverage_plan(
@@ -551,9 +770,20 @@ def execute_defined_gate(
     )
 
     current_input_digest = path_digest(root, scoped_inputs)
-    tests_digest = _test_digest(definition.tests)
+    tests_digest = selection.digest if selection else _test_digest(definition.tests)
+    execution_command = _materialize_command(definition, selection, change_name)
+    release_digest = ""
+    if definition.stage.startswith("release_"):
+        from mase_cli.release import release_context_digest
+
+        release_digest = release_context_digest(state.release)
     signature = _execution_signature(
-        definition.command, current_input_digest, tests_digest, candidate_id, scope
+        execution_command,
+        current_input_digest,
+        tests_digest,
+        candidate_id,
+        scope,
+        release_digest,
     )
     state = ChangeState.load(change / "mase-state.yaml")
     for record in reversed(state.evidence):
@@ -562,6 +792,7 @@ def execute_defined_gate(
             and record.scope == scope
             and record.result == "passed"
             and record.execution_signature == signature
+            and record.release_digest == release_digest
             and assess_evidence(record, root, scoped_inputs) == "fresh"
         ):
             _fan_out_coverage(
@@ -577,13 +808,17 @@ def execute_defined_gate(
         root,
         change / "mase-state.yaml",
         gate_name,
-        definition.command,
+        execution_command,
         scoped_inputs,
         definition.artifacts,
         scope=scope,
         candidate_id=candidate_id,
         test_digest=tests_digest,
         execution_signature=signature,
+        release_digest=release_digest,
+        selected_tests=selection.test_ids if selection else definition.tests,
+        selection_reason=selection.reason if selection else "static_gate_tests",
+        selection_fallback=selection.fallback if selection else "",
         retention=definitions.retention,
         stream_output=stream_output,
     )

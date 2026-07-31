@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from mase_cli.commands import check_project, doctor, install_framework, metrics, status, update_project
 from mase_cli import main as cli
@@ -60,7 +61,67 @@ def test_metrics_usage_precedence_and_tool_output_proxy(tmp_path, monkeypatch):
     assert explicit["tokens"]["input"] == 1
     assert explicit["source"] == "explicit"
     assert proxy["tool_output_characters"] == 123
-    assert proxy["kind"] == "context_proxy"
+
+
+def test_test_automation_metrics_separate_actual_evidence_and_manual_source(tmp_path):
+    manifest = tmp_path / ".mase" / "tests.yaml"
+    manifest.parent.mkdir()
+    manifest.write_text(yaml.safe_dump({
+        "schema": "mase-test-manifest/v1",
+        "tests": [
+            {
+                "id": "auth-login", "tier": "p0_journey", "runner": "playwright",
+                "selectors": ["e2e/auth.spec.js"], "capabilities": ["auth"],
+                "paths": ["templates/login.html"], "acceptance": "用户登录",
+            },
+            {
+                "id": "settings-errors", "tier": "p1_regression", "runner": "playwright",
+                "selectors": ["e2e/settings.spec.js"], "capabilities": ["settings"],
+                "paths": ["templates/settings.html"],
+            },
+        ],
+    }, sort_keys=False), encoding="utf-8")
+    state = tmp_path / "openspec" / "changes" / "demo" / "mase-state.yaml"
+    state.parent.mkdir(parents=True)
+    state.write_text(yaml.safe_dump({
+        "schema": "mase-project/v2", "profile": "lite", "stack": "generic",
+        "phase": "verify", "risk": {"triggers": []}, "gates": {"p0_e2e": "passed"},
+        "evidence": [
+            {
+                "gate": "p0_e2e", "kind": "automatic", "result": "passed",
+                "at": "2026-01-01T00:00:00Z", "duration_seconds": 4, "exit_code": 0,
+                "command": ["test"], "platform": "test", "commit": None,
+                "worktree": "x", "input_digest": "x", "log_path": "log",
+                "attempts": 1, "first_attempt_result": "passed",
+            },
+            {
+                "gate": "p0_e2e", "kind": "automatic", "result": "passed",
+                "at": "2026-01-02T00:00:00Z", "duration_seconds": 6, "exit_code": 0,
+                "command": ["test"], "platform": "test", "commit": None,
+                "worktree": "x", "input_digest": "x", "log_path": "log",
+                "attempts": 2, "first_attempt_result": "failed",
+                "failure_classification": "flaky",
+            },
+        ],
+    }, sort_keys=False), encoding="utf-8")
+
+    report = metrics.collect_test_automation_metrics(
+        tmp_path,
+        manual_regression_minutes=15,
+        manual_regression_source="timesheet:demo",
+    )
+
+    assert report["kind"] == "actual_test_evidence"
+    assert report["p0"]["runs"] == 2
+    assert report["p0"]["first_pass_rate"] == 0.5
+    assert report["p0"]["flaky_rate"] == 0.5
+    assert report["p0"]["duration_seconds"] == 10
+    assert report["capability_journey_coverage"] == {
+        "covered": 1, "eligible": 2, "rate": 0.5,
+    }
+    assert report["manual_regression"] == {
+        "kind": "actual", "minutes": 15.0, "source": "timesheet:demo",
+    }
 
 
 def test_status_returns_non_success_for_inconsistent_change(tmp_path):
@@ -107,6 +168,49 @@ def test_update_dry_run_never_creates_backup_or_modifies_project(tmp_path):
 
     assert (project / ".mase.yaml").read_text() == original
     assert not (project / ".mase-backup").exists()
+
+
+def test_update_plan_adds_missing_test_manifest_without_overwriting_existing(tmp_path):
+    project = tmp_path / "project"
+    framework = tmp_path / "framework"
+    project.mkdir()
+    (framework / "templates").mkdir(parents=True)
+    (project / ".mase.yaml").write_text("mase:\n  version: '1.3'\n")
+    (framework / "project-rules.md").write_text("# rules\n")
+    (framework / "templates" / "tests.yaml").write_text(
+        "schema: mase-test-manifest/v1\ntests: []\n", encoding="utf-8"
+    )
+
+    changes = update_project.check_updates(project, framework)
+
+    manifest = next(item for item in changes if item["component"] == ".mase/tests.yaml")
+    assert manifest["action"] == "create"
+    existing = project / ".mase" / "tests.yaml"
+    existing.parent.mkdir()
+    existing.write_text("schema: mase-test-manifest/v1\ntests: []\n", encoding="utf-8")
+    second = update_project.check_updates(project, framework)
+    assert not any(item["component"] == ".mase/tests.yaml" for item in second)
+
+
+def test_update_plan_adds_impact_template_without_touching_change_artifacts(tmp_path):
+    project = tmp_path / "project"
+    framework = tmp_path / "framework"
+    project.mkdir()
+    (framework / "templates").mkdir(parents=True)
+    (project / ".mase.yaml").write_text("mase:\n  version: '1.3'\n")
+    (framework / "project-rules.md").write_text("# rules\n")
+    (framework / "templates" / "impact-analysis.yaml").write_text(
+        "schema: mase-impact-analysis/v1\napplicability: required\n", encoding="utf-8"
+    )
+
+    changes = update_project.check_updates(project, framework)
+
+    template = next(
+        item for item in changes
+        if item["component"] == ".mase/impact-analysis.template.yaml"
+    )
+    assert template["action"] == "create"
+    assert not any("openspec/changes" in item["component"] for item in changes)
 
 
 def test_install_runtime_uses_manifest_boundary_and_excludes_content(tmp_path):
