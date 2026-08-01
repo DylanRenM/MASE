@@ -1,4 +1,4 @@
-<!-- MASE:CORE:START source_hash=a0fb9d893812f96867488c85041827aa868d7e2f8209fc7791143b9f11259d6a -->
+<!-- MASE:CORE:START source_hash=6f78154fa77f9bdffc04a7a7480b19fe6d948ff1f98e066be2734582ba5c2142 -->
 # MASE v2 核心工程规则
 
 > 唯一人工维护规则源。IDE 适配文件由工具生成；详细规范按任务读取，禁止全量预加载。

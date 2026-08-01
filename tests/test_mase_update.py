@@ -104,6 +104,20 @@ def _read(path):
 # Tests: update_project 模块函数
 # ================================================================
 
+def test_distributed_canonical_rules_have_valid_core_hash():
+    """分发源自身及其 IDE adapter 必须保持 canonical 一致。"""
+    from mase_cli.commands.update_project import _rule_sections
+    from mase_cli.rules import RuleSynchronizer
+
+    root = Path(__file__).resolve().parents[1]
+    canonical = root / "project-rules.md"
+    sections = _rule_sections(canonical.read_text(encoding="utf-8"))
+
+    assert sections is not None
+    for relative, expected in RuleSynchronizer(canonical).render_all().items():
+        assert (root / relative).read_text(encoding="utf-8") == expected
+
+
 class TestCheckUpdates:
     """测试 check_updates() — 检测需要更新的组件。"""
 
