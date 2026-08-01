@@ -10,3 +10,4 @@ __pycache__/
 *.egg-info/
 .venv/
 node_modules/
+e2e/sandbox/

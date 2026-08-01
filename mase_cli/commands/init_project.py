@@ -9,7 +9,7 @@ from typing import Iterable, Optional
 
 import yaml
 
-from mase_cli.config import framework_home, load_manifest
+from mase_cli.config import SANDBOX_SUBDIRS, framework_home, load_manifest
 from mase_cli.profiles import ProfileRegistry
 from mase_cli.rules import RuleSynchronizer
 
@@ -50,6 +50,7 @@ def _common_project_files(project: Path, name: str, stack: str, profile: str, ro
             "project": name,
             "profile": profile,
             "stack": stack,
+            "toolchains": [],
         }
     }
     _write(project / ".mase.yaml", yaml.safe_dump(metadata, sort_keys=False, allow_unicode=True))
@@ -86,6 +87,16 @@ def _common_project_files(project: Path, name: str, stack: str, profile: str, ro
             project / ".mase" / "impact-analysis.template.yaml",
             impact_template.read_text(encoding="utf-8"),
         )
+    sandbox_template = root / "templates" / "sandbox.config.json"
+    if sandbox_template.is_file():
+        _write(
+            project / "sandbox.config.json",
+            sandbox_template.read_text(encoding="utf-8"),
+        )
+    if stack != "generic":
+        sandbox = project / "tests" / "e2e" / "sandbox"
+        for child in SANDBOX_SUBDIRS:
+            (sandbox / child).mkdir(parents=True, exist_ok=True)
     for directory in ("openspec/changes", "docs", "scripts"):
         (project / directory).mkdir(parents=True, exist_ok=True)
     canonical_rules = root / str(manifest["canonical"]["rules"])

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mase_cli.commands import check_project, init_project
+from mase_cli.commands import check_project, init_project, update_project
 
 
 def init_args(tmp_path, name, stack, profile, package=None):
@@ -43,6 +43,16 @@ def test_init_generic_lite_creates_only_common_mase_files(tmp_path):
     assert impact_template["schema"] == "mase-impact-analysis/v1"
     assert not (project / "pyproject.toml").exists()
     assert not (project / "Package.swift").exists()
+
+
+@pytest.mark.parametrize("stack", ["generic", "python", "swift"])
+def test_fresh_init_requires_no_same_version_update(tmp_path, stack):
+    project = init_project.run(init_args(tmp_path, f"current-{stack}", stack, "lite"))
+    framework = Path(__file__).resolve().parents[1]
+
+    changes = update_project.check_updates(project, framework)
+
+    assert changes == []
 
 
 def test_legacy_python_arguments_remain_compatible(tmp_path):

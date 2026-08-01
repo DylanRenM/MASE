@@ -12,14 +12,17 @@ from typing import Optional, Union
 
 import yaml
 
-from mase_cli.config import framework_home as resolve_framework_home, load_manifest
+from mase_cli.config import (
+    REQUIRED_GITIGNORE_ENTRIES,
+    SANDBOX_SUBDIRS,
+    framework_home as resolve_framework_home,
+    load_manifest,
+)
 from mase_cli.rules import RuleSynchronizer
 from mase_cli.schema import GovernanceError, load_yaml_document, validate_payload
 
 
 LEGACY_VERSION = "1.3"
-REQUIRED_GITIGNORE_ENTRIES = ["e2e/sandbox/", ".mase-backup/", ".mase/cache/"]
-SANDBOX_SUBDIRS = ["uploads", "exports", "logs", "snapshots", "backups"]
 PathInput = Union[str, Path]
 ALLOWED_STACKS = {"generic", "python", "swift"}
 CORE_RULES_PATTERN = re.compile(
@@ -385,7 +388,9 @@ def check_updates(project_dir: PathInput = ".", framework_home: Optional[PathInp
             changes.append(candidate)
 
     sandbox = project / "tests" / "e2e" / "sandbox"
-    if any(not (sandbox / child).is_dir() for child in SANDBOX_SUBDIRS):
+    if migrated_metadata.get("stack") != "generic" and any(
+        not (sandbox / child).is_dir() for child in SANDBOX_SUBDIRS
+    ):
         changes.append(_change("tests/e2e/sandbox/", "create", "sandbox directories are incomplete"))
 
     gitignore = project / ".gitignore"

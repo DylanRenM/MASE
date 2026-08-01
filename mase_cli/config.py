@@ -11,6 +11,8 @@ import yaml
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+REQUIRED_GITIGNORE_ENTRIES = ("e2e/sandbox/", ".mase-backup/", ".mase/cache/")
+SANDBOX_SUBDIRS = ("uploads", "exports", "logs", "snapshots", "backups")
 
 
 PathInput = Union[str, os.PathLike]
