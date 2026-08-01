@@ -45,3 +45,24 @@ The editable training source and generated PPTX MUST include the full release pr
 #### Scenario: Training deck verification runs
 - **WHEN** the deck is rebuilt and verified from the editable YAML
 - **THEN** required state vocabulary, version, editability, geometry, logo, and bounds checks all pass
+
+### Requirement: 完整课件与当前运行时一致
+MASE SHALL 从当前规则、Profile、Schema 和已归档 Specs 验证 66 页培训课件的关键说法，并 SHALL 阻止旧门禁名称、旧提交节奏、固定 37 页或采用项目专属规则进入当前课件。
+
+#### Scenario: 执行培训一致性验证
+- **WHEN** 运行框架全量回归
+- **THEN** 验证器检查当前六项原则、六步主线、影响链、上下文预算、证据索引、测试分层和发布附加流程均存在且无禁用旧说法
+
+### Requirement: 培训资产不进入默认 Agent 上下文
+扩展后的 YAML、PPTX、PDF 或预览图 SHALL 继续位于培训资产边界并默认从开发 Agent 上下文排除，除非当前任务明确修改或评审培训材料。
+
+#### Scenario: 普通代码工作包规划上下文
+- **WHEN** change 不涉及培训内容
+- **THEN** 66 页课件和其生成产物不进入默认上下文计划或 Token 代理统计
+
+### Requirement: 设计宗旨在框架表面一致
+MASE 唯一规则源、README、现行框架/用户/设计文档、Agent 指引和当前培训课件 SHALL 对顶层设计宗旨保持语义一致，并 MUST NOT 把单纯生成更多代码、减少测试或跳过评审表述为框架目标。
+
+#### Scenario: 同步核心规则后执行一致性检查
+- **WHEN** 顶层设计宗旨被修改或重新表述
+- **THEN** 自动验证确认核心文档、生成的 IDE adapter 和培训课件均包含一致的五个结果维度

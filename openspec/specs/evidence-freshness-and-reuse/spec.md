@@ -57,3 +57,46 @@ The system SHALL compact state evidence per gate instance to a bounded audit set
 #### Scenario: Gate is rerun many times
 - **WHEN** more than the configured retention count exists for one gate instance
 - **THEN** `mase-state.yaml` retains only the bounded relevant records and status remains determined by the latest evidence
+
+### Requirement: Impact evidence freshness uses semantic inputs
+Impact analysis and review evidence SHALL be fresh only when baseline/diff identity, changed paths/symbols, affected Specs/contracts, scanner adapter/rules, implicit-channel checks, affected scope, test plan, decision, and candidate binding match the current change.
+
+#### Scenario: Scanner rules change after approval
+- **WHEN** the adapter or rule-set digest changes after impact review passes
+- **THEN** analysis and dependent review evidence become stale even if source files are unchanged
+
+#### Scenario: Unrelated capability changes
+- **WHEN** a file outside the impact gate's canonical Capability scope changes
+- **THEN** fresh scoped analysis MAY be reused when every execution-signature input remains identical
+
+### Requirement: Reconciliation invalidates planned-only evidence
+Planned impact evidence MUST NOT satisfy post-implementation reconciliation. Reconciliation SHALL bind the actual diff and SHALL invalidate dependent test/review evidence when realized scope expands.
+
+#### Scenario: Actual diff adds an affected boundary
+- **WHEN** reconciliation finds a system boundary absent from the planned analysis
+- **THEN** the prior level, review, and selected verification evidence become stale and the GatePlan is recomputed
+
+### Requirement: Matched reconciliation is continuously revalidated
+MASE SHALL recompute the canonical digest of the reconciled actual paths whenever impact status, dependent gate planning, or candidate freeze is evaluated. A previously matched artifact MUST become inconsistent or stale when any bound path changes after reconciliation.
+
+#### Scenario: Source changes after a matched reconciliation
+- **WHEN** an approved source file changes after `impact_reconcile` records matched status
+- **THEN** impact status reports the actual-diff digest as stale and candidate freeze remains blocked until reconciliation runs again
+
+### Requirement: 缓存键绑定完整验证环境
+自动 evidence 的缓存键 MUST 包含 gate 命令、规范化 Test ID/selector 集、源码与测试输入摘要、依赖锁摘要、工具链版本、fixture/config 摘要、候选 ID、scope 和适用 release context。
+
+#### Scenario: 依赖锁变化
+- **WHEN** 源码与测试未变但 dependency lock digest 变化
+- **THEN** 旧 evidence 不得命中缓存或覆盖新执行
+
+#### Scenario: 完全相同执行对象
+- **WHEN** 所有缓存键分量相同且 evidence fresh
+- **THEN** Gate Runner 复用已有 execution 并报告 cache hit
+
+### Requirement: 跨 gate 覆盖要求等价或更严格
+源 gate 只有在测试集合与输入为目标超集、候选相同、工具链和依赖相同、fixture/config 等价且环境相同或更严格时 SHALL 产生 subsumed evidence。
+
+#### Scenario: Fixture 不等价
+- **WHEN** 源 gate 使用 mock fixture 而目标要求受控真实持久化
+- **THEN** 覆盖被拒绝，目标 gate 保持待执行
