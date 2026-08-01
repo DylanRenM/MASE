@@ -50,4 +50,3 @@ The system SHALL compact state evidence per gate instance to a bounded audit set
 #### Scenario: Gate is rerun many times
 - **WHEN** more than the configured retention count exists for one gate instance
 - **THEN** `mase-state.yaml` retains only the bounded relevant records and status remains determined by the latest evidence
-

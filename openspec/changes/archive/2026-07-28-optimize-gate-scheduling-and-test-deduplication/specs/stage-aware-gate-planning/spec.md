@@ -46,4 +46,3 @@ Projects without `.mase/gates.yaml` SHALL remain readable and SHALL be allowed t
 #### Scenario: Legacy project runs a gate
 - **WHEN** an existing project without a gate definition file invokes `mase gate run GATE -- COMMAND`
 - **THEN** the command executes with the existing evidence contract and the CLI reports that canonical planning/reuse is not active
-
