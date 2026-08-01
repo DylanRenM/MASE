@@ -1,23 +1,22 @@
 /**
- * E2E Sandbox — 环境隔离与自动恢复
+ * E2E Sandbox — containment-safe snapshot, restore, and verification.
  *
- * 三层防线：
- *   1. 状态快照与恢复 — beforeAll 捕获快照，afterAll 恢复
- *   2. 写入重定向      — 通过环境变量将写操作定向到临时目录
- *   3. 环境健康检查    — 恢复后验证一致性
- *
- * 用法（在 spec 文件中）：
- *   import { snapshot, restore, verify } from '../helpers/sandbox.js';
- *   test.beforeAll(async () => { await snapshot(); });
- *   test.afterAll(async () => { await restore(); await verify(); });
+ * All configured filesystem paths are project-relative, canonicalized, and
+ * constrained by safety.allowed_roots before they are read or mutated.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { execSync } from 'node:child_process';
 
-// ---- 配置加载 ----
+const WINDOWS_ABSOLUTE = /^(?:[A-Za-z]:[\\/]|\\\\)/;
+
+let _snapshotData = null;
+let _config = null;
+let _snapshotPath = null;
+let _projectRoot = null;
+let _allowedRoots = [];
+let _neverBackup = [];
 
 function loadConfig() {
   const configPath = path.resolve(process.cwd(), 'sandbox.config.json');
@@ -25,13 +24,100 @@ function loadConfig() {
     console.warn('[sandbox] sandbox.config.json 未找到，使用默认空配置（仅监控 .env）');
     return {
       snapshot: { directories: [], files: ['.env'], env_vars: [] },
-      validation: { strict: true }
+      validation: { strict: true },
+      safety: { allowed_roots: ['.'], never_backup: [] }
     };
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 }
 
-// ---- 文件哈希 ----
+function relativeParts(value) {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error('[sandbox] 路径必须是非空项目相对路径');
+  }
+  if (path.isAbsolute(value) || WINDOWS_ABSOLUTE.test(value)) {
+    throw new Error(`[sandbox] 拒绝绝对路径: ${value}`);
+  }
+  const parts = value.replaceAll('\\', '/').split('/');
+  if (parts.includes('..')) {
+    throw new Error(`[sandbox] 拒绝路径穿越: ${value}`);
+  }
+  return parts.filter(part => part && part !== '.');
+}
+
+function isWithin(candidate, root) {
+  const relative = path.relative(root, candidate);
+  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+}
+
+function canonicalizeCandidate(candidate) {
+  let cursor = candidate;
+  const suffix = [];
+  while (!fs.existsSync(cursor)) {
+    const parent = path.dirname(cursor);
+    if (parent === cursor) break;
+    suffix.unshift(path.basename(cursor));
+    cursor = parent;
+  }
+  const canonicalParent = fs.realpathSync.native(cursor);
+  return path.join(canonicalParent, ...suffix);
+}
+
+function projectRelative(value) {
+  const parts = relativeParts(value);
+  const candidate = path.resolve(_projectRoot, ...parts);
+  if (!isWithin(candidate, _projectRoot)) {
+    throw new Error(`[sandbox] 路径越过项目根目录: ${value}`);
+  }
+  return { value, candidate, canonical: canonicalizeCandidate(candidate) };
+}
+
+function configureSafety(config) {
+  _projectRoot = fs.realpathSync.native(process.cwd());
+  const safety = config.safety || {};
+  const configuredRoots = safety.allowed_roots?.length ? safety.allowed_roots : ['.'];
+  _allowedRoots = configuredRoots.map(value => {
+    const resolved = projectRelative(value);
+    if (!isWithin(resolved.canonical, _projectRoot)) {
+      throw new Error(`[sandbox] allowed_root 越过项目根目录: ${value}`);
+    }
+    return resolved.canonical;
+  });
+  _neverBackup = (safety.never_backup || []).map(value => String(value).replaceAll('\\', '/'));
+}
+
+function resolveManagedPath(value) {
+  const resolved = projectRelative(value);
+  if (!_allowedRoots.some(root => isWithin(resolved.canonical, root))) {
+    throw new Error(`[sandbox] 路径不在 safety.allowed_roots 内: ${value}`);
+  }
+  return resolved.candidate;
+}
+
+function assertManagedAbsolute(candidate, label) {
+  const canonical = canonicalizeCandidate(candidate);
+  if (!_allowedRoots.some(root => isWithin(canonical, root))) {
+    throw new Error(`[sandbox] ${label} 解析后越过 safety.allowed_roots`);
+  }
+  return candidate;
+}
+
+function globMatch(value, pattern) {
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replaceAll('**', '\u0000')
+    .replaceAll('*', '[^/]*')
+    .replaceAll('?', '[^/]')
+    .replaceAll('\u0000', '.*');
+  return new RegExp(`^${escaped}$`).test(value);
+}
+
+function isNeverBackup(candidate) {
+  const relative = path.relative(_projectRoot, candidate).split(path.sep).join('/');
+  return _neverBackup.some(pattern =>
+    globMatch(relative, pattern) || globMatch(path.basename(relative), pattern)
+  );
+}
 
 function fileHash(filePath) {
   if (!fs.existsSync(filePath)) return null;
@@ -39,372 +125,204 @@ function fileHash(filePath) {
   return crypto.createHash('sha256').update(content).digest('hex');
 }
 
-// ---- 目录快照 ----
-
 function dirSnapshot(dirPath) {
   if (!fs.existsSync(dirPath)) return null;
+  assertManagedAbsolute(dirPath, dirPath);
   const result = {};
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-  for (const entry of entries) {
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
     const fullPath = path.join(dirPath, entry.name);
-    if (entry.isFile()) {
-      result[entry.name] = fileHash(fullPath);
-    } else if (entry.isDirectory()) {
-      result[entry.name + '/'] = dirSnapshot(fullPath);
+    assertManagedAbsolute(fullPath, fullPath);
+    if (entry.isSymbolicLink()) {
+      throw new Error(`[sandbox] 拒绝快照符号链接: ${path.relative(_projectRoot, fullPath)}`);
     }
+    if (isNeverBackup(fullPath)) continue;
+    if (entry.isFile()) result[entry.name] = fileHash(fullPath);
+    else if (entry.isDirectory()) result[`${entry.name}/`] = dirSnapshot(fullPath);
   }
   return result;
 }
-
-// ---- 环境变量快照 ----
 
 function envSnapshot(varNames) {
-  const result = {};
-  for (const name of varNames) {
-    result[name] = process.env[name] || null;
-  }
-  return result;
+  return Object.fromEntries(varNames.map(name => [name, process.env[name] ?? null]));
 }
-
-// ---- 配置文件解析 ----
 
 function parseConfigFile(filePath) {
   if (!fs.existsSync(filePath)) return null;
   const ext = path.extname(filePath).toLowerCase();
   const content = fs.readFileSync(filePath, 'utf-8');
-
   if (ext === '.env') {
-    // .env 文件解析
     const result = {};
-    const lines = content.split('\n');
-    for (const line of lines) {
+    for (const line of content.split('\n')) {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#')) continue;
-      const eqIdx = trimmed.indexOf('=');
-      if (eqIdx > 0) {
-        result[trimmed.slice(0, eqIdx).trim()] = trimmed.slice(eqIdx + 1).trim();
-      }
+      const index = trimmed.indexOf('=');
+      if (index > 0) result[trimmed.slice(0, index).trim()] = trimmed.slice(index + 1).trim();
     }
     return result;
   }
-
-  if (ext === '.json') {
-    return JSON.parse(content);
-  }
-
-  if (ext === '.yaml' || ext === '.yml') {
-    // 简单 YAML 解析（仅支持顶层键值对）
-    const result = {};
-    const lines = content.split('\n');
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const colonIdx = trimmed.indexOf(':');
-      if (colonIdx > 0 && !trimmed.startsWith(' ') && !trimmed.startsWith('\t')) {
-        result[trimmed.slice(0, colonIdx).trim()] = trimmed.slice(colonIdx + 1).trim();
-      }
-    }
-    return result;
-  }
-
-  // 未知格式：记录原始内容哈希
+  if (ext === '.json') return JSON.parse(content);
   return { _raw_hash: fileHash(filePath) };
 }
 
-// ---- 快照存储路径 ----
-
 function getSnapshotDir() {
-  return path.resolve(process.cwd(), 'e2e/sandbox/snapshots');
+  return path.resolve(_projectRoot || process.cwd(), 'e2e/sandbox/snapshots');
 }
 
-function ensureSnapshotDir() {
-  const dir = getSnapshotDir();
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+function getBackupDir() {
+  return path.resolve(_projectRoot || process.cwd(), 'e2e/sandbox/backups');
+}
+
+function ensureInternalDir(dir) {
+  if (!isWithin(dir, _projectRoot)) throw new Error('[sandbox] 内部存储越过项目根目录');
+  fs.mkdirSync(dir, { recursive: true });
 }
 
 function snapshotFilePath() {
-  // 每个 spec 文件一个快照文件，用时间戳 + PID 区分
-  const pid = process.pid;
-  const ts = Date.now();
-  return path.join(getSnapshotDir(), `snapshot_${pid}_${ts}.json`);
+  return path.join(getSnapshotDir(), `snapshot_${process.pid}_${Date.now()}.json`);
 }
 
-// ---- 备份目录 ----
-
-function getBackupDir() {
-  return path.resolve(process.cwd(), 'e2e/sandbox/backups');
+function backupPathFor(candidate) {
+  const relative = path.relative(_projectRoot, candidate);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`[sandbox] 无法为越界路径创建备份: ${candidate}`);
+  }
+  const target = path.join(getBackupDir(), 'files', `${relative}.backup`);
+  if (!isWithin(target, getBackupDir())) throw new Error('[sandbox] 备份路径越界');
+  return target;
 }
 
-function ensureBackupDir() {
-  const dir = getBackupDir();
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+function backupFile(candidate) {
+  if (!fs.existsSync(candidate) || isNeverBackup(candidate)) return;
+  assertManagedAbsolute(candidate, candidate);
+  const target = backupPathFor(candidate);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.copyFileSync(candidate, target);
+}
+
+function backupDirectory(dirPath) {
+  if (!fs.existsSync(dirPath)) return;
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+    const fullPath = path.join(dirPath, entry.name);
+    assertManagedAbsolute(fullPath, fullPath);
+    if (entry.isSymbolicLink()) throw new Error(`[sandbox] 拒绝备份符号链接: ${fullPath}`);
+    if (isNeverBackup(fullPath)) continue;
+    if (entry.isFile()) backupFile(fullPath);
+    else if (entry.isDirectory()) backupDirectory(fullPath);
   }
 }
 
-/**
- * 递归备份目录内所有文件
- */
-function backupDirectory(dirPath, basePath = '') {
-  if (!fs.existsSync(dirPath)) return;
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dirPath, entry.name);
-    const relPath = basePath ? path.join(basePath, entry.name) : entry.name;
-    if (entry.isFile()) {
-      const backupPath = path.join(getBackupDir(), relPath + '.backup');
-      const backupParent = path.dirname(backupPath);
-      if (!fs.existsSync(backupParent)) {
-        fs.mkdirSync(backupParent, { recursive: true });
+function restoreTree(rootPath, original, errors) {
+  if (original === null) {
+    if (fs.existsSync(rootPath)) fs.rmSync(assertManagedAbsolute(rootPath, rootPath), { recursive: true, force: true });
+    return;
+  }
+  fs.mkdirSync(rootPath, { recursive: true });
+  const currentNames = new Set(fs.readdirSync(rootPath));
+  const originalNames = new Set(Object.keys(original).map(name => name.endsWith('/') ? name.slice(0, -1) : name));
+  for (const name of currentNames) {
+    const candidate = path.join(rootPath, name);
+    assertManagedAbsolute(candidate, candidate);
+    if (isNeverBackup(candidate)) continue;
+    if (!originalNames.has(name)) fs.rmSync(candidate, { recursive: true, force: true });
+  }
+  for (const [name, value] of Object.entries(original)) {
+    const cleanName = name.endsWith('/') ? name.slice(0, -1) : name;
+    const candidate = path.join(rootPath, cleanName);
+    assertManagedAbsolute(candidate, candidate);
+    if (name.endsWith('/')) {
+      restoreTree(candidate, value, errors);
+    } else if (fileHash(candidate) !== value) {
+      const backup = backupPathFor(candidate);
+      if (!fs.existsSync(backup)) errors.push(`无法恢复 ${path.relative(_projectRoot, candidate)}：备份不存在`);
+      else {
+        fs.mkdirSync(path.dirname(candidate), { recursive: true });
+        fs.copyFileSync(backup, candidate);
       }
-      fs.copyFileSync(fullPath, backupPath);
-    } else if (entry.isDirectory()) {
-      backupDirectory(fullPath, relPath);
     }
   }
 }
 
-// ================================================================
-//  公开 API
-// ================================================================
-
-let _snapshotData = null;
-let _config = null;
-let _snapshotPath = null;
-
-/**
- * 捕获环境快照
- * 在 beforeAll 中调用
- */
 export async function snapshot() {
   _config = loadConfig();
-  ensureSnapshotDir();
-  ensureBackupDir();
+  configureSafety(_config);
+  ensureInternalDir(getSnapshotDir());
+  ensureInternalDir(getBackupDir());
   _snapshotPath = snapshotFilePath();
-
-  console.log('[sandbox] 捕获环境快照...');
-
-  const snap = {
-    timestamp: new Date().toISOString(),
-    directories: {},
-    files: {},
-    env_vars: {}
-  };
-
-  // 目录快照（含备份）
-  for (const dir of _config.snapshot.directories || []) {
-    const absPath = path.resolve(process.cwd(), dir);
-    snap.directories[dir] = dirSnapshot(absPath);
-    // 备份目录内所有文件
-    backupDirectory(absPath);
+  const snap = { timestamp: new Date().toISOString(), directories: {}, files: {}, env_vars: {} };
+  for (const dir of _config.snapshot?.directories || []) {
+    const absolute = resolveManagedPath(dir);
+    snap.directories[dir] = dirSnapshot(absolute);
+    backupDirectory(absolute);
   }
-
-  // 文件快照（含备份）
-  for (const file of _config.snapshot.files || []) {
-    const absPath = path.resolve(process.cwd(), file);
-    snap.files[file] = {
-      hash: fileHash(absPath),
-      parsed: parseConfigFile(absPath)
-    };
-    // 备份文件内容
-    if (fs.existsSync(absPath)) {
-      const backupPath = path.join(getBackupDir(), path.basename(file) + '.backup');
-      fs.copyFileSync(absPath, backupPath);
-    }
+  for (const file of _config.snapshot?.files || []) {
+    const absolute = resolveManagedPath(file);
+    if (isNeverBackup(absolute)) continue;
+    snap.files[file] = { hash: fileHash(absolute), parsed: parseConfigFile(absolute) };
+    backupFile(absolute);
   }
-
-  // 环境变量快照
-  snap.env_vars = envSnapshot(_config.snapshot.env_vars || []);
-
+  snap.env_vars = envSnapshot(_config.snapshot?.env_vars || []);
   _snapshotData = snap;
   fs.writeFileSync(_snapshotPath, JSON.stringify(snap, null, 2), 'utf-8');
-  console.log(`[sandbox] 快照已保存: ${_snapshotPath}`);
 }
 
-/**
- * 恢复环境到快照状态
- * 在 afterAll 中调用
- */
 export async function restore() {
-  if (!_snapshotData || !_config) {
-    console.warn('[sandbox] 无快照数据，跳过恢复');
-    return;
-  }
-
-  console.log('[sandbox] 恢复环境...');
-  const snap = _snapshotData;
+  if (!_snapshotData || !_config) return;
   const errors = [];
-
-  // 恢复目录：删除快照中不存在的新增文件
-  for (const dir of _config.snapshot.directories || []) {
-    const absPath = path.resolve(process.cwd(), dir);
-    if (!fs.existsSync(absPath)) continue;
-
-    const currentSnap = dirSnapshot(absPath);
-    const originalSnap = snap.directories[dir];
-
-    if (!originalSnap) continue;
-
-    // 删除新增文件
-    for (const [name, hash] of Object.entries(currentSnap || {})) {
-      if (!(name in originalSnap)) {
-        const targetPath = path.join(absPath, name);
-        if (name.endsWith('/')) {
-          fs.rmSync(targetPath, { recursive: true, force: true });
-          console.log(`  [sandbox] 删除新增目录: ${path.join(dir, name)}`);
-        } else {
-          fs.unlinkSync(targetPath);
-          console.log(`  [sandbox] 删除新增文件: ${path.join(dir, name)}`);
-        }
-      }
-    }
-
-    // 恢复被修改的文件
-    for (const [name, originalHash] of Object.entries(originalSnap)) {
-      const filePath = path.join(absPath, name);
-      const currentHash = currentSnap?.[name];
-      if (currentHash && currentHash !== originalHash) {
-        // 文件被修改，从备份恢复
-        const backupPath = path.join(getBackupDir(), name + '.backup');
-        if (fs.existsSync(backupPath)) {
-          fs.copyFileSync(backupPath, filePath);
-          console.log(`  [sandbox] 恢复文件: ${path.join(dir, name)}`);
-        } else {
-          errors.push(`无法恢复 ${path.join(dir, name)}：备份不存在`);
-        }
+  for (const dir of _config.snapshot?.directories || []) {
+    restoreTree(resolveManagedPath(dir), _snapshotData.directories[dir], errors);
+  }
+  for (const file of _config.snapshot?.files || []) {
+    const original = _snapshotData.files[file];
+    if (!original) continue;
+    const absolute = resolveManagedPath(file);
+    const currentHash = fileHash(absolute);
+    if (original.hash === null) {
+      if (currentHash !== null) fs.rmSync(assertManagedAbsolute(absolute, file), { force: true });
+    } else if (currentHash !== original.hash) {
+      const backup = backupPathFor(absolute);
+      if (!fs.existsSync(backup)) errors.push(`无法恢复 ${file}：备份不存在`);
+      else {
+        fs.mkdirSync(path.dirname(absolute), { recursive: true });
+        fs.copyFileSync(backup, absolute);
       }
     }
   }
-
-  // 恢复文件
-  for (const file of _config.snapshot.files || []) {
-    const backupPath = path.join(getBackupDir(), path.basename(file) + '.backup');
-    const absPath = path.resolve(process.cwd(), file);
-    const currentHash = fileHash(absPath);
-    const originalHash = snap.files[file]?.hash;
-
-    if (originalHash && currentHash !== originalHash) {
-      if (fs.existsSync(backupPath)) {
-        fs.copyFileSync(backupPath, absPath);
-        console.log(`  [sandbox] 恢复文件: ${file}`);
-      } else {
-        // 文件原本不存在，现在被创建了 → 删除
-        if (!originalHash && currentHash) {
-          fs.unlinkSync(absPath);
-          console.log(`  [sandbox] 删除新增文件: ${file}`);
-        } else {
-          errors.push(`无法恢复 ${file}：备份不存在`);
-        }
-      }
-    }
+  for (const [name, value] of Object.entries(_snapshotData.env_vars || {})) {
+    if (value === null) delete process.env[name];
+    else process.env[name] = value;
   }
-
-  // 恢复环境变量
-  for (const [name, originalValue] of Object.entries(snap.env_vars || {})) {
-    if (originalValue === null) {
-      delete process.env[name];
-    } else {
-      process.env[name] = originalValue;
-    }
-  }
-
-  if (errors.length > 0) {
-    console.error('[sandbox] 恢复过程中出现错误:');
-    errors.forEach(e => console.error(`  - ${e}`));
-  }
-
-  console.log('[sandbox] 环境恢复完成');
+  if (errors.length) throw new Error(`[sandbox] 恢复失败:\n${errors.join('\n')}`);
 }
 
-/**
- * 验证环境是否与快照一致
- * 在 afterAll 中 restore() 之后调用
- */
+function collectTreeDiffs(base, current, original, diffs) {
+  if (JSON.stringify(current) === JSON.stringify(original)) return;
+  const keys = new Set([...Object.keys(current || {}), ...Object.keys(original || {})]);
+  for (const key of keys) {
+    const left = current?.[key];
+    const right = original?.[key];
+    if (typeof left === 'object' && typeof right === 'object') collectTreeDiffs(path.join(base, key), left, right, diffs);
+    else if (left !== right) diffs.push(path.join(base, key));
+  }
+}
+
 export async function verify() {
-  if (!_snapshotData || !_config) {
-    console.warn('[sandbox] 无快照数据，跳过验证');
-    return;
-  }
-
-  console.log('[sandbox] 验证环境一致性...');
-  const snap = _snapshotData;
+  if (!_snapshotData || !_config) return;
   const diffs = [];
-
-  // 验证目录
-  for (const dir of _config.snapshot.directories || []) {
-    const absPath = path.resolve(process.cwd(), dir);
-    const currentSnap = dirSnapshot(absPath);
-    const originalSnap = snap.directories[dir];
-
-    const allKeys = new Set([
-      ...Object.keys(currentSnap || {}),
-      ...Object.keys(originalSnap || {})
-    ]);
-
-    for (const key of allKeys) {
-      if (currentSnap?.[key] !== originalSnap?.[key]) {
-        diffs.push({
-          type: 'file',
-          path: path.join(dir, key),
-          expected: originalSnap?.[key] || '(不存在)',
-          actual: currentSnap?.[key] || '(不存在)'
-        });
-      }
-    }
+  for (const dir of _config.snapshot?.directories || []) {
+    collectTreeDiffs(dir, dirSnapshot(resolveManagedPath(dir)), _snapshotData.directories[dir], diffs);
   }
-
-  // 验证文件
-  for (const file of _config.snapshot.files || []) {
-    const absPath = path.resolve(process.cwd(), file);
-    const currentHash = fileHash(absPath);
-    const originalHash = snap.files[file]?.hash;
-
-    if (currentHash !== originalHash) {
-      diffs.push({
-        type: 'file',
-        path: file,
-        expected: originalHash || '(不存在)',
-        actual: currentHash || '(不存在)'
-      });
-    }
+  for (const [file, original] of Object.entries(_snapshotData.files || {})) {
+    if (fileHash(resolveManagedPath(file)) !== original.hash) diffs.push(file);
   }
-
-  // 验证环境变量
-  for (const name of _config.snapshot.env_vars || []) {
-    const currentValue = process.env[name] || null;
-    const originalValue = snap.env_vars?.[name] || null;
-    if (currentValue !== originalValue) {
-      diffs.push({
-        type: 'env',
-        path: name,
-        expected: originalValue || '(未设置)',
-        actual: currentValue || '(未设置)'
-      });
-    }
+  for (const name of _config.snapshot?.env_vars || []) {
+    if ((process.env[name] ?? null) !== (_snapshotData.env_vars?.[name] ?? null)) diffs.push(`env:${name}`);
   }
-
-  if (diffs.length > 0) {
-    console.error('[sandbox] 环境验证失败！以下状态与快照不一致:\n');
-    for (const diff of diffs) {
-      console.error(`  [${diff.type}] ${diff.path}`);
-      console.error(`    期望: ${diff.expected}`);
-      console.error(`    实际: ${diff.actual}\n`);
-      console.error('清理命令:');
-      console.error(`    rm -rf e2e/sandbox/uploads/* e2e/sandbox/exports/*`);
-      console.error(`    并检查生产目录是否有残留文件\n`);
-    }
-    console.error('[sandbox] 测试已阻止，请手动清理后再运行。');
+  if (diffs.length) {
+    console.error(`[sandbox] 环境验证失败: ${diffs.join(', ')}`);
     process.exitCode = 1;
-  } else {
-    console.log('[sandbox] 环境验证通过 — 无污染');
   }
 }
 
-/**
- * 获取 sandbox 环境变量（用于 playwright.config.js 注入）
- */
 export function getSandboxEnv() {
   return {
     E2E_SANDBOX_MODE: 'true',
@@ -414,30 +332,17 @@ export function getSandboxEnv() {
   };
 }
 
-/**
- * 初始化 sandbox 目录结构
- */
 export function initSandboxDirs() {
-  const dirs = [
-    'e2e/sandbox/uploads',
-    'e2e/sandbox/exports',
-    'e2e/sandbox/logs',
-    'e2e/sandbox/snapshots',
-    'e2e/sandbox/backups'
-  ];
-  for (const dir of dirs) {
-    const absPath = path.resolve(process.cwd(), dir);
-    if (!fs.existsSync(absPath)) {
-      fs.mkdirSync(absPath, { recursive: true });
-    }
+  for (const dir of ['e2e/sandbox/uploads', 'e2e/sandbox/exports', 'e2e/sandbox/logs', 'e2e/sandbox/snapshots', 'e2e/sandbox/backups']) {
+    fs.mkdirSync(path.resolve(process.cwd(), dir), { recursive: true });
   }
 }
 
-/**
- * 重置模块状态（供测试使用）
- */
 export function reset() {
   _snapshotData = null;
   _config = null;
   _snapshotPath = null;
+  _projectRoot = null;
+  _allowedRoots = [];
+  _neverBackup = [];
 }

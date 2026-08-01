@@ -57,6 +57,73 @@ class GatePlan:
     unknown_triggers: tuple[str, ...] = ()
     missing_gates: tuple[str, ...] = ()
     capability_plans: dict[str, CapabilityGatePlan] = field(default_factory=dict)
+    change_risk_level: str = "L2"
+    change_risk_reasons: tuple[str, ...] = ()
+
+
+CHANGE_RISK_ORDER = {"L1": 1, "L2": 2, "L3": 3, "L4": 4}
+CHANGE_RISK_GATES = {
+    "L1": {"related_tests"},
+    "L2": {"related_tests"},
+    "L3": {"related_tests", "api_contract", "integration_tests", "independent_review"},
+    "L4": {
+        "related_tests", "api_contract", "integration_tests", "full_regression",
+        "security_review", "independent_review", "rollback_verification",
+    },
+}
+
+
+def resolve_change_risk(
+    change_risk: Optional[Mapping], triggers: Iterable[str]
+) -> tuple[str, tuple[str, ...]]:
+    """Return an undegradable Change Risk floor and auditable reasons."""
+
+    raw = dict(change_risk or {})
+    declared = str(raw.get("level", "L2")).upper()
+    if declared not in CHANGE_RISK_ORDER:
+        declared = "L4"
+    level = declared
+    reasons = [f"declared:{declared}"]
+    dimensions = dict(raw.get("dimensions", {}))
+    trigger_set = {str(item).lower() for item in triggers}
+
+    floors: list[tuple[str, str]] = []
+    for name in ("authentication", "authorization", "secrets", "quota"):
+        if bool(dimensions.get(name)) or name in trigger_set:
+            floors.append(("L4", name))
+    if "migration" in trigger_set:
+        floors.append(("L4", "migration"))
+    if "irreversible_write" in trigger_set or (
+        bool(dimensions.get("data_write")) and dimensions.get("reversible") is False
+    ):
+        floors.append(("L4", "irreversible_data_write"))
+    for name in (
+        "public_contract", "core_calculation", "concurrency", "cross_system",
+        "persistent_state_machine",
+    ):
+        if bool(dimensions.get(name)):
+            floors.append(("L3", name))
+    trigger_floors = {
+        "public_contract_change": "L3",
+        "core_algorithm": "L3",
+        "concurrency": "L3",
+        "persistence": "L3",
+        "multi_service_release": "L3",
+    }
+    floors.extend(
+        (floor, trigger) for trigger, floor in trigger_floors.items()
+        if trigger in trigger_set
+    )
+    if "migration" in trigger_set and (
+        bool(dimensions.get("concurrency"))
+        or bool(dimensions.get("persistent_state_machine"))
+    ):
+        floors.append(("L4", "migration_with_state_or_concurrency"))
+    for floor, reason in floors:
+        if CHANGE_RISK_ORDER[floor] > CHANGE_RISK_ORDER[level]:
+            level = floor
+        reasons.append(f"hard_floor:{reason}:{floor}")
+    return level, tuple(dict.fromkeys(reasons))
 
 
 def load_risk_registry(path: Optional[Path] = None) -> dict[str, dict]:
@@ -76,12 +143,15 @@ def derive_gate_plan(
     capabilities: Optional[Mapping[str, Mapping]] = None,
     release: Optional[Mapping] = None,
     impact_analysis: Optional[Mapping] = None,
+    change_risk: Optional[Mapping] = None,
 ) -> GatePlan:
     trigger_names = tuple(dict.fromkeys(str(item).lower() for item in triggers))
     definitions = risk_registry or load_risk_registry()
     known = [item for item in trigger_names if item in definitions]
     unknown = tuple(item for item in trigger_names if item not in definitions)
     selected = registry.get(base_profile)
+    change_risk_level, change_risk_reasons = resolve_change_risk(change_risk, trigger_names)
+    explicit_change_risk = change_risk is not None
     for trigger in known:
         minimum = str(definitions[trigger].get("minimum_profile", "lite"))
         candidate = registry.get(minimum)
@@ -160,12 +230,51 @@ def derive_gate_plan(
     if selected.review == "capability-boundary":
         gates.add("code_review")
 
+    gates.update(CHANGE_RISK_GATES[change_risk_level])
+    if explicit_change_risk and change_risk_level in {"L1", "L2"} and selected.name != "strict":
+        gates.discard("code_review")
+        gates.discard("independent_review")
+    elif explicit_change_risk and change_risk_level == "L3":
+        gates.discard("code_review")
+        gates.add("independent_review")
+
+    all_capability_triggers = {
+        str(item).lower()
+        for raw in (capabilities or {}).values()
+        for item in dict(raw or {}).get("triggers", [])
+    }
+    contract_triggers = {
+        "public_contract_change", "authentication", "authorization", "payment"
+    }
+    contract_applicable = not (
+        (product or {}).get("has_public_contract") is False
+        and not (set(known) | all_capability_triggers) & contract_triggers
+    )
+    if not contract_applicable:
+        gates.discard("api_contract")
+
     has_ui = bool((product or {}).get("has_ui", False))
-    ui_changed = bool((impact or {}).get("ui_changed", False))
-    if not (has_ui and ui_changed):
+    impact_payload = dict(impact or {})
+    ui_kind = str(impact_payload.get("ui_change_kind", "")).lower()
+    if not ui_kind:
+        ui_kind = "journey" if impact_payload.get("ui_changed", False) else "none"
+    if not has_ui or ui_kind == "none":
         gates.discard("p0_e2e")
-    elif has_ui and ui_changed:
+        gates.discard("ui_contract")
+    elif ui_kind == "presentation":
+        gates.discard("p0_e2e")
+        gates.add("ui_contract")
+    elif ui_kind == "interaction":
+        gates.add("ui_contract")
+        if impact_payload.get("critical_journey", False):
+            gates.add("p0_e2e")
+        else:
+            gates.discard("p0_e2e")
+    elif ui_kind == "journey":
         gates.add("p0_e2e")
+    else:
+        gates.add("p0_e2e")
+        change_risk_reasons = (*change_risk_reasons, f"unknown_ui_change_kind:{ui_kind}")
     declared = set(str(item) for item in (declared_gates or []))
     missing = tuple(sorted(gates - declared)) if declared_gates is not None else ()
     capability_unknown = tuple(
@@ -181,10 +290,15 @@ def derive_gate_plan(
     return GatePlan(
         profile=selected.name,
         required_gates=tuple(sorted(gates)),
-        required_artifacts=selected.required_artifacts,
+        required_artifacts=tuple(
+            item for item in selected.required_artifacts
+            if item != "api_contract" or contract_applicable
+        ),
         test_schedule=schedule,
         review=selected.review,
         unknown_triggers=tuple(dict.fromkeys((*unknown, *capability_unknown))),
         missing_gates=missing,
         capability_plans=capability_plans,
+        change_risk_level=change_risk_level,
+        change_risk_reasons=change_risk_reasons,
     )

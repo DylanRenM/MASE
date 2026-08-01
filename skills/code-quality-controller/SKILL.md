@@ -27,10 +27,10 @@ Select depth from the effective MASE Profile: Lite reviews only the affected dif
 
 ### 2. Code Quality
 - Code smells (duplication, long methods, large classes, etc.)
-- SOLID principles compliance (see [MASE Design Principles](docs/design-principles.md))
-- GRASP principles compliance (see [MASE Design Principles](docs/design-principles.md))
-- KISS/DRY/YAGNI compliance (see [MASE Design Principles](docs/design-principles.md))
-- Layered design compliance (see [MASE Design Principles](docs/design-principles.md) — 分层设计原则)
+- SOLID principles compliance (see [MASE Design Principles](../../docs/design-principles.md))
+- GRASP principles compliance (see [MASE Design Principles](../../docs/design-principles.md))
+- KISS/DRY/YAGNI compliance (see [MASE Design Principles](../../docs/design-principles.md))
+- Layered design compliance (see [MASE Design Principles](../../docs/design-principles.md) — 分层设计原则)
 - Error handling adequacy
 - Type safety and null safety
 

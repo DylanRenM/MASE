@@ -1,0 +1,98 @@
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: worktree-before-change
+  diff_digest: pending-uncommitted-worktree
+  spec_inputs:
+    - specs/current-mase-training-deck/spec.md
+    - specs/multi-track-training-generation/spec.md
+  contract_inputs: [framework-manifest.yaml, project-rules.md]
+adapter:
+  name: generic-manifest
+  version: "1.0"
+  rules_digest: pending
+  confidence: high
+  inputs: [training/mase-framework/mase-training-v2.3.yaml]
+change_points:
+  - {id: deck-build, path: scripts/build_mase_training_deck.py, symbol: build_deck, change_type: external_contract, core_path: false, call_frequency: low, semantics_preserved: false, side_effects_preserved: true}
+  - {id: deck-verify, path: scripts/verify_mase_training_deck.py, symbol: verify, change_type: business_semantics, core_path: false, call_frequency: low, semantics_preserved: false, side_effects_preserved: true}
+approved_paths:
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - scripts/analyze_pptx.py
+  - scripts/pptx_to_pdf.py
+  - tests/test_mase_training_deck.py
+forbidden_paths: [training/mase-framework/MASE框架培训讲义V1.pptx, Pilot]
+approved_symbols: [load_source, clone_slide, build_deck, verify]
+protected_invariants:
+  - V1 课件字节不变
+  - 六项原则保持六条独立描述
+  - 中文优先且不混入 Pilot 内容
+  - 新增文本和形状保持可编辑并位于画布内
+  - 深讲页必须融入对应章节，不能形成后置附录
+call_graph:
+  status: verified
+  reason: 构建器、验证器和单测入口均为显式 Python 调用
+  baseline_edges:
+    - {caller: training-yaml, callee: build_deck, via: file-input}
+    - {caller: generated-pptx, callee: verify, via: file-input}
+  planned_changes:
+    - {operation: reroute, caller: training-yaml, callee: build_deck, via: track-and-template-slide}
+  actual_changes:
+    - {operation: reroute, caller: training-yaml, callee: build_deck, via: track-and-template-slide}
+  unplanned_changes: []
+protected_tests:
+  baseline: worktree-before-change
+  selectors: [tests/test_mase_training_deck.py]
+  manifest_digest: pending
+  changes: []
+effect_budget:
+  status: verified
+  reason: 仅写入目标课件和显式视觉预览目录
+  allowed:
+    file_reads: [培训 YAML, 受保护 V1 课件]
+    file_writes: [V2.3 PPTX, 显式预览目录]
+    persistence_writes: []
+    external_calls: []
+    messages: []
+  forbidden: [V1 覆盖, Pilot 内容, 产品数据]
+  observed_extra: []
+change_declaration:
+  spec_changes: [66 页完整课程, 章节交错融合, 同源轨道, 动态页码与视觉验证, 参数化 PPT 分析与 PDF 导出工具]
+  incidental_changes: []
+  non_spec_changes: []
+callers:
+  - {id: deck-tests, path: tests/test_mase_training_deck.py, symbol: training-deck-tests, depth: 1, first_party: true, via: direct}
+implicit_channels:
+  - {kind: serialization, status: discovered, risk: controlled, path: training/mase-framework/mase-training-v2.3.yaml}
+  - {kind: configuration_spi, status: checked_empty, risk: controlled}
+  - {kind: reflection, status: checked_empty, risk: controlled}
+  - {kind: proxy_aop, status: checked_empty, risk: controlled}
+  - {kind: async_callback, status: checked_empty, risk: controlled}
+boundaries:
+  - {id: deck-cli, kind: cli, path: scripts/build_mase_training_deck.py, depth: 1}
+  - {id: pptx-output, kind: other, path: training/mase-framework/MASE框架培训讲义V2.3.pptx, depth: 1}
+terminations:
+  - {branch: deck-cli, reason: system_boundary, depth: 1}
+  - {branch: pptx-output, reason: system_boundary, depth: 1}
+classification: {level: L3, reasons: [可编辑课件输出契约与生成器行为变化]}
+decision: {status: proceed, strategy: scoped-change}
+verification:
+  test_types: [unit, visual, full_regression]
+  tests: [tests/test_mase_training_deck.py, scripts/verify_mase_training_deck.py]
+  fixture_sources: [受保护 V1 课件]
+  expected_differences: [V2.3 从 37 页扩展为 66 页, 深讲内容从后置附录调整为对应章节内交错编排]
+  side_effect_isolation: 视觉缓存位于临时目录并在边界审计前移出仓库
+recovery:
+  strategy: 恢复旧生成器与 37 页内容源；V1 原文件始终保留
+  data_compatibility: PPTX 为独立培训资产，无产品数据迁移
+reconciliation:
+  status: pending
+  actual_diff_digest: ""
+  actual_paths: []
+  unplanned_paths: []
+  actual_symbols: []
+  unplanned_symbols: []
+residual_risks: [最终提交前仍需按实际 diff 复扫]

@@ -5,11 +5,13 @@ description: MASE v2 router — select a Profile, maintain canonical change stat
 
 # Agent 1 — Orchestrator
 
+MASE 宗旨：让 Agentic Coding 高效交付正确、健壮、优化且易于维护的代码。统管取舍必须同时维护高效交付、需求正确、运行健壮、质量优化、整洁可维护；不用跳过硬门禁换取表面速度。
+
 ## Start
 
-1. Read `project-rules.md`, the active change `mase-state.yaml`, and `profiles/<profile>.yaml`.
+1. Read `project-rules.md`, the active change's compact state summary, and `profiles/<profile>.yaml`; load one evidence sidecar only when its gate requires diagnosis.
 2. Select `lite`, `standard`, or `strict`. Risk triggers may upgrade one capability but never downgrade the base process.
-3. Classify historical-code changes and require fresh impact analysis before routing design/build; threshold decisions stay with an authorized human.
+3. Classify historical-code changes and require a fresh file/symbol envelope, protected-test baseline, call-edge/implicit-channel analysis and applicable effect budget before routing design/build; threshold decisions stay with an authorized human.
 4. Route user-visible requirements to Agent 2, impact/design/build to Agent 3, and risk/quality boundaries to Agent 4.
 5. Continue autonomously between gates. Ask the user only for blocking product decisions or new authority.
 
@@ -41,6 +43,8 @@ Read required gates from the effective Profile. The following remain hard whenev
 - More than 10 first-party callers, at least 3 system boundaries, unresolved depth-three traversal or uncontrolled hidden dependencies: require human architecture disposition; AI cannot approve.
 
 P1, full independent review, complete design documents and full E2E frequency are Profile/risk decisions.
+
+Show required gates and their next action by default. Use the complete GatePlan only to audit unselected definitions; do not run an optional gate because it appears in project configuration.
 
 ## Release
 

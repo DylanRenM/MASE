@@ -19,6 +19,7 @@ hard_gates:
 capability_gates:
   - related_tests
   - integration_tests
+  # 同时也是 change 硬门禁；在此保留用于 Strict Capability 的局部实例。
   - security_review
   - independent_review
 test_schedule:

@@ -211,4 +211,70 @@ describe('restore() + verify() 端到端', () => {
     expect(fs.readFileSync(path.join(testDir, 'data/uploads', 'b.txt'), 'utf-8')).toBe('world');
     expect(fs.existsSync(path.join(testDir, 'data/uploads', 'c.txt'))).toBe(false);
   });
+
+  it('应该恢复嵌套目录并区分相同文件名', async () => {
+    fs.mkdirSync(path.join(testDir, 'safe/a'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, 'safe/b'), { recursive: true });
+    fs.writeFileSync(path.join(testDir, 'safe/a/same.txt'), 'a');
+    fs.writeFileSync(path.join(testDir, 'safe/b/same.txt'), 'b');
+    fs.writeFileSync(path.join(testDir, 'sandbox.config.json'), JSON.stringify({
+      snapshot: { directories: ['safe'], files: [], env_vars: [] },
+      safety: { allowed_roots: ['safe'], never_backup: [] }
+    }));
+
+    await sandbox.snapshot();
+    fs.writeFileSync(path.join(testDir, 'safe/a/same.txt'), 'changed-a');
+    fs.writeFileSync(path.join(testDir, 'safe/b/same.txt'), 'changed-b');
+    fs.writeFileSync(path.join(testDir, 'safe/b/new.txt'), 'new');
+    await sandbox.restore();
+    await sandbox.verify();
+
+    expect(fs.readFileSync(path.join(testDir, 'safe/a/same.txt'), 'utf-8')).toBe('a');
+    expect(fs.readFileSync(path.join(testDir, 'safe/b/same.txt'), 'utf-8')).toBe('b');
+    expect(fs.existsSync(path.join(testDir, 'safe/b/new.txt'))).toBe(false);
+  });
+});
+
+describe('path safety', () => {
+  it.each(['../outside', '/tmp/outside', 'C:\\outside'])('拒绝越界或绝对路径 %s', async unsafe => {
+    fs.writeFileSync(path.join(testDir, 'sandbox.config.json'), JSON.stringify({
+      snapshot: { directories: [unsafe], files: [], env_vars: [] },
+      safety: { allowed_roots: ['safe'], never_backup: [] }
+    }));
+    await expect(sandbox.snapshot()).rejects.toThrow(/拒绝|不在/);
+  });
+
+  it('拒绝通过符号链接越过 allowed_roots', async () => {
+    const outside = `${testDir}-outside`;
+    fs.mkdirSync(path.join(testDir, 'safe'), { recursive: true });
+    fs.mkdirSync(outside, { recursive: true });
+    fs.writeFileSync(path.join(outside, 'keep.txt'), 'keep');
+    fs.symlinkSync(outside, path.join(testDir, 'safe/link'));
+    fs.writeFileSync(path.join(testDir, 'sandbox.config.json'), JSON.stringify({
+      snapshot: { directories: ['safe/link'], files: [], env_vars: [] },
+      safety: { allowed_roots: ['safe'], never_backup: [] }
+    }));
+    try {
+      await expect(sandbox.snapshot()).rejects.toThrow(/allowed_roots|符号链接/);
+      expect(fs.readFileSync(path.join(outside, 'keep.txt'), 'utf-8')).toBe('keep');
+    } finally {
+      fs.rmSync(outside, { recursive: true, force: true });
+    }
+  });
+
+  it('never_backup 文件不会进入备份且不会被恢复或删除', async () => {
+    fs.mkdirSync(path.join(testDir, 'safe'), { recursive: true });
+    fs.writeFileSync(path.join(testDir, 'safe/data.txt'), 'data');
+    fs.writeFileSync(path.join(testDir, 'safe/secret.pem'), 'secret');
+    fs.writeFileSync(path.join(testDir, 'sandbox.config.json'), JSON.stringify({
+      snapshot: { directories: ['safe'], files: [], env_vars: [] },
+      safety: { allowed_roots: ['safe'], never_backup: ['*.pem'] }
+    }));
+    await sandbox.snapshot();
+    const backups = path.join(testDir, 'e2e/sandbox/backups');
+    expect(fs.readdirSync(backups, { recursive: true }).join('\n')).not.toContain('secret.pem');
+    fs.writeFileSync(path.join(testDir, 'safe/secret.pem'), 'changed-secret');
+    await sandbox.restore();
+    expect(fs.readFileSync(path.join(testDir, 'safe/secret.pem'), 'utf-8')).toBe('changed-secret');
+  });
 });

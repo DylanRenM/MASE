@@ -14,7 +14,8 @@ from mase_cli.commands import (
     status,
     update_project,
 )
-from mase_cli.evidence import record_manual_evidence, run_gate
+from mase_cli.evidence import load_evidence_detail, record_manual_evidence, run_gate
+from mase_cli.fix import promote_lite_change, start_lite_change
 from mase_cli.gates import (
     execute_defined_gate,
     freeze_candidate,
@@ -68,6 +69,16 @@ def build_parser():
     stat.add_argument("--dir", "-d", default=".")
     _add_json(stat)
 
+    fix = sub.add_parser("fix", help="创建或提升低风险单文件修复")
+    fix_sub = fix.add_subparsers(dest="fix_command", required=True)
+    fix_start = fix_sub.add_parser("start", help="创建 bugfix-lite change.md")
+    fix_start.add_argument("name")
+    fix_start.add_argument("--dir", "-d", default=".")
+    fix_promote = fix_sub.add_parser("promote", help="无损提升为完整 OpenSpec change")
+    fix_promote.add_argument("name")
+    fix_promote.add_argument("--to", choices=["standard"], default="standard")
+    fix_promote.add_argument("--dir", "-d", default=".")
+
     doc = sub.add_parser("doctor", help="执行非修改式环境预检")
     doc.add_argument("--stack", choices=("generic", "python", "swift"), default="generic")
     _add_json(doc)
@@ -91,7 +102,20 @@ def build_parser():
     context_plan.add_argument("--dir", "-d", default=".")
     context_plan.add_argument("--read", action="append", default=[])
     context_plan.add_argument("--allow-excluded", action="store_true")
+    context_plan.add_argument("--task", help="只规划 tasks.md 中声明 reads 的工作包")
+    context_plan.add_argument("--capability", help="只规划状态中声明精确 paths 的 Capability")
+    context_plan.add_argument("--allow-over-budget", action="store_true")
+    context_plan.add_argument("--budget-reason", default="")
     _add_json(context_plan)
+
+    evidence = sub.add_parser("evidence", help="按需读取一条结构化门禁证据")
+    evidence_sub = evidence.add_subparsers(dest="evidence_command", required=True)
+    evidence_show = evidence_sub.add_parser("show", help="按 execution ID 或 gate 读取详情")
+    evidence_show.add_argument("--change", required=True)
+    evidence_show.add_argument("--dir", "-d", default=".")
+    evidence_show.add_argument("--execution")
+    evidence_show.add_argument("--gate")
+    _add_json(evidence_show)
 
     update = sub.add_parser("update", help="预览或应用非破坏框架迁移")
     update.add_argument("--check", dest="check_only", action="store_true")
@@ -123,9 +147,17 @@ def build_parser():
     gate_manual.add_argument("--actor", required=True)
     gate_manual.add_argument("--subject", required=True)
     gate_manual.add_argument("--reference", required=True)
+    gate_manual.add_argument(
+        "--review-kind", choices=["self", "independent"], default="independent"
+    )
     gate_plan = gate_sub.add_parser("plan", help="按阶段显示可执行、可复用和延后的门禁")
     gate_plan.add_argument("--change", required=True)
     gate_plan.add_argument("--dir", "-d", default=".")
+    gate_plan.add_argument("--all", dest="all_gates", action="store_true", help="包含未触发的可选 gate")
+    gate_plan.add_argument(
+        "--target", choices=["development", "merge", "release", "observe"],
+        default="release", help="规划到指定验证里程碑",
+    )
     _add_json(gate_plan)
     gate_freeze = gate_sub.add_parser("freeze", help="冻结最终候选版本")
     gate_freeze.add_argument("--change", required=True)
@@ -170,6 +202,7 @@ def build_parser():
     impact_reconcile.add_argument("--change", required=True)
     impact_reconcile.add_argument("--dir", "-d", default=".")
     impact_reconcile.add_argument("--actual-path", action="append", required=True)
+    impact_reconcile.add_argument("--actual-symbol", action="append", default=[])
     impact_reconcile.add_argument("--actual-diff-digest", required=True)
     _add_json(impact_reconcile)
     impact_scan = impact_sub.add_parser("scan", help="校验语言适配器的标准扫描结果")
@@ -209,6 +242,16 @@ def _dispatch(args):
         if not report.consistent:
             raise SystemExit(EXIT_INCONSISTENT)
         return report
+    elif args.command == "fix":
+        if args.fix_command == "start":
+            path = start_lite_change(args.dir, args.name)
+            print(f"created bugfix-lite source: {path}")
+            return path
+        paths = promote_lite_change(args.dir, args.name, target=args.to)
+        print("promoted bugfix-lite change:")
+        for path in paths:
+            print(f"  {path}")
+        return paths
     elif args.command == "doctor":
         report = doctor.run(args.stack, args.json)
         if not report.ok:
@@ -245,6 +288,10 @@ def _dispatch(args):
             args.change,
             explicit_reads=args.read,
             allow_excluded=args.allow_excluded,
+            task=args.task or "",
+            capability=args.capability or "",
+            allow_over_budget=args.allow_over_budget,
+            budget_reason=args.budget_reason,
         )
         if args.json:
             print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
@@ -260,7 +307,24 @@ def _dispatch(args):
                 print(f"  - {item.path}: {item.reason}")
             if report.over_budget:
                 print(f"  ! context proxy budget exceeded: {', '.join(report.budget_reasons)}")
+            for diagnostic in report.diagnostics:
+                print(f"  ! {diagnostic}")
+        if report.over_budget and not args.allow_over_budget:
+            raise SystemExit(EXIT_INCONSISTENT)
         return report
+    elif args.command == "evidence":
+        root, state = _state_path(args)
+        record = load_evidence_detail(
+            state, execution_id=args.execution or "", gate=args.gate or ""
+        )
+        if args.json:
+            print(json.dumps(record.to_dict(), ensure_ascii=False, indent=2))
+        else:
+            print(
+                f"Evidence: {record.gate} · {record.result} · execution={record.execution_id}; "
+                f"log={record.log_path or '-'}"
+            )
+        return record
     elif args.command == "update":
         return update_project.run(args)
     elif args.command == "install":
@@ -347,6 +411,7 @@ def _dispatch(args):
                 change,
                 actual_paths=args.actual_path,
                 actual_diff_digest=args.actual_diff_digest,
+                actual_symbols=args.actual_symbol,
             )
         elif args.impact_command == "render":
             paths = render_impact_views(change)
@@ -413,20 +478,37 @@ def _dispatch(args):
                 reused = execution.reused
         elif args.gate_command == "manual":
             record = record_manual_evidence(
-                state, args.gate, args.actor, args.subject, args.reference
+                state, args.gate, args.actor, args.subject, args.reference,
+                review_kind=args.review_kind,
             )
             reused = False
         elif args.gate_command == "plan":
-            report = plan_change(root, args.change)
+            report = plan_change(
+                root, args.change, include_all=args.all_gates, target=args.target
+            )
             if args.json:
                 print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
             else:
-                print(f"Gate plan: {report.change} · profile={report.profile}")
+                print(
+                    f"Gate plan: {report.change} · profile={report.profile} · "
+                    f"change-risk={report.change_risk_level} · target={report.target}"
+                )
+                for target, estimate in report.costs.items():
+                    if estimate.p50_seconds is None:
+                        value = f"{estimate.sample_status}; samples={estimate.sample_count}"
+                    else:
+                        value = (
+                            f"p50={estimate.p50_seconds:.1f}s · "
+                            f"p90={estimate.p90_seconds:.1f}s · samples={estimate.sample_count}"
+                        )
+                    suffix = " · budget exceeded" if estimate.budget_exceeded else ""
+                    print(f"  cost {target:11} {value}{suffix}")
                 for stage, checks in report.test_schedule.items():
                     print(f"  schedule {stage:10} {', '.join(checks)}")
                 for instance in report.instances.values():
                     print(
                         f"  {instance.name:24} {instance.stage:10} "
+                        f"{instance.required_at:11} "
                         f"{instance.status:10} {instance.reason}; next: {instance.next_action}"
                     )
                 for diagnostic in report.diagnostics:

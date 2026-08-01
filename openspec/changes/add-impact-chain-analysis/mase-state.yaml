@@ -6,7 +6,7 @@ framework_contract:
   name: MASE
   version: 2.3.0
   interface: installed-cli-and-versioned-schemas
-phase: build
+phase: verify
 product:
   has_ui: false
   ui_platform: null
@@ -46,9 +46,9 @@ impact_analysis:
   level: L3
   decision: proceed
   artifact: impact-analysis.yaml
-  artifact_digest: sha256:2ab76a85604cdfb789a1012cd38e10ce083fd373a793dbe1bf16e447e1b2a321
+  artifact_digest: sha256:edb05581908202fe5757e5e8f2462c2479474dad98b8c40c915443513eea823c
   baseline_digest: commit:8888c8f
-  diff_digest: 01cf6282513f108481863276ce29800c2c99478750bc3f41a4bad1c255e48a90
+  diff_digest: ab1b1948b6740c8bf87a414641ad6989474fdc6d200a41b033d469b236492a17
   reconciliation: matched
   capabilities:
     impact_governance:
@@ -419,6 +419,344 @@ evidence:
   test_digest: 0d2aac0fe28adc900be388c8308e9b2b9ce2f2d47d010cff2353f7de8c1027a8
   execution_signature: 1652a1da46c0ae782dff6670bda09e355a61a402642b17b0c51844d3f1489abc
   execution_id: 49e3d8d2653c432fbfda5fb4c70dcd7d
+  selected_tests:
+  - tests/test_mase_update.py
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_impact_analysis.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: impact_analysis
+  kind: automatic
+  result: passed
+  at: '2026-08-01T00:18:40.971416Z'
+  duration_seconds: 0.18717383399999998
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - mase_cli.main
+  - impact
+  - validate
+  - --change
+  - add-impact-chain-analysis
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 69c7b1ccbeb5d41866dfd740f7312476ee767690
+  worktree: fa27aecb169aaef56af57577f778b4660f7ee1562935328b25d980883e393672
+  input_digest: 43e0a283a4833d1f3457699daaa5363c5cd4ae63c25d4b32a63cd10fe2a80bde
+  inputs:
+  - mase_cli/impact.py
+  - mase_cli/risk.py
+  - mase_cli/state.py
+  - schemas/mase-impact-analysis.schema.json
+  - schemas/mase-impact-scan.schema.json
+  - schemas/mase-state.schema.json
+  - profiles
+  - openspec/changes/add-impact-chain-analysis/impact-analysis.yaml
+  log_path: .mase/evidence/add-impact-chain-analysis/impact_analysis-20260801T001840Z-8a6a6b64.log
+  test_digest: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+  execution_signature: 41296e6545aff9b088b09b717ee1bc5139e8cd42859aaf3677dca2865a5863ef
+  execution_id: 9e3d4d481dfa470c8d53e0cc518261b3
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: contract_differential
+  kind: automatic
+  result: passed
+  at: '2026-08-01T00:18:45.685333Z'
+  duration_seconds: 4.094650167
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_impact_analysis.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 69c7b1ccbeb5d41866dfd740f7312476ee767690
+  worktree: 756ddf49545f8792f4255781286fcbdbdab33d291eaabf45a7b94d3fd5007f7f
+  input_digest: 60ab6d651ce469741988ea4710f3cb77383d42223da4b980f44500c1c28e857e
+  inputs:
+  - mase_cli/impact.py
+  - schemas/mase-impact-analysis.schema.json
+  - tests/test_mase_impact_analysis.py
+  - openspec/changes/add-impact-chain-analysis/impact-analysis.yaml
+  log_path: .mase/evidence/add-impact-chain-analysis/contract_differential-20260801T001845Z-1560e933.log
+  test_digest: 96dc1651a55dfb075c032fec5a0cd8e0ebb3b4a21640607115da0c6b9fc277c9
+  execution_signature: 48f1fa594757cd5d6f1d3bef423dda74c84bf828174fa0a5f192516224e1d8ab
+  execution_id: f500b87599a34756aaeaddc609735b52
+  selected_tests:
+  - tests/test_mase_impact_analysis.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: impact_reconcile
+  kind: automatic
+  result: passed
+  at: '2026-08-01T00:18:46.496826Z'
+  duration_seconds: 0.18849908399999998
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - mase_cli.main
+  - impact
+  - status
+  - --change
+  - add-impact-chain-analysis
+  - --require-matched
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 69c7b1ccbeb5d41866dfd740f7312476ee767690
+  worktree: 8869fa4936b1ac1749e3d995366a4472647d0a0a09d15704effabb1aa05ef3cb
+  input_digest: 8c064c087bf8c214a558563c94bb3fb776517866112285d759c3fd5c5cfbc42a
+  inputs:
+  - mase_cli/impact.py
+  - mase_cli/gates.py
+  - mase_cli/state.py
+  - schemas/mase-impact-analysis.schema.json
+  - tests/test_mase_impact_analysis.py
+  - openspec/changes/add-impact-chain-analysis/impact-analysis.yaml
+  log_path: .mase/evidence/add-impact-chain-analysis/impact_reconcile-20260801T001846Z-1aff87fe.log
+  test_digest: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+  execution_signature: 28d21e205ff26caf869c04fb149741bfc0752fb04bc472d478ed327c72ffd72d
+  execution_id: 360e41b693644ba582f1b120a6978bcb
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-08-01T00:19:07.394539Z'
+  duration_seconds: 20.212146708
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  - tests/test_mase_impact_analysis.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 69c7b1ccbeb5d41866dfd740f7312476ee767690
+  worktree: 947e0fb2b255608e3ffb74043011e15fa580d7e79635a66a4addf4a07bcea0a4
+  input_digest: 23ea7bbf4cf344d3f4f5ccbef1d8f18e4ae5d11918ff23188d49be6a2f1f29bc
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - mase_cli/test_selection.py
+  - schemas/mase-test-manifest.schema.json
+  - schemas/mase-test-diagnostic.schema.json
+  - skills/webapp-testing/mase-reporter.cjs
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  - tests/test_mase_impact_analysis.py
+  - openspec/changes/add-impact-chain-analysis/impact-analysis.yaml
+  log_path: .mase/evidence/add-impact-chain-analysis/related_tests-20260801T001907Z-8e3eedf2.log
+  test_digest: a3b7e763faf857d8a66a5fe13b2f98cc0b08294b8dd46904350c314e4fa241ad
+  execution_signature: 1da3da42c4671438a64f12dddb6532a897b475513bf0b741b4b2a50b12aabdb0
+  execution_id: f0eb65f5142e4e18aa975a68d392b779
+  selected_tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_mase_impact_analysis.py
+  - tests/test_webapp_reporter.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: integration_tests
+  kind: automatic
+  result: passed
+  at: '2026-08-01T00:19:09.694059Z'
+  duration_seconds: 1.60421025
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 69c7b1ccbeb5d41866dfd740f7312476ee767690
+  worktree: 0b3008d22d7960702dd63734344cb339ac3a748132475ab20763fb9783836be0
+  input_digest: 0bc6778b4ab6dfcdc2a40c26bed52282a8107fb33385fd1f98b6c2abcf4c16b2
+  inputs:
+  - mase_cli
+  - templates
+  - framework-manifest.yaml
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - openspec/changes/add-impact-chain-analysis/impact-analysis.yaml
+  log_path: .mase/evidence/add-impact-chain-analysis/integration_tests-20260801T001909Z-e8aeaaf0.log
+  test_digest: ee731f361bdd25538d5b13f3edddf9a1e9c0f8dee63e378c8acd631aa1f997df
+  execution_signature: d1f139c29659298c98196de79938e5a938fb0cd87cbd8e097d9dfec681687fe5
+  execution_id: ed1b02a9442746148be3981da9be4ba6
+  selected_tests:
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-08-01T00:19:27.312694Z'
+  duration_seconds: 16.861515291
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_mase_impact_analysis.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 69c7b1ccbeb5d41866dfd740f7312476ee767690
+  worktree: c6a168b2abcdfc81991d80003a380e07bcc7141eb653925092642964a55ebe0f
+  input_digest: d1720a75494930f1e678e56497ec8df374c37b98d001fda7136d0c9668130290
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - mase_cli/test_selection.py
+  - schemas/mase-test-manifest.schema.json
+  - schemas/mase-test-diagnostic.schema.json
+  - tests/test_mase_test_selection.py
+  - tests/test_mase_impact_analysis.py
+  log_path: .mase/evidence/add-impact-chain-analysis/api_contract-20260801T001927Z-3d7faabf.log
+  test_digest: e90e53d17fcf60c35ec6efcddf1d0a7fb7af28628a69a27f2435692d37f9addf
+  execution_signature: a77438bb3df697faa929ac89323bf48265f08274ce66db5606e969d84944d645
+  execution_id: 12ebc466d8094044888b82c7feec0e86
+  selected_tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_mase_impact_analysis.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: full_chain_smoke
+  kind: automatic
+  result: passed
+  at: '2026-08-01T00:19:42.967269Z'
+  duration_seconds: 14.889099625
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_impact_analysis.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 69c7b1ccbeb5d41866dfd740f7312476ee767690
+  worktree: 1b5db191be7f9433e856bd69e857997c20cdf2ac0d90dc174255ff9eaa47203c
+  input_digest: 657655b4e2cd96967126a15e9fee226cdc91d82281dd243438e4d104adb22fe7
+  inputs:
+  - mase_cli
+  - schemas
+  - templates
+  - profiles
+  - tests/test_mase_impact_analysis.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - openspec/changes/add-impact-chain-analysis/impact-analysis.yaml
+  log_path: .mase/evidence/add-impact-chain-analysis/full_chain_smoke-20260801T001942Z-a11af3e5.log
+  test_digest: 9458c68c5dea8f7ef9e907bf352b756263e3a3ae5f09fe6393b8b84f63f28699
+  execution_signature: 1b512e7d135e5fbe09767f5f21317e6be6edcd958f01f064732a5b5fcc46a4a4
+  execution_id: e029b209b81c412295f5a23c7eb6d1b1
+  selected_tests:
+  - tests/test_mase_impact_analysis.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: rollback_verification
+  kind: automatic
+  result: passed
+  at: '2026-08-01T00:19:48.334441Z'
+  duration_seconds: 4.1729319579999995
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_update.py
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_impact_analysis.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: 69c7b1ccbeb5d41866dfd740f7312476ee767690
+  worktree: 5dcca908fc76d2310aaecbeb6a3e64fc8bea778e80687e12871b81cb40d28ace
+  input_digest: e78cec6ddaa9a5591d217463b6ff82f2e9bbaa6f300025fd7a625f44aedd4f99
+  inputs:
+  - mase_cli/commands/init_project.py
+  - mase_cli/commands/update_project.py
+  - mase_cli/impact.py
+  - templates
+  - tests/test_mase_update.py
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_impact_analysis.py
+  - openspec/changes/add-impact-chain-analysis/impact-analysis.yaml
+  log_path: .mase/evidence/add-impact-chain-analysis/rollback_verification-20260801T001948Z-96d2136a.log
+  test_digest: 0d2aac0fe28adc900be388c8308e9b2b9ce2f2d47d010cff2353f7de8c1027a8
+  execution_signature: 5c5fc98a2a2dbdc5ac0090191bb963a4cd2de2e468c2d5a368e2023fe45ff9ef
+  execution_id: 0b4ce1d37dea4d15803f1a4a61726dce
   selected_tests:
   - tests/test_mase_update.py
   - tests/test_mase_cli_stacks.py

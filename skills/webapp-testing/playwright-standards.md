@@ -49,3 +49,11 @@
 ```
 
 添加 `data-testid` 的代码变更必须与对应的测试用例在同一 PR 中提交。
+
+## MASE 执行与诊断契约
+
+- P0 journey 必须使用真实产品路由；`page.route()` mock 产品自有 API 的用例归类为 UI contract。
+- 只允许在 LLM、SMTP、支付或第三方 SaaS 等不可控系统边界使用确定性 fake。
+- 禁止 `waitForTimeout()` 固定等待，使用可观察 UI 状态、URL、事件或响应条件。
+- hard gate 设置临时测试根和隔离端口，`reuseExistingServer` 必须为 `false`。
+- 配置 `mase-reporter.cjs`，通过 `MASE_TEST_DIAGNOSTIC_PATH` 输出标准重试/失败诊断。

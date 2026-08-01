@@ -20,6 +20,7 @@
     },
     "inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "change_points": {"type": "array", "items": {"type": "object"}},
+    "call_edges": {"type": "array", "items": {"type": "object"}},
     "callers": {"type": "array", "items": {"type": "object"}},
     "implicit_channels": {"type": "array", "items": {"type": "object"}},
     "boundaries": {"type": "array", "items": {"type": "object"}},

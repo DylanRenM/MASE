@@ -15,6 +15,7 @@
         "required": ["stage", "command"],
         "properties": {
           "stage": {"enum": ["analysis", "micro", "capability", "final", "release_artifact", "release_preflight", "release_live", "release_observe"]},
+          "required_at": {"enum": ["development", "merge", "release", "observe"]},
           "command": {
             "type": "array",
             "items": {"type": "string", "minLength": 1},
@@ -23,6 +24,7 @@
           "inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
           "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
           "tests": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "test_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
           "test_tiers": {
             "type": "array",
             "items": {"enum": ["unit", "contract", "integration", "ui_contract", "p0_journey", "p1_regression"]},
@@ -36,6 +38,11 @@
           "effect": {"enum": ["read-only", "local-write", "external-write"]},
           "required_authority": {"enum": ["read-only", "release"]},
           "requires": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          ,"dependency_locks": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          ,"fixture_inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          ,"config_inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          ,"toolchain": {"type": "string"}
+          ,"environment": {"enum": ["standard", "strict"]}
         },
         "additionalProperties": false
       }

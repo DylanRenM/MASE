@@ -43,6 +43,25 @@ def redact_secrets(value: str) -> str:
     return redacted
 
 
+def load_evidence_detail(
+    state_path: PathInput, *, execution_id: str = "", gate: str = ""
+) -> EvidenceRecord:
+    """Load one hydrated evidence record without expanding the full history in output."""
+
+    from mase_cli.state import ChangeState
+
+    state = ChangeState.load(Path(state_path).expanduser().resolve())
+    matches = [
+        item for item in state.evidence
+        if (not execution_id or item.execution_id == execution_id)
+        and (not gate or item.gate == gate)
+    ]
+    if not matches:
+        key = execution_id or gate or "latest"
+        raise GovernanceError(f"evidence not found: {key}", code="not_found")
+    return matches[-1]
+
+
 def _inside(root: Path, relative: str) -> Path:
     normalized_parts = str(relative).replace("\\", "/").split("/")
     if Path(relative).is_absolute():
@@ -154,17 +173,54 @@ def _atomic_write_yaml(path: Path, payload: Mapping) -> None:
         raise
 
 
-def _append_evidence(state_path: Path, record: EvidenceRecord, retention: int = 3) -> None:
+def _atomic_write_json(path: Path, payload: Mapping) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(dict(payload), handle, ensure_ascii=False, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _append_evidence(state_path: Path, record: EvidenceRecord, retention: int = 3) -> EvidenceRecord:
+    root = state_path.parents[3]
+    execution_id = record.execution_id or uuid.uuid4().hex
+    safe_gate = re.sub(r"[^A-Za-z0-9_.-]+", "-", record.gate).strip("-") or "gate"
+    relative_sidecar = (
+        Path(".mase") / "evidence" / state_path.parent.name
+        / f"{safe_gate}-{execution_id}.json"
+    )
+    sidecar = _inside(root, relative_sidecar.as_posix())
+    full_record = replace(record, execution_id=execution_id)
+    detail = full_record.to_dict()
+    validate_payload(detail, "mase-evidence.schema.json", path=sidecar)
+    sidecar_digest = _atomic_write_json(sidecar, detail)
+    indexed_record = replace(
+        full_record,
+        evidence_path=relative_sidecar.as_posix(),
+        evidence_digest=sidecar_digest,
+        sidecar_status="fresh",
+    )
     payload = load_yaml_document(state_path)
     evidence = payload.setdefault("evidence", [])
     if not isinstance(evidence, list):
         raise GovernanceError("evidence must be an array", path=state_path, code="schema")
-    evidence.append(record.to_dict())
-    scope = record.scope or "change"
+    evidence.append(indexed_record.to_summary_dict())
+    scope = indexed_record.scope or "change"
     matching = [
         index
         for index, item in enumerate(evidence)
-        if str(item.get("gate", "")) == record.gate
+        if str(item.get("gate", "")) == indexed_record.gate
         and str(item.get("scope", "change")) == scope
     ]
     limit = max(1, int(retention))
@@ -174,7 +230,7 @@ def _append_evidence(state_path: Path, record: EvidenceRecord, retention: int = 
             (
                 index for index in reversed(matching)
                 if str(evidence[index].get("result", ""))
-                in {"passed", "passed_with_baseline", "skipped"}
+                in {"passed", "subsumed", "passed_with_baseline", "skipped"}
             ),
             None,
         )
@@ -197,9 +253,10 @@ def _append_evidence(state_path: Path, record: EvidenceRecord, retention: int = 
     gates = payload.setdefault("gates", {})
     if not isinstance(gates, dict):
         raise GovernanceError("gates must be a mapping", path=state_path, code="schema")
-    gates[record.gate] = record.result
+    gates[indexed_record.gate] = indexed_record.result
     validate_payload(payload, "mase-state.schema.json", path=state_path)
     _atomic_write_yaml(state_path, payload)
+    return indexed_record
 
 
 def run_gate(
@@ -214,6 +271,7 @@ def run_gate(
     candidate_id: str = "",
     test_digest: str = "",
     execution_signature: str = "",
+    environment_digest: str = "",
     execution_id: Optional[str] = None,
     reused_from: str = "",
     release_digest: str = "",
@@ -371,6 +429,7 @@ def run_gate(
         candidate_id=str(candidate_id or ""),
         test_digest=str(test_digest or ""),
         execution_signature=str(execution_signature or ""),
+        environment_digest=str(environment_digest or ""),
         execution_id=actual_execution_id,
         reused_from=str(reused_from or ""),
         release_digest=str(release_digest or ""),
@@ -382,8 +441,7 @@ def run_gate(
         first_attempt_result=first_attempt_result,
         attempts=attempts,
     )
-    _append_evidence(state, record, retention=retention)
-    return record
+    return _append_evidence(state, record, retention=retention)
 
 
 def assess_evidence(
@@ -394,6 +452,8 @@ def assess_evidence(
     """Return fresh, stale, missing, or invalid for one evidence record."""
 
     root = Path(project_root).expanduser().resolve()
+    if evidence.sidecar_status in {"missing", "invalid"}:
+        return evidence.sidecar_status
     if evidence.legacy:
         return "stale"
     if evidence.kind == "manual":
@@ -405,7 +465,11 @@ def assess_evidence(
             return "invalid"
         paths = tuple(str(item) for item in input_paths) if input_paths is not None else evidence.inputs
         return "fresh" if _path_digest(root, paths) == evidence.input_digest else "stale"
-    if evidence.kind != "automatic" or evidence.result != "passed" or evidence.exit_code != 0:
+    if (
+        evidence.kind != "automatic"
+        or evidence.result not in {"passed", "subsumed"}
+        or evidence.exit_code != 0
+    ):
         return "invalid"
     if not evidence.log_path or not _inside(root, evidence.log_path).is_file():
         return "missing"
@@ -425,6 +489,7 @@ def record_manual_evidence(
     actor: str,
     subject: str,
     reference: str,
+    review_kind: str = "independent",
 ) -> EvidenceRecord:
     """Append subject-bound manual evidence for a canonically manual gate."""
 
@@ -435,6 +500,13 @@ def record_manual_evidence(
 
     definitions = load_gate_definitions(root, required=False)
     definition = definitions.gates.get(str(gate))
+    normalized_review_kind = str(review_kind or "independent").lower()
+    if normalized_review_kind not in {"self", "independent"}:
+        raise GovernanceError("review kind must be self or independent", code="schema")
+    if str(gate) in {"independent_review", "security_review", "architecture_review"} and normalized_review_kind != "independent":
+        raise GovernanceError(
+            f"self review cannot satisfy independent manual gate {gate}", code="conflict"
+        )
     current = load_yaml_document(state)
     bound_inputs = set(definition.inputs if definition else ())
     bound_inputs.update(str(item) for item in dict(current.get("impact", {})).get("paths", []))
@@ -465,6 +537,7 @@ def record_manual_evidence(
         "actor": str(actor).strip(),
         "subject": str(subject).strip(),
         "reference": str(reference).strip(),
+        "review_kind": normalized_review_kind,
         "decision": "passed" if valid else "failed",
     }
     execution_signature = hashlib.sha256(json.dumps(
@@ -478,6 +551,7 @@ def record_manual_evidence(
         actor=redact_secrets(str(actor)),
         subject=redact_secrets(str(subject)),
         reference=str(reference),
+        review_kind=normalized_review_kind,
         input_digest=input_digest,
         inputs=inputs,
         candidate_id=candidate_id,
@@ -485,5 +559,5 @@ def record_manual_evidence(
         execution_signature=execution_signature,
         freshness="fresh" if valid else "invalid",
     )
-    _append_evidence(state, record)
-    return replace(record, freshness="fresh" if valid else "invalid")
+    indexed = _append_evidence(state, replace(record, execution_id=uuid.uuid4().hex))
+    return replace(indexed, freshness="fresh" if valid else "invalid")

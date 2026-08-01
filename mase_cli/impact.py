@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import fnmatch
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence, Union
@@ -178,6 +179,8 @@ def assess_impact(payload: Mapping[str, Any]) -> ImpactAssessment:
     implicit_channels = list(payload.get("implicit_channels", []))
     terminations = list(payload.get("terminations", []))
     adapter = dict(payload.get("adapter", {}))
+    call_graph = dict(payload.get("call_graph", {}))
+    effect_budget = dict(payload.get("effect_budget", {}))
     caller_count = _unique_first_party_callers(payload)
     boundary_count = _unique_boundaries(payload)
 
@@ -207,6 +210,12 @@ def assess_impact(payload: Mapping[str, Any]) -> ImpactAssessment:
     if str(adapter.get("confidence", "low")) != "high":
         computed_rank = max(computed_rank, 2)
         diagnostics.append("analysis_confidence_not_high")
+    if call_graph and str(call_graph.get("status", "unverified")) != "verified":
+        computed_rank = max(computed_rank, 2)
+        diagnostics.append("call_graph_diff_unverified")
+    if effect_budget and str(effect_budget.get("status", "unverified")) != "verified":
+        computed_rank = max(computed_rank, 2)
+        diagnostics.append("effect_budget_unverified")
     if any(str(item.get("status")) in {"discovered", "unverified", "outside_repository"} for item in implicit_channels):
         computed_rank = max(computed_rank, 2)
         diagnostics.append("implicit_dependency_or_uncertainty")
@@ -262,6 +271,79 @@ def _validate_impact_policy(payload: Mapping[str, Any], path: Path) -> ImpactAss
             path=path,
             code="policy",
         )
+    reconciliation = dict(payload.get("reconciliation", {}))
+    actual_paths = [str(item) for item in reconciliation.get("actual_paths", [])]
+    forbidden_paths = [str(item) for item in payload.get("forbidden_paths", [])]
+    forbidden_hits = sorted({
+        actual
+        for actual in actual_paths
+        if any(fnmatch.fnmatch(actual, pattern) for pattern in forbidden_paths)
+    })
+    if forbidden_hits:
+        raise GovernanceError(
+            "actual paths enter forbidden change scope: " + ", ".join(forbidden_hits),
+            path=path,
+            code="blocked",
+        )
+
+    call_graph = dict(payload.get("call_graph", {}))
+    if call_graph:
+        def edge_key(item: Mapping[str, Any]) -> tuple[str, str, str, str]:
+            return (
+                str(item.get("operation", "")),
+                str(item.get("caller", "")),
+                str(item.get("callee", "")),
+                str(item.get("via", "")),
+            )
+
+        planned = {edge_key(item) for item in call_graph.get("planned_changes", [])}
+        actual = {edge_key(item) for item in call_graph.get("actual_changes", [])}
+        reported = {edge_key(item) for item in call_graph.get("unplanned_changes", [])}
+        computed_unplanned = actual - planned
+        if reported != computed_unplanned:
+            raise GovernanceError(
+                "call_graph.unplanned_changes does not match actual minus planned edges",
+                path=path,
+                code="policy",
+            )
+        if computed_unplanned:
+            raise GovernanceError(
+                "unplanned call-graph edge changes require scope reconciliation",
+                path=path,
+                code="blocked",
+            )
+
+    protected_tests = dict(payload.get("protected_tests", {}))
+    for change in protected_tests.get("changes", []):
+        if not str(change.get("approval", "")).strip():
+            raise GovernanceError(
+                "protected test change requires approval: "
+                + str(change.get("selector", "<unknown>")),
+                path=path,
+                code="blocked",
+            )
+
+    effect_budget = dict(payload.get("effect_budget", {}))
+    observed_extra = [str(item) for item in effect_budget.get("observed_extra", [])]
+    if observed_extra:
+        raise GovernanceError(
+            "observed effects exceed declared budget: " + ", ".join(observed_extra),
+            path=path,
+            code="blocked",
+        )
+
+    declaration = dict(payload.get("change_declaration", {}))
+    undeclared_scope = [
+        str(item)
+        for field in ("incidental_changes", "non_spec_changes")
+        for item in declaration.get(field, [])
+    ]
+    if undeclared_scope and not dict(payload.get("decision", {})).get("approval"):
+        raise GovernanceError(
+            "incidental or non-Spec changes require human disposition",
+            path=path,
+            code="blocked",
+        )
     if assessment.architecture_review_required:
         decision = dict(payload.get("decision", {}))
         status = str(decision.get("status", ""))
@@ -315,6 +397,16 @@ def _impact_artifact(change: Path, state: Mapping[str, Any]) -> Path:
     return _inside(change, relative)
 
 
+def _project_root(change: Path) -> Path:
+    if change.parent.name != "changes" or change.parent.parent.name != "openspec":
+        raise GovernanceError(
+            "impact change must be inside openspec/changes",
+            path=change,
+            code="path",
+        )
+    return change.parents[2]
+
+
 def impact_status(change_dir: PathInput) -> ImpactStatus:
     change = Path(change_dir).expanduser().resolve()
     state_path, state = _state_payload(change)
@@ -339,6 +431,19 @@ def impact_status(change_dir: PathInput) -> ImpactStatus:
     for field, actual in comparisons.items():
         if str(summary.get(field, "")) != actual:
             issues.append(f"state {field} does not match impact artifact")
+    reconciliation = dict(payload.get("reconciliation", {}))
+    if assessment.reconciliation == "matched":
+        from mase_cli.evidence import path_digest
+
+        expected_diff_digest = str(reconciliation.get("actual_diff_digest", ""))
+        current_diff_digest = path_digest(
+            _project_root(change),
+            [str(item) for item in reconciliation.get("actual_paths", [])],
+        )
+        if current_diff_digest != expected_diff_digest:
+            issues.append("actual diff digest is stale for reconciled paths")
+        if str(summary.get("diff_digest", "")) != expected_diff_digest:
+            issues.append("state diff_digest does not match reconciled actual diff")
     return ImpactStatus(
         change.name,
         artifact.relative_to(change).as_posix(),
@@ -367,6 +472,7 @@ def reconcile_impact(
     *,
     actual_paths: Sequence[str],
     actual_diff_digest: str,
+    actual_symbols: Sequence[str] = (),
 ) -> ImpactStatus:
     change = Path(change_dir).expanduser().resolve()
     state_path, state = _state_payload(change)
@@ -377,14 +483,33 @@ def reconcile_impact(
     planned = {
         str(item) for item in payload.get("approved_paths", [])
     } or {str(item.get("path")) for item in payload.get("change_points", [])}
+    planned_symbols = {
+        str(item) for item in payload.get("approved_symbols", [])
+    } or {
+        f"{item.get('path')}:{item.get('symbol')}"
+        for item in payload.get("change_points", [])
+    }
     actual = tuple(dict.fromkeys(str(item) for item in actual_paths))
+    realized_symbols = tuple(dict.fromkeys(str(item) for item in actual_symbols))
+    from mase_cli.evidence import path_digest
+
+    current_diff_digest = path_digest(_project_root(change), actual)
+    if str(actual_diff_digest) != current_diff_digest:
+        raise GovernanceError(
+            "actual diff digest does not match current reconciled paths",
+            path=artifact,
+            code="stale",
+        )
     unplanned = tuple(sorted(set(actual) - planned))
+    unplanned_symbols = tuple(sorted(set(realized_symbols) - planned_symbols))
     reconciliation = dict(payload.get("reconciliation", {}))
     reconciliation.update({
-        "status": "expanded" if unplanned else "matched",
-        "actual_diff_digest": str(actual_diff_digest),
+        "status": "expanded" if unplanned or unplanned_symbols else "matched",
+        "actual_diff_digest": current_diff_digest,
         "actual_paths": list(actual),
         "unplanned_paths": list(unplanned),
+        "actual_symbols": list(realized_symbols),
+        "unplanned_symbols": list(unplanned_symbols),
     })
     payload["reconciliation"] = reconciliation
     _atomic_yaml(artifact, payload)
@@ -395,7 +520,7 @@ def reconcile_impact(
         "level": assessment.level,
         "decision": assessment.decision,
         "artifact_digest": file_digest(artifact),
-        "diff_digest": str(actual_diff_digest),
+        "diff_digest": current_diff_digest,
         "reconciliation": reconciliation["status"],
     })
     state["impact_analysis"] = summary
@@ -438,6 +563,12 @@ def render_impact_views(change_dir: PathInput) -> tuple[Path, Path, Path]:
         f"{item.get('branch')}: {item.get('reason')}（深度 {item.get('depth')}）"
         for item in payload.get("terminations", [])
     ]
+    call_graph = dict(payload.get("call_graph", {}))
+    edge_changes = [
+        f"{item.get('operation')} · {item.get('caller')} → {item.get('callee')}（{item.get('via')}）"
+        for item in call_graph.get("actual_changes", [])
+    ]
+    declaration = dict(payload.get("change_declaration", {}))
     impact_scope = (
         "# 影响范围说明书\n\n"
         f"{digest_line}\n\n"
@@ -446,21 +577,51 @@ def render_impact_views(change_dir: PathInput) -> tuple[Path, Path, Path]:
         f"- 第一方调用方：{assessment.caller_count}\n"
         f"- 系统边界：{assessment.boundary_count}\n\n"
         "## 修改点\n\n" + _bullet(change_points) + "\n\n"
+        "## 批准的文件与符号边界\n\n"
+        + _bullet(payload.get("approved_paths", [])) + "\n\n"
+        + _bullet(payload.get("approved_symbols", [])) + "\n\n"
+        "## 受保护不变量\n\n" + _bullet(payload.get("protected_invariants", [])) + "\n\n"
         "## 受影响调用方\n\n" + _bullet(callers) + "\n\n"
+        f"## 调用图差异（{call_graph.get('status', '未声明')}）\n\n"
+        + _bullet(edge_changes) + "\n\n"
+        "## 实现变更声明\n\n"
+        "### Spec 内变更\n\n" + _bullet(declaration.get("spec_changes", [])) + "\n\n"
+        "### 附带/非 Spec 变更\n\n"
+        + _bullet([
+            *declaration.get("incidental_changes", []),
+            *declaration.get("non_spec_changes", []),
+        ]) + "\n\n"
         "## 隐性依赖通道\n\n" + _bullet(implicit) + "\n\n"
         "## 递归终止\n\n" + _bullet(terminations) + "\n\n"
         "## 诊断与剩余风险\n\n"
         + _bullet([*assessment.diagnostics, *payload.get("residual_risks", [])]) + "\n"
     )
     verification = dict(payload.get("verification", {}))
+    protected_tests = dict(payload.get("protected_tests", {}))
+    effect_budget = dict(payload.get("effect_budget", {}))
+    allowed_effects = dict(effect_budget.get("allowed", {}))
+    allowed_effect_lines = [
+        f"{kind}: {value}"
+        for kind, values in allowed_effects.items()
+        for value in values
+    ]
     test_scope = (
         "# 测试范围确认单\n\n"
         f"{digest_line}\n\n"
         "## 测试类型\n\n" + _bullet(verification.get("test_types", [])) + "\n\n"
         "## 测试选择\n\n" + _bullet(verification.get("tests", [])) + "\n\n"
+        f"## 受保护历史测试（基线 {protected_tests.get('baseline', '未声明')}）\n\n"
+        + _bullet(protected_tests.get("selectors", [])) + "\n\n"
         "## 数据来源\n\n" + _bullet(verification.get("fixture_sources", [])) + "\n\n"
         "## 允许差异\n\n" + _bullet(verification.get("expected_differences", []), "新旧结果必须一致") + "\n\n"
-        f"## 副作用隔离\n\n{verification.get('side_effect_isolation', '未声明')}\n"
+        f"## 副作用隔离\n\n{verification.get('side_effect_isolation', '未声明')}\n\n"
+        f"## 副作用预算（{effect_budget.get('status', '未声明')}）\n\n"
+        + _bullet(allowed_effect_lines) + "\n\n"
+        "### 禁止与超额副作用\n\n"
+        + _bullet([
+            *effect_budget.get("forbidden", []),
+            *effect_budget.get("observed_extra", []),
+        ]) + "\n"
     )
     recovery = dict(payload.get("recovery", {}))
     rollback = (

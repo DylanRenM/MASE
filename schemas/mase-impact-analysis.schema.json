@@ -47,6 +47,56 @@
       "items": {"$ref": "#/$defs/changePoint"}
     },
     "approved_paths": {"$ref": "#/$defs/strings"},
+    "approved_symbols": {"$ref": "#/$defs/strings"},
+    "forbidden_paths": {"$ref": "#/$defs/strings"},
+    "protected_invariants": {"$ref": "#/$defs/strings"},
+    "call_graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "baseline_edges", "planned_changes", "actual_changes", "unplanned_changes"],
+      "properties": {
+        "status": {"enum": ["verified", "unverified"]},
+        "reason": {"type": "string"},
+        "baseline_edges": {"type": "array", "items": {"$ref": "#/$defs/callEdge"}},
+        "planned_changes": {"type": "array", "items": {"$ref": "#/$defs/edgeChange"}},
+        "actual_changes": {"type": "array", "items": {"$ref": "#/$defs/edgeChange"}},
+        "unplanned_changes": {"type": "array", "items": {"$ref": "#/$defs/edgeChange"}}
+      }
+    },
+    "protected_tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "selectors", "manifest_digest", "changes"],
+      "properties": {
+        "baseline": {"type": "string", "minLength": 1},
+        "selectors": {"$ref": "#/$defs/strings"},
+        "manifest_digest": {"type": "string", "minLength": 1},
+        "no_tests_reason": {"type": "string"},
+        "changes": {"type": "array", "items": {"$ref": "#/$defs/protectedTestChange"}}
+      }
+    },
+    "effect_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "allowed", "forbidden", "observed_extra"],
+      "properties": {
+        "status": {"enum": ["verified", "unverified"]},
+        "reason": {"type": "string"},
+        "allowed": {"$ref": "#/$defs/effectSet"},
+        "forbidden": {"$ref": "#/$defs/strings"},
+        "observed_extra": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "change_declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spec_changes", "incidental_changes", "non_spec_changes"],
+      "properties": {
+        "spec_changes": {"$ref": "#/$defs/strings"},
+        "incidental_changes": {"$ref": "#/$defs/strings"},
+        "non_spec_changes": {"$ref": "#/$defs/strings"}
+      }
+    },
     "callers": {
       "type": "array",
       "items": {"$ref": "#/$defs/caller"}
@@ -133,7 +183,9 @@
         "status": {"enum": ["pending", "matched", "expanded"]},
         "actual_diff_digest": {"type": "string"},
         "actual_paths": {"$ref": "#/$defs/strings"},
-        "unplanned_paths": {"$ref": "#/$defs/strings"}
+        "unplanned_paths": {"$ref": "#/$defs/strings"},
+        "actual_symbols": {"$ref": "#/$defs/strings"},
+        "unplanned_symbols": {"$ref": "#/$defs/strings"}
       }
     },
     "residual_risks": {"$ref": "#/$defs/strings"}
@@ -162,6 +214,50 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": {"type": "string", "minLength": 1}
+    },
+    "callEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caller", "callee", "via"],
+      "properties": {
+        "caller": {"type": "string", "minLength": 1},
+        "callee": {"type": "string", "minLength": 1},
+        "via": {"type": "string", "minLength": 1}
+      }
+    },
+    "edgeChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "caller", "callee", "via"],
+      "properties": {
+        "operation": {"enum": ["add", "remove", "reroute"]},
+        "caller": {"type": "string", "minLength": 1},
+        "callee": {"type": "string", "minLength": 1},
+        "via": {"type": "string", "minLength": 1}
+      }
+    },
+    "protectedTestChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "action", "rationale"],
+      "properties": {
+        "selector": {"type": "string", "minLength": 1},
+        "action": {"enum": ["modified", "removed", "skipped", "weakened"]},
+        "rationale": {"type": "string", "minLength": 1},
+        "approval": {"type": "string", "minLength": 1}
+      }
+    },
+    "effectSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file_reads", "file_writes", "persistence_writes", "external_calls", "messages"],
+      "properties": {
+        "file_reads": {"$ref": "#/$defs/strings"},
+        "file_writes": {"$ref": "#/$defs/strings"},
+        "persistence_writes": {"$ref": "#/$defs/strings"},
+        "external_calls": {"$ref": "#/$defs/strings"},
+        "messages": {"$ref": "#/$defs/strings"}
+      }
     },
     "changePoint": {
       "type": "object",

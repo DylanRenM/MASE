@@ -5,7 +5,7 @@ import yaml
 
 from mase_cli.commands import check_project
 from mase_cli.profiles import ProfileRegistry
-from mase_cli.state import ChangeState
+from mase_cli.state import ChangeState, inspect_change_status
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +63,37 @@ def test_change_state_supports_toolchains_product_impact_and_dependencies(tmp_pa
     assert state.impact["ui_changed"] is False
     assert state.dependencies[0]["change"] == "base"
     assert state.legacy is False
+
+
+def test_change_state_preserves_a_versioned_external_framework_contract(tmp_path):
+    change = tmp_path / "openspec" / "changes" / "demo"
+    contract = {
+        "name": "MASE",
+        "version": "2.4.0",
+        "interface": "installed-cli-and-versioned-schemas",
+    }
+    write_state(change, framework_contract=contract)
+
+    state = ChangeState.load(change / "mase-state.yaml")
+    report = inspect_change_status(change)
+
+    assert state.framework_contract == contract
+    assert report.to_dict()["framework_contract"] == contract
+
+
+def test_framework_contract_rejects_a_source_repository_interface(tmp_path):
+    change = tmp_path / "openspec" / "changes" / "demo"
+    write_state(
+        change,
+        framework_contract={
+            "name": "MASE",
+            "version": "2.4.0",
+            "interface": "sibling-source-repository",
+        },
+    )
+
+    with pytest.raises(ValueError, match="framework_contract"):
+        ChangeState.load(change / "mase-state.yaml")
 
 
 def test_legacy_evidence_is_loaded_but_marked_legacy_and_stale(tmp_path):
@@ -161,3 +192,28 @@ def test_missing_derived_hard_gate_is_reported(tmp_path):
     state = ChangeState.load(change / "mase-state.yaml")
 
     assert "security_review" in state.gate_plan.missing_gates
+
+
+def test_skipped_hard_gate_and_pending_terminal_state_are_inconsistent(tmp_path):
+    change = tmp_path / "openspec" / "changes" / "demo"
+    write_state(
+        change,
+        profile="lite",
+        phase="complete",
+        product={"has_ui": False},
+        risk={"triggers": [], "capabilities": {}},
+        gates={
+            "api_contract": "skipped",
+            "related_tests": "pending",
+            "full_regression": "pending",
+        },
+    )
+    (change / "tasks.md").write_text("- [x] 1.1 done\n", encoding="utf-8")
+    (change / "specs").mkdir()
+
+    report = inspect_change_status(change)
+
+    assert report.effective_gates["api_contract"] == "skipped"
+    assert report.lifecycle == "ready_for_gate"
+    assert report.consistent is False
+    assert any("terminal phase has incomplete" in issue for issue in report.issues)

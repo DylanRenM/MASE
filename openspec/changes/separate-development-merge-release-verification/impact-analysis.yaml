@@ -1,0 +1,228 @@
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: commit:69c7b1c
+  diff_digest: pending
+  spec_inputs:
+  - openspec/changes/separate-development-merge-release-verification/specs
+  contract_inputs:
+  - schemas/mase-gates.schema.json
+  - schemas/mase-state.schema.json
+adapter:
+  name: python-static-and-manifest
+  version: '1.0'
+  rules_digest: mase-2.4-impact-policy
+  confidence: high
+  inputs:
+  - mase_cli
+  - schemas
+  - templates
+  - tests
+change_points:
+- id: gate-timing
+  path: mase_cli/gates.py
+  symbol: required_at planning and milestone derivation
+  change_type: business_semantics
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: state-milestones
+  path: mase_cli/state.py
+  symbol: verification milestone status
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: cli-target
+  path: mase_cli/main.py
+  symbol: gate plan --target
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+approved_paths:
+- mase_cli/gates.py
+- mase_cli/state.py
+- mase_cli/main.py
+- schemas/mase-gates.schema.json
+- schemas/mase-state.schema.json
+- templates/gates.yaml
+- templates/mase-state.yaml
+- .mase/gates.yaml
+- project-rules.md
+- README.md
+- docs/MASE-framework.md
+- docs/user-guide.md
+- docs/glossary.md
+- tests/test_mase_gate_planning.py
+- tests/test_mase_governance_models.py
+- tests/test_release_governance.py
+- openspec/changes/separate-development-merge-release-verification
+approved_symbols:
+- mase_cli/gates.py:GateDefinition
+- mase_cli/gates.py:plan_change
+- mase_cli/state.py:inspect_change_status
+- mase_cli/main.py:gate plan parser
+forbidden_paths:
+- ../pilot/**
+- /Users/dylanren/Documents/trae_projects/pilot/**
+protected_invariants:
+- 开发验证不得冒充合并或发布就绪
+- 候选绑定门禁不得在 development 或 merge 执行
+- 发布与观察门禁只在显式发布意图下适用
+call_graph:
+  status: verified
+  baseline_edges: []
+  planned_changes: []
+  actual_changes: []
+  unplanned_changes: []
+protected_tests:
+  baseline: commit:69c7b1c
+  selectors:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_governance_models.py
+  - tests/test_release_governance.py
+  manifest_digest: framework-regression-239-python-15-node
+  changes:
+  - selector: tests/test_mase_gate_planning.py
+    action: modified
+    rationale: 增加 required_at、目标 GatePlan 和候选绑定 RED 回归
+    approval: user-request:optimize-MASE-2.4
+  - selector: tests/test_mase_governance_models.py
+    action: modified
+    rationale: 增加验证里程碑派生状态回归
+    approval: user-request:optimize-MASE-2.4
+effect_budget:
+  status: verified
+  allowed:
+    file_reads:
+    - MASE 框架源码、Schema、配置和测试
+    file_writes:
+    - 批准范围内的 MASE 框架文件
+    persistence_writes: []
+    external_calls: []
+    messages: []
+  forbidden:
+  - Pilot 项目文件、数据与测试
+  observed_extra: []
+change_declaration:
+  spec_changes:
+  - 分离开发、合并、发布和观察的验证时点
+  - 新增证据派生验证里程碑
+  incidental_changes: []
+  non_spec_changes: []
+callers:
+- id: cli-plan
+  path: mase_cli/main.py
+  symbol: gate plan dispatch
+  depth: 1
+  first_party: true
+  via: direct import
+  capability: stage-aware-gate-planning
+- id: state-status
+  path: mase_cli/state.py
+  symbol: inspect_change_status
+  depth: 1
+  first_party: true
+  via: direct call
+  capability: verification-milestones
+- id: release-freeze
+  path: mase_cli/release.py
+  symbol: candidate freeze workflow
+  depth: 2
+  first_party: true
+  via: gate planner
+  capability: release-governance
+implicit_channels:
+- kind: serialization
+  status: discovered
+  risk: controlled
+  evidence: JSON Schema and YAML round-trip tests
+  path: schemas
+- kind: configuration_spi
+  status: discovered
+  risk: controlled
+  evidence: .mase/gates.yaml is the canonical registry
+  path: .mase/gates.yaml
+- kind: reflection
+  status: checked_empty
+  risk: controlled
+  evidence: no reflection dispatch
+- kind: proxy_aop
+  status: checked_empty
+  risk: controlled
+  evidence: no proxy or AOP runtime
+- kind: async_callback
+  status: checked_empty
+  risk: controlled
+  evidence: synchronous CLI execution
+boundaries:
+- id: gate-cli
+  kind: cli
+  path: mase_cli/main.py
+  depth: 1
+- id: installed-state-schema
+  kind: other
+  path: schemas/mase-state.schema.json
+  depth: 1
+terminations:
+- branch: gate-cli
+  reason: system_boundary
+  depth: 1
+- branch: installed-state-schema
+  reason: system_boundary
+  depth: 1
+classification:
+  level: L3
+  reasons:
+  - 修改安装后 CLI 和状态 Schema 公共契约
+  - 修改候选冻结业务语义
+decision:
+  status: proceed
+  strategy: backward-compatible staged rollout
+verification:
+  test_types:
+  - unit
+  - contract
+  - integration
+  - full_regression
+  tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_governance_models.py
+  - tests/test_release_governance.py
+  fixture_sources:
+  - versioned repository fixtures
+  expected_differences:
+  - GatePlan 可按 development/merge/release/observe 目标延迟后续门禁
+  side_effect_isolation: 临时目录测试且无业务数据写入
+recovery:
+  strategy: 回退 2.4 运行时与 Schema，旧 stage 映射仍可读
+  data_compatibility: 新字段可忽略，无数据迁移
+reconciliation:
+  status: matched
+  actual_diff_digest: cb0d9550f54f0cf26da3505bc7f0dc871ce58521c1195264790db67d7232c0f9
+  actual_paths:
+  - mase_cli/gates.py
+  - mase_cli/state.py
+  - mase_cli/main.py
+  - schemas/mase-gates.schema.json
+  - schemas/mase-state.schema.json
+  - templates/gates.yaml
+  - templates/mase-state.yaml
+  - .mase/gates.yaml
+  - project-rules.md
+  - README.md
+  - docs/MASE-framework.md
+  - docs/user-guide.md
+  - docs/glossary.md
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_governance_models.py
+  - tests/test_release_governance.py
+  unplanned_paths: []
+  actual_symbols: []
+  unplanned_symbols: []
+residual_risks:
+- L3 独立综合评审仍需由非实现者确认

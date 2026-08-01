@@ -1,0 +1,71 @@
+schema: mase-project/v2
+profile: standard
+stack: python
+toolchains: []
+framework_contract:
+  name: MASE
+  version: 2.3.0
+  interface: installed-cli-and-versioned-schemas
+phase: verify
+product: {has_ui: false, has_public_contract: true, ui_platform: null}
+impact:
+  ui_changed: false
+  paths:
+    - mase_cli/context.py
+    - mase_cli/evidence.py
+    - mase_cli/state.py
+    - mase_cli/gates.py
+    - mase_cli/main.py
+    - mase_cli/risk.py
+    - schemas
+    - templates
+    - profiles
+    - agents
+    - docs
+    - tests
+    - .mase/gates.yaml
+    - .mase/tests.yaml
+    - project-rules.md
+impact_analysis:
+  applicability: required
+  level: L3
+  decision: proceed
+  artifact: impact-analysis.yaml
+  artifact_digest: sha256:683f51821ff365a8cd34c134ae5a7f8d60e9d1e76d791ed555bf575d8542a9bf
+  baseline_digest: worktree-before-change
+  diff_digest: pending-uncommitted-worktree
+  reconciliation: pending
+  capabilities:
+    context_routing:
+      level: L2
+      paths: [mase_cli/context.py, mase_cli/main.py, tests/test_mase_context.py]
+      decision: proceed
+    compact_evidence:
+      level: L3
+      paths: [mase_cli/evidence.py, mase_cli/state.py, schemas/mase-evidence.schema.json, tests/test_mase_gate_evidence.py]
+      decision: proceed
+    gate_efficiency:
+      level: L2
+      paths: [mase_cli/gates.py, mase_cli/risk.py, .mase/gates.yaml, .mase/tests.yaml, tests/test_mase_gate_planning.py]
+      decision: proceed
+risk:
+  triggers: [public_contract_change]
+  capabilities:
+    context_routing:
+      profile: standard
+      triggers: []
+      paths: [mase_cli/context.py, mase_cli/main.py, tests/test_mase_context.py]
+    compact_evidence:
+      profile: standard
+      triggers: [public_contract_change]
+      paths: [mase_cli/evidence.py, mase_cli/state.py, schemas/mase-evidence.schema.json, tests/test_mase_gate_evidence.py]
+    gate_efficiency:
+      profile: standard
+      triggers: []
+      paths: [mase_cli/gates.py, mase_cli/risk.py, .mase/gates.yaml, .mase/tests.yaml, tests/test_mase_gate_planning.py]
+gates: {}
+evidence: []
+dependencies: []
+conflicts_with: []
+blockers: []
+capabilities: [context_routing, compact_evidence, gate_efficiency]

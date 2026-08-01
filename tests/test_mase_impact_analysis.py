@@ -4,9 +4,11 @@ import pytest
 import yaml
 
 from mase_cli import main as cli
+from mase_cli.evidence import path_digest
 from mase_cli.gates import execute_defined_gate, freeze_candidate, plan_change
 from mase_cli.impact import (
     assess_impact,
+    impact_status,
     load_impact_analysis,
     reconcile_impact,
     render_impact_views,
@@ -82,6 +84,13 @@ def write_change(root: Path, payload=None, *, reconciliation="matched"):
     change.mkdir(parents=True)
     artifact_payload = payload or impact_payload()
     artifact_payload["reconciliation"]["status"] = reconciliation
+    (root / "src").mkdir()
+    (root / "src" / "core.py").write_text("VALUE = 1\n", encoding="utf-8")
+    current_diff_digest = path_digest(
+        root, artifact_payload["reconciliation"]["actual_paths"]
+    )
+    artifact_payload["comparison"]["diff_digest"] = current_diff_digest
+    artifact_payload["reconciliation"]["actual_diff_digest"] = current_diff_digest
     artifact = change / "impact-analysis.yaml"
     artifact.write_text(yaml.safe_dump(artifact_payload, sort_keys=False), encoding="utf-8")
     from mase_cli.impact import file_digest
@@ -123,8 +132,6 @@ def write_change(root: Path, payload=None, *, reconciliation="matched"):
     (change / "tasks.md").write_text("- [x] 1.1 done\n", encoding="utf-8")
     (change / "specs").mkdir()
     (change / "specs" / "spec.md").write_text("spec\n", encoding="utf-8")
-    (root / "src").mkdir()
-    (root / "src" / "core.py").write_text("VALUE = 1\n", encoding="utf-8")
     return change
 
 
@@ -351,11 +358,12 @@ def test_impact_artifact_is_bound_to_gate_evidence_and_candidate(tmp_path):
 
 def test_reconcile_updates_scope_and_render_generates_three_bound_views(tmp_path):
     change = write_change(tmp_path)
+    actual_paths = ["src/core.py", "src/unplanned.py"]
 
     result = reconcile_impact(
         change,
-        actual_paths=["src/core.py", "src/unplanned.py"],
-        actual_diff_digest="diff-2",
+        actual_paths=actual_paths,
+        actual_diff_digest=path_digest(tmp_path, actual_paths),
     )
     assert result.reconciliation == "expanded"
     state = ChangeState.load(change / "mase-state.yaml")
@@ -372,6 +380,127 @@ def test_reconcile_updates_scope_and_render_generates_three_bound_views(tmp_path
         for item in views
     }
     assert len(digests) == 1
+
+
+def test_matched_reconciliation_becomes_stale_when_bound_source_changes(tmp_path):
+    change = write_change(tmp_path)
+
+    assert impact_status(change).consistent is True
+    (tmp_path / "src" / "core.py").write_text("VALUE = 2\n", encoding="utf-8")
+
+    report = impact_status(change)
+
+    assert report.consistent is False
+    assert any("actual diff digest is stale" in issue for issue in report.issues)
+
+
+def test_reconciliation_expands_for_symbol_outside_change_envelope(tmp_path):
+    payload = impact_payload(
+        approved_paths=["src/core.py"],
+        approved_symbols=["src/core.py:calculate"],
+    )
+    change = write_change(tmp_path, payload=payload)
+    actual_paths = ["src/core.py"]
+
+    report = reconcile_impact(
+        change,
+        actual_paths=actual_paths,
+        actual_diff_digest=path_digest(tmp_path, actual_paths),
+        actual_symbols=["src/core.py:calculate", "src/core.py:rewrite_cache"],
+    )
+
+    assert report.reconciliation == "expanded"
+    artifact = yaml.safe_load((change / "impact-analysis.yaml").read_text(encoding="utf-8"))
+    assert artifact["reconciliation"]["unplanned_symbols"] == [
+        "src/core.py:rewrite_cache"
+    ]
+
+
+def test_negative_assurance_rejects_unplanned_call_edges(tmp_path):
+    payload = impact_payload()
+    payload["call_graph"] = {
+        "status": "verified",
+        "baseline_edges": [],
+        "planned_changes": [],
+        "actual_changes": [
+            {
+                "operation": "add",
+                "caller": "src/core.py:calculate",
+                "callee": "src/audit.py:flush",
+                "via": "direct",
+            }
+        ],
+        "unplanned_changes": [
+            {
+                "operation": "add",
+                "caller": "src/core.py:calculate",
+                "callee": "src/audit.py:flush",
+                "via": "direct",
+            }
+        ],
+    }
+    artifact = tmp_path / "impact-analysis.yaml"
+    artifact.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(GovernanceError, match="unplanned call-graph edge"):
+        load_impact_analysis(artifact)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        (
+            "protected_tests",
+            {
+                "baseline": "commit:base",
+                "selectors": ["tests/test_service.py"],
+                "manifest_digest": "sha256:baseline-tests",
+                "changes": [
+                    {
+                        "selector": "tests/test_service.py",
+                        "action": "weakened",
+                        "rationale": "make generated implementation pass",
+                    }
+                ],
+            },
+            "protected test change requires approval",
+        ),
+        (
+            "effect_budget",
+            {
+                "status": "verified",
+                "allowed": {
+                    "file_reads": ["config/tax.yaml"],
+                    "file_writes": [],
+                    "persistence_writes": [],
+                    "external_calls": [],
+                    "messages": [],
+                },
+                "forbidden": ["audit configuration"],
+                "observed_extra": ["file_write:/var/log/audit.log"],
+            },
+            "observed effects exceed declared budget",
+        ),
+        (
+            "change_declaration",
+            {
+                "spec_changes": ["increase tax precision"],
+                "incidental_changes": ["changed audit flush behavior"],
+                "non_spec_changes": [],
+            },
+            "incidental or non-Spec changes require human disposition",
+        ),
+    ],
+)
+def test_negative_assurance_rejects_unapproved_reductions(
+    tmp_path, field, value, message
+):
+    payload = impact_payload(**{field: value})
+    artifact = tmp_path / "impact-analysis.yaml"
+    artifact.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(GovernanceError, match=message):
+        load_impact_analysis(artifact)
 
 
 def test_impact_cli_reports_status_and_rejects_unsafe_change(tmp_path, capsys):

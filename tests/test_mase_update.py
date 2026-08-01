@@ -127,7 +127,7 @@ class TestCheckUpdates:
 
         rules_changes = [c for c in changes if c["component"] == "project-rules.md"]
         assert len(rules_changes) >= 1  # 可能多个 IDE 目录
-        assert all(c["action"] == "update" for c in rules_changes)
+        assert all(c["action"] == "conflict" for c in rules_changes)
 
     def test_detect_missing_sandbox_config(self, temp_project, framework_home, monkeypatch):
         from mase_cli.commands import update_project
@@ -174,7 +174,8 @@ class TestCheckUpdates:
         changes = update_project.check_updates(project_dir=temp_project,
                                                 framework_home=framework_home)
         assert [(item["component"], item["action"]) for item in changes] == [
-            ("tests/e2e/conftest.py", "conflict")
+            ("project-rules.md", "conflict"),
+            ("tests/e2e/conftest.py", "conflict"),
         ]
 
     def test_not_a_mase_project(self, tmp_path, framework_home):
@@ -256,7 +257,46 @@ class TestApplyUpdates:
         update_project.apply_updates(changes, project_dir=temp_project, dry_run=False, framework_home=framework_home)
 
         content = _read(os.path.join(temp_project, "project-rules.md"))
-        assert "v1.3" in content
+        assert "v1.1" in content
+        assert "v1.3" not in content
+
+    def test_marked_rule_extensions_survive_core_update(self, temp_project, framework_home):
+        from mase_cli.commands import update_project
+
+        rules_path = Path(temp_project) / "project-rules.md"
+        rules_path.write_text(
+            update_project._render_rule_sections("# old generated core\n", "Local rule: keep exactly\n"),
+            encoding="utf-8",
+        )
+        changes = update_project.check_updates(temp_project, framework_home)
+        rule_change = next(item for item in changes if item["component"] == "project-rules.md")
+
+        assert rule_change["action"] == "update"
+        update_project.apply_updates([rule_change], temp_project, framework_home=framework_home)
+        updated = rules_path.read_text(encoding="utf-8")
+        assert "MASE 九大工程原则" in updated
+        assert "Local rule: keep exactly" in updated
+
+    def test_modified_marked_core_conflicts_and_is_backed_up(self, temp_project, framework_home):
+        from mase_cli.commands import update_project
+
+        rules_path = Path(temp_project) / "project-rules.md"
+        rules_path.write_text(
+            update_project._render_rule_sections("# generated core\n", "Local extension\n"),
+            encoding="utf-8",
+        )
+        rules_path.write_text(
+            rules_path.read_text(encoding="utf-8").replace("generated core", "edited core"),
+            encoding="utf-8",
+        )
+        original = rules_path.read_text(encoding="utf-8")
+        changes = update_project.check_updates(temp_project, framework_home)
+        rule_change = next(item for item in changes if item["component"] == "project-rules.md")
+
+        assert rule_change["action"] == "conflict"
+        backup = update_project.apply_updates([rule_change], temp_project, framework_home=framework_home)
+        assert rules_path.read_text(encoding="utf-8") == original
+        assert (backup / "project-rules.md").read_text(encoding="utf-8") == original
 
     def test_dry_run_does_not_modify(self, temp_project, framework_home):
         from mase_cli.commands import update_project

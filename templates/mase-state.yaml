@@ -5,7 +5,7 @@ stack: generic
 toolchains: []
 framework_contract:
   name: MASE
-  version: 2.3.0
+  version: 2.4.0
   interface: installed-cli-and-versioned-schemas
 phase: draft
 
@@ -25,11 +25,32 @@ phase: draft
 
 product:
   has_ui: false
+  # 没有 API/公共协议的本地工具可显式设为 false；风险触发器仍可升级。
+  has_public_contract: true
   ui_platform: null
 
 impact:
   ui_changed: false
+  ui_change_kind: none
   paths: []
+
+# Profile 表达基础产品/Capability 风险；Change Risk 表达本次修改治理重量。
+# 它与 impact_analysis 的历史代码影响等级 L1-L3 相互独立。
+change_risk:
+  level: L1
+  dimensions:
+    public_contract: false
+    core_calculation: false
+    data_write: false
+    authentication: false
+    authorization: false
+    secrets: false
+    quota: false
+    concurrency: false
+    cross_system: false
+    persistent_state_machine: false
+    reversible: true
+    stable_regression: true
 
 # 每个新 change 在设计前必须完成分类；历史行为变化填充完整影响分析，
 # 纯注释/格式/非机器消费文案记录结构化豁免。

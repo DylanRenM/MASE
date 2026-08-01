@@ -99,6 +99,7 @@
       "type": "object",
       "properties": {
         "has_ui": {"type": "boolean"},
+        "has_public_contract": {"type": "boolean"},
         "ui_platform": {"type": ["string", "null"]}
       },
       "additionalProperties": true
@@ -107,9 +108,37 @@
       "type": "object",
       "properties": {
         "ui_changed": {"type": "boolean"},
+        "ui_change_kind": {"enum": ["none", "presentation", "interaction", "journey"]},
+        "critical_journey": {"type": "boolean"},
         "paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
       },
       "additionalProperties": true
+    },
+    "change_risk": {
+      "type": "object",
+      "required": ["level", "dimensions"],
+      "properties": {
+        "level": {"enum": ["L1", "L2", "L3", "L4"]},
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "public_contract": {"type": "boolean"},
+            "core_calculation": {"type": "boolean"},
+            "data_write": {"type": "boolean"},
+            "authentication": {"type": "boolean"},
+            "authorization": {"type": "boolean"},
+            "secrets": {"type": "boolean"},
+            "quota": {"type": "boolean"},
+            "concurrency": {"type": "boolean"},
+            "cross_system": {"type": "boolean"},
+            "persistent_state_machine": {"type": "boolean"},
+            "reversible": {"type": "boolean"},
+            "stable_regression": {"type": "boolean"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     },
     "impact_analysis": {
       "type": "object",
@@ -188,7 +217,7 @@
     "gates": {
       "type": "object",
       "additionalProperties": {
-        "enum": ["pending", "passed", "passed_with_baseline", "failed", "skipped", "stale", "blocked"]
+        "enum": ["pending", "passed", "subsumed", "passed_with_baseline", "failed", "skipped", "stale", "blocked"]
       }
     },
     "evidence": {
@@ -199,7 +228,7 @@
         "properties": {
           "gate": {"type": "string", "minLength": 1},
           "kind": {"enum": ["automatic", "manual", "legacy"]},
-          "result": {"enum": ["passed", "failed", "skipped", "pending", "stale", "passed_with_baseline"]},
+          "result": {"enum": ["passed", "subsumed", "failed", "skipped", "pending", "stale", "passed_with_baseline"]},
           "at": {"type": "string"},
           "duration_seconds": {"type": "number", "minimum": 0},
           "exit_code": {"type": "integer"},
@@ -214,11 +243,13 @@
           "actor": {"type": "string"},
           "subject": {"type": "string"},
           "reference": {"type": "string"},
+          "review_kind": {"enum": ["self", "independent"]},
           "path": {"type": "string"}
           ,"scope": {"type": "string"}
           ,"candidate_id": {"type": "string"}
           ,"test_digest": {"type": "string"}
           ,"execution_signature": {"type": "string"}
+          ,"environment_digest": {"type": "string"}
           ,"execution_id": {"type": "string"}
           ,"reused_from": {"type": "string"}
           ,"release_digest": {"type": "string"}
@@ -229,10 +260,17 @@
           ,"failure_classification": {"enum": ["product", "test", "environment", "test-data", "flaky", "unknown"]}
           ,"first_attempt_result": {"enum": ["passed", "failed"]}
           ,"attempts": {"type": "integer", "minimum": 1}
+          ,"evidence_path": {"type": "string", "minLength": 1}
+          ,"evidence_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
         },
         "allOf": [
           {
-            "if": {"properties": {"kind": {"const": "automatic"}}, "required": ["kind"]},
+            "if": {
+              "allOf": [
+                {"properties": {"kind": {"const": "automatic"}}, "required": ["kind"]},
+                {"not": {"required": ["evidence_path"]}}
+              ]
+            },
             "then": {
               "required": [
                 "at", "duration_seconds", "exit_code", "command", "platform",
@@ -241,8 +279,17 @@
             }
           },
           {
-            "if": {"properties": {"kind": {"const": "manual"}}, "required": ["kind"]},
+            "if": {
+              "allOf": [
+                {"properties": {"kind": {"const": "manual"}}, "required": ["kind"]},
+                {"not": {"required": ["evidence_path"]}}
+              ]
+            },
             "then": {"required": ["at", "actor", "subject", "reference", "input_digest", "execution_signature"]}
+          },
+          {
+            "if": {"required": ["evidence_path"]},
+            "then": {"required": ["evidence_digest", "execution_id", "input_digest"]}
           }
         ],
         "additionalProperties": true

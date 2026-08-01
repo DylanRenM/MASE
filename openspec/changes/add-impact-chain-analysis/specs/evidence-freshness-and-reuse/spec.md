@@ -17,3 +17,10 @@ Planned impact evidence MUST NOT satisfy post-implementation reconciliation. Rec
 #### Scenario: Actual diff adds an affected boundary
 - **WHEN** reconciliation finds a system boundary absent from the planned analysis
 - **THEN** the prior level, review, and selected verification evidence become stale and the GatePlan is recomputed
+
+### Requirement: Matched reconciliation is continuously revalidated
+MASE SHALL recompute the canonical digest of the reconciled actual paths whenever impact status, dependent gate planning, or candidate freeze is evaluated. A previously matched artifact MUST become inconsistent or stale when any bound path changes after reconciliation.
+
+#### Scenario: Source changes after a matched reconciliation
+- **WHEN** an approved source file changes after `impact_reconcile` records matched status
+- **THEN** impact status reports the actual-diff digest as stale and candidate freeze remains blocked until reconciliation runs again

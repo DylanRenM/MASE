@@ -1,5 +1,18 @@
 # MASE v2 使用手册
 
+## 设计宗旨
+
+MASE 的宗旨是：**让 Agentic Coding 高效交付正确、健壮、优化且易于维护的代码，确保正确满足需求、软件可靠运行，并持续消除坏味道**。使用时应用 **高效交付、需求正确、运行健壮、质量优化、整洁可维护** 五个结果检查流程取舍，不用少测、跳过评审或生成更多代码冒充高效。
+
+## 估算优化收益
+
+1. 用优化前数据计算代码完成到可手测的 `T_old(pre-hand-test)`。
+2. 用 2.4 development 门禁关键路径计算 `T_new(dev_verified)`。
+3. 计算 `1 - T_new / T_old`，再分开报告 candidate→release_ready、返工率、逸出缺陷和缓存/冗余率。
+4. 每个 gate 至少 3 个等价样本才报 p50/p90；否则标记 `unknown`。
+
+MASE 本仓当前 54 条记录的观测中位数串行代理为 58.4s 降到 17.2s，方向性收益约 71%；由于 5 个 gate 样本不足，这是低置信度示例而非承诺。可用 `python3 scripts/estimate_mase_speed_gain.py --json` 复算 MASE 本仓数据，采用项目需对自己的 evidence 执行同等统计。
+
 ## 安装
 
 ```bash
@@ -36,10 +49,12 @@ Profile 选择：本地 MVP 用 Lite；UI/文件/并发用 Standard；鉴权/支
 | `mase check --json` | 按当前 Profile/stack 检查结构 |
 | `mase status [--json]` | 汇总所有活动 change、依赖、冲突与基线债务 |
 | `mase status --change NAME` | 从 state+tasks 检查单个 change 一致性 |
+| `mase fix start NAME` | 为 L1/L2 修复创建仅含 `change.md` 的 bugfix-lite 工作流 |
+| `mase fix promote NAME --to standard` | 风险升级时无损生成完整 OpenSpec 工件并保留来源 |
 | `mase gate run GATE --change NAME -- COMMAND...` | 执行门禁并原子记录可复现证据 |
 | `mase gate run ... --verbose -- COMMAND...` | 人工调试时流式显示完整门禁输出 |
-| `mase gate plan --change NAME [--json]` | 查看 runnable/reusable/deferred/stale 门禁和重复测试诊断 |
-| `mase gate freeze --change NAME` | 在前置门禁完成后冻结最终候选 |
+| `mase gate plan --change NAME --target development|merge|release|observe [--all] [--json]` | 按可手测、可合并、可发布或观察目标查看必需门禁；`--all` 审计未触发定义和重复测试诊断 |
+| `mase gate freeze --change NAME` | 在 development/merge 前置门禁完成后冻结最终候选 |
 | `mase gate manual GATE --change NAME ...` | 记录允许人工完成的结构化证据 |
 | `mase impact classify KIND [--machine-consumed]` | 判定历史变更是否必须执行影响分析 |
 | `mase impact scan --input adapter-result.yaml` | 校验语言/工具链扫描适配器输出 |
@@ -52,8 +67,16 @@ Profile 选择：本地 MVP 用 Lite；UI/文件/并发用 Standard；鉴权/支
 | `mase metrics FILE...` | 报告上下文代理指标 |
 | `mase metrics ... --input-tokens N` | 记录平台提供的真实 Token |
 | `mase metrics ... --usage-file usage.json` | 读取平台导出的 input/output/cache Token |
-| `mase context plan --change NAME --read PATH --json` | 生成不包含文件正文的上下文计划 |
+| `mase context plan --change NAME --task ID --json` | 按工作包 reads 生成不包含文件正文的上下文计划 |
+| `mase context plan --change NAME --capability NAME --json` | 按精确 Capability paths 规划上下文 |
+| `mase evidence show --change NAME --execution ID --json` | 按需读取一条完整 evidence sidecar |
 | `mase update --dry-run` | 预览 v1.3→v2 迁移 |
+
+`phase` 表示 OpenSpec 工作进度；`verification_milestone` 由新鲜门禁证据派生。`dev_verified` 只表示可启动本地服务和交付手测，不代表已完成生产构建、候选冻结、全量回归或发布审计；`merge_verified` 后才允许冻结候选，发布与观察门禁只在相应目标下执行。
+
+Profile 是产品/Capability 的基础风险；`change_risk.level` 是本次修改的 L1–L4 治理重量；`impact_analysis.level` 是历史代码波及验证深度 L1–L3，三者不可互相替代。UI 使用 `ui_change_kind: presentation|interaction|journey`，纯展示不触发 P0，关键交互和 journey 才触发。
+
+`.mase/gates.yaml` 中，`requires` 表示执行前序，`covers` 表示测试集合覆盖，`candidate_bound` 表示绑定冻结候选；缓存由完整执行签名自动判断。覆盖复用显示为 `subsumed` 并保留来源 execution，不会冒充目标 gate 独立运行。依赖锁、工具链、fixture/config、候选或环境变化都会使精确缓存失效。
 | `mase install --dry-run` | 查看框架将分发的资源 |
 | `python3 scripts/audit_repository_boundary.py` | 阻断产品、旧资料和生成缓存混入 MASE 框架仓库 |
 
@@ -67,15 +90,19 @@ Profile 选择：本地 MVP 用 Lite；UI/文件/并发用 Standard；鉴权/支
 6. 将工作拆成纵向任务，每项声明 `reads` 和 `verify`。
 7. RED→GREEN→REFACTOR 只跑相关测试；Capability 边界先按实际 diff 复扫影响范围，再运行互不重复的 integration/security/P0。
 8. 先完成轻量人工确认，再用 `mase gate freeze` 固定最终候选；只对该候选运行 final 全量门禁。
-9. 用 Gate Runner 生成自动 evidence；仅受影响输入、日志、制品或候选变化后重新执行 stale 门禁。完整签名未变时 Runner 复用 evidence，归档时生成 master 快照。
+9. 用 Gate Runner 生成自动 evidence；完整记录写入 `.mase/evidence`，活动状态只保留摘要索引。仅受影响输入、日志、制品或候选变化后重新执行 stale 门禁，完整签名未变时复用 evidence，归档时生成 master 快照。
 
 ## 影响链分析
 
-`impact-analysis.yaml` 是唯一事实源，记录对比基线、修改点、调用方、隐性通道、系统边界、递归终止、L1/L2/L3、测试数据、允许差异、决策和回滚。`mase impact render` 生成《影响范围说明书》《测试范围确认单》《回滚方案》，不要手工维护三套事实。
+`impact-analysis.yaml` 是唯一事实源，记录对比基线、批准的文件/符号、受保护不变量、调用方、调用边差异、隐性通道、系统边界、L1/L2/L3、受保护测试、副作用预算、变更声明、决策和回滚。`mase impact render` 生成《影响范围说明书》《测试范围确认单》《回滚方案》，不要手工维护三套事实。
 
 只有签名、业务语义、异常、副作用、幂等、并发、事务、缓存、持久化、超时和重试都不变时，内部实现才能只追踪直接调用方。契约或语义变化递归到系统边界；达到三层仍未到边界时产生架构耦合告警，不能把深度上限当成“分析完成”。没有频率证据或仍有未验证隐性通道时至少按 L2。
 
 新旧差异契约应优先使用历史测试或受控样本。生产来源必须授权、脱敏和最小化；两版运行要隔离副作用并规范化时间、随机数等非确定性输出。未在 Spec 中确认的差异按疑似误伤处理。
+
+修改前已经存在的测试应登记为受保护测试；当前 change 新增的测试不能单独证明没有回归。删除、跳过、弱化断言或实质修改受保护测试时必须记录理由和人工审批。支持扫描的适配器比较修改前后的调用边；不支持时标记未验证而不是填空表示“无变化”。L2/L3 声明文件读写、持久化、外部调用和消息预算，并用可用的静态/Sandbox/运行轨迹核对。`mase impact status` 会重新摘要实际路径，复扫后的文件再次变化会立即显示 stale。
+
+工作包在 `tasks.md` 的任务下声明 `reads: path, path`。默认 change 计划不会递归展开 `docs`、`agents` 等宽泛目录；超预算计划返回非成功，人工覆盖需同时使用 `--allow-over-budget --budget-reason REASON`。字符数和文件数仍是上下文代理，不是真实 Token。
 
 ## 门禁定义与去重
 

@@ -97,7 +97,7 @@ def test_governance_migration_is_backed_up_valid_and_idempotent(tmp_path):
     update_project.apply_updates(changes, tmp_path, framework_home=FRAMEWORK)
 
     marker = yaml.safe_load((tmp_path / ".mase.yaml").read_text(encoding="utf-8"))["mase"]
-    assert marker["version"] == "2.3.0"
+    assert marker["version"] == "2.4.0"
     assert marker["stack"] == "swift"
     assert marker["toolchains"] == ["dart", "flutter", "kotlin", "swiftui"]
     state = ChangeState.load(change / "mase-state.yaml")

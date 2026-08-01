@@ -1,0 +1,57 @@
+schema: mase-project/v2
+profile: standard
+stack: python
+toolchains: []
+framework_contract:
+  name: MASE
+  version: 2.3.0
+  interface: installed-cli-and-versioned-schemas
+phase: verify
+product: {has_ui: false, has_public_contract: false, ui_platform: null}
+impact:
+  ui_changed: false
+  paths:
+    - training/mase-framework/mase-training-v2.3.yaml
+    - training/mase-framework/MASE框架培训讲义V2.3.pptx
+    - scripts/build_mase_training_deck.py
+    - scripts/verify_mase_training_deck.py
+    - scripts/analyze_pptx.py
+    - scripts/pptx_to_pdf.py
+    - tests/test_mase_training_deck.py
+impact_analysis:
+  applicability: required
+  level: L3
+  decision: proceed
+  artifact: impact-analysis.yaml
+  artifact_digest: sha256:da1d84ca0accd8dfe888b84f298f5d5023303ad57f8742fc18cc105b6fa340ae
+  baseline_digest: worktree-before-change
+  diff_digest: pending-uncommitted-worktree
+  reconciliation: pending
+  capabilities:
+    training_deck:
+      level: L3
+      paths:
+        - training/mase-framework/mase-training-v2.3.yaml
+        - scripts/build_mase_training_deck.py
+        - scripts/verify_mase_training_deck.py
+        - tests/test_mase_training_deck.py
+      decision: proceed
+risk:
+  triggers: []
+  capabilities:
+    training_deck:
+      profile: standard
+      triggers: []
+      paths:
+        - training/mase-framework/mase-training-v2.3.yaml
+        - scripts/build_mase_training_deck.py
+        - scripts/verify_mase_training_deck.py
+        - tests/test_mase_training_deck.py
+gates: {}
+evidence: []
+dependencies:
+  - change: optimize-mase-execution-efficiency
+    phase: verify
+conflicts_with: []
+blockers: []
+capabilities: [training_deck]

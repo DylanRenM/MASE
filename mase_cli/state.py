@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import shutil
 from dataclasses import dataclass, field
@@ -23,7 +24,7 @@ from mase_cli.schema import GovernanceError, load_yaml_document, validate_payloa
 
 TASK_PATTERN = re.compile(r"^- \[(?P<done>[ xX])\] ", re.MULTILINE)
 TERMINAL_PHASES = {"complete", "archived"}
-PASSING_GATE_STATES = {"passed"}
+PASSING_GATE_STATES = {"passed", "subsumed"}
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,7 @@ class EvidenceRecord(Mapping[str, Any]):
     actor: str = ""
     subject: str = ""
     reference: str = ""
+    review_kind: str = ""
     path: str = ""
     legacy: bool = False
     freshness: str = "fresh"
@@ -52,6 +54,7 @@ class EvidenceRecord(Mapping[str, Any]):
     candidate_id: str = ""
     test_digest: str = ""
     execution_signature: str = ""
+    environment_digest: str = ""
     execution_id: str = ""
     reused_from: str = ""
     release_digest: str = ""
@@ -62,6 +65,9 @@ class EvidenceRecord(Mapping[str, Any]):
     failure_classification: str = ""
     first_attempt_result: str = ""
     attempts: int = 0
+    evidence_path: str = ""
+    evidence_digest: str = ""
+    sidecar_status: str = ""
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "EvidenceRecord":
@@ -89,6 +95,7 @@ class EvidenceRecord(Mapping[str, Any]):
             actor=str(payload.get("actor", "")),
             subject=str(payload.get("subject", "")),
             reference=str(payload.get("reference", "")),
+            review_kind=str(payload.get("review_kind", "")),
             path=str(payload.get("path", "")),
             legacy=legacy,
             freshness=freshness,
@@ -96,6 +103,7 @@ class EvidenceRecord(Mapping[str, Any]):
             candidate_id=str(payload.get("candidate_id", "")),
             test_digest=str(payload.get("test_digest", "")),
             execution_signature=str(payload.get("execution_signature", "")),
+            environment_digest=str(payload.get("environment_digest", "")),
             execution_id=str(payload.get("execution_id", "")),
             reused_from=str(payload.get("reused_from", "")),
             release_digest=str(payload.get("release_digest", "")),
@@ -106,6 +114,9 @@ class EvidenceRecord(Mapping[str, Any]):
             failure_classification=str(payload.get("failure_classification", "")),
             first_attempt_result=str(payload.get("first_attempt_result", "")),
             attempts=int(payload.get("attempts", 0) or 0),
+            evidence_path=str(payload.get("evidence_path", "")),
+            evidence_digest=str(payload.get("evidence_digest", "")),
+            sidecar_status=str(payload.get("sidecar_status", "")),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -129,11 +140,13 @@ class EvidenceRecord(Mapping[str, Any]):
             "actor": self.actor,
             "subject": self.subject,
             "reference": self.reference,
+            "review_kind": self.review_kind,
             "path": self.path,
             "scope": self.scope if self.scope != "change" else "",
             "candidate_id": self.candidate_id,
             "test_digest": self.test_digest,
             "execution_signature": self.execution_signature,
+            "environment_digest": self.environment_digest,
             "execution_id": self.execution_id,
             "reused_from": self.reused_from,
             "release_digest": self.release_digest,
@@ -144,11 +157,38 @@ class EvidenceRecord(Mapping[str, Any]):
             "failure_classification": self.failure_classification,
             "first_attempt_result": self.first_attempt_result,
             "attempts": self.attempts if self.attempts > 0 else None,
+            "evidence_path": self.evidence_path,
+            "evidence_digest": self.evidence_digest,
         }
         data.update({key: value for key, value in optional.items() if value not in (None, "", (), [], {})})
         if self.kind == "automatic":
             data["commit"] = self.commit
         return data
+
+    def to_summary_dict(self) -> dict[str, Any]:
+        """Return the bounded active-state index for a sidecar-backed record."""
+
+        if not self.evidence_path:
+            return self.to_dict()
+        values = {
+            "gate": self.gate,
+            "kind": self.kind,
+            "result": self.result,
+            "at": self.at,
+            "duration_seconds": self.duration_seconds,
+            "input_digest": self.input_digest,
+            "log_path": self.log_path,
+            "scope": self.scope if self.scope != "change" else "",
+            "candidate_id": self.candidate_id,
+            "execution_signature": self.execution_signature,
+            "environment_digest": self.environment_digest,
+            "execution_id": self.execution_id,
+            "reused_from": self.reused_from,
+            "release_digest": self.release_digest,
+            "evidence_path": self.evidence_path,
+            "evidence_digest": self.evidence_digest,
+        }
+        return {key: value for key, value in values.items() if value not in (None, "", 0.0)}
 
     def __getitem__(self, key: str) -> Any:
         return self.to_dict()[key]
@@ -173,6 +213,7 @@ class ChangeState:
     product: dict[str, Any]
     impact: dict[str, Any]
     impact_analysis: dict[str, Any]
+    change_risk: dict[str, Any]
     risk: dict[str, Any]
     gates: dict[str, str]
     evidence: tuple[EvidenceRecord, ...]
@@ -202,10 +243,45 @@ class ChangeState:
         impact = dict(impact) if isinstance(impact, dict) else {}
         impact_analysis = payload.get("impact_analysis", {})
         impact_analysis = dict(impact_analysis) if isinstance(impact_analysis, dict) else {}
-        evidence = tuple(EvidenceRecord.from_dict(item) for item in payload.get("evidence", []))
+        evidence_payloads = []
+        root = source.parents[3]
+        for raw in payload.get("evidence", []):
+            item = dict(raw)
+            relative = str(item.get("evidence_path", ""))
+            if relative:
+                candidate = (root / relative).resolve()
+                try:
+                    candidate.relative_to(root.resolve())
+                except ValueError:
+                    item["sidecar_status"] = "invalid"
+                else:
+                    if not candidate.is_file():
+                        item["sidecar_status"] = "missing"
+                    else:
+                        actual = hashlib.sha256(candidate.read_bytes()).hexdigest()
+                        if actual != str(item.get("evidence_digest", "")):
+                            item["sidecar_status"] = "invalid"
+                        else:
+                            try:
+                                detail = json.loads(candidate.read_text(encoding="utf-8"))
+                            except (OSError, json.JSONDecodeError):
+                                item["sidecar_status"] = "invalid"
+                            else:
+                                if isinstance(detail, dict):
+                                    detail.update({
+                                        "evidence_path": relative,
+                                        "evidence_digest": actual,
+                                        "sidecar_status": "fresh",
+                                    })
+                                    item = detail
+                                else:
+                                    item["sidecar_status"] = "invalid"
+            evidence_payloads.append(item)
+        evidence = tuple(EvidenceRecord.from_dict(item) for item in evidence_payloads)
         legacy = legacy or any(item.legacy for item in evidence)
         gates = {str(key): str(value) for key, value in payload.get("gates", {}).items()}
         risk = dict(payload.get("risk", {}))
+        change_risk = dict(payload.get("change_risk", {}))
         release = dict(payload.get("release", {}))
         registry = ProfileRegistry()
         gate_plan = derive_gate_plan(
@@ -218,6 +294,7 @@ class ChangeState:
             capabilities=risk.get("capabilities", {}),
             release=release,
             impact_analysis=impact_analysis,
+            change_risk=change_risk or None,
         )
         return cls(
             path=source,
@@ -234,6 +311,7 @@ class ChangeState:
             product=product,
             impact=impact,
             impact_analysis=impact_analysis,
+            change_risk=change_risk,
             risk=risk,
             gates=gates,
             evidence=evidence,
@@ -258,6 +336,7 @@ class StatusReport:
     complete: int
     total: int
     lifecycle: str
+    verification_milestone: str
     consistent: bool
     issues: tuple[str, ...]
     evidence: tuple[EvidenceRecord, ...]
@@ -265,6 +344,7 @@ class StatusReport:
     dependencies: tuple[dict[str, str], ...] = ()
     impact_paths: tuple[str, ...] = ()
     impact_analysis: dict[str, Any] = field(default_factory=dict)
+    change_risk: dict[str, Any] = field(default_factory=dict)
     blockers: tuple[dict[str, Any], ...] = ()
     conflicts_with: tuple[str, ...] = ()
     effective_gates: dict[str, str] = field(default_factory=dict)
@@ -283,6 +363,7 @@ class StatusReport:
             "release": dict(self.release),
             "release_outcome": self.release_outcome,
             "lifecycle": self.lifecycle,
+            "verification_milestone": self.verification_milestone,
             "tasks": {"complete": self.complete, "total": self.total},
             "consistent": self.consistent,
             "issues": list(self.issues),
@@ -290,9 +371,10 @@ class StatusReport:
             "dependencies": list(self.dependencies),
             "impact_paths": list(self.impact_paths),
             "impact_analysis": dict(self.impact_analysis),
+            "change_risk": dict(self.change_risk),
             "blockers": list(self.blockers),
             "conflicts_with": list(self.conflicts_with),
-            "evidence": [item.to_dict() for item in self.evidence],
+            "evidence": [item.to_summary_dict() for item in self.evidence],
             "effective_gates": dict(self.effective_gates),
         }
 
@@ -310,6 +392,71 @@ def _lifecycle(
     if all_done and gates_done and state.phase in {"verify", "retro", "release"}:
         return "ready_to_complete"
     return "active"
+
+
+def _verification_milestone(
+    state: ChangeState, effective_gates: Mapping[str, str], release_outcome: str
+) -> str:
+    """Derive the highest verification milestone from canonical fresh evidence."""
+
+    from mase_cli.evidence import path_digest
+    from mase_cli.gates import REQUIRED_AT_ORDER, load_gate_definitions
+
+    root = state.path.parents[3]
+    try:
+        definitions = load_gate_definitions(root, required=False)
+    except (GovernanceError, ValueError, OSError):
+        return "working"
+    required = {
+        name: definitions.gates[name]
+        for name in state.gate_plan.required_gates
+        if name in definitions.gates
+    }
+
+    def gates_passed(target: str, *, exclude_live: bool = False) -> bool:
+        applicable = [
+            name for name, definition in required.items()
+            if REQUIRED_AT_ORDER[definition.required_at] <= REQUIRED_AT_ORDER[target]
+            and not (
+                exclude_live
+                and definition.stage in {"release_live", "release_observe"}
+            )
+        ]
+        return bool(applicable) and all(
+            effective_gates.get(name) in PASSING_GATE_STATES for name in applicable
+        )
+
+    if release_outcome == "observed":
+        return "observed"
+    if release_outcome == "live_verified":
+        return "live_verified"
+    development_ready = gates_passed("development")
+    if not development_ready:
+        return "working"
+    user_confirmation_selected = "user_confirmation" in required
+    user_confirmed = (
+        user_confirmation_selected
+        and effective_gates.get("user_confirmation") in PASSING_GATE_STATES
+    )
+    merge_ready = gates_passed("merge")
+    if not merge_ready:
+        return "user_confirmed" if user_confirmed else "dev_verified"
+    candidate_fresh = bool(state.candidate) and (
+        path_digest(root, state.candidate.get("inputs", []))
+        == state.candidate.get("input_digest")
+    )
+    if not candidate_fresh:
+        return "merge_verified"
+    release_gates = [
+        name for name, definition in required.items()
+        if definition.required_at == "release"
+        and definition.stage not in {"release_live", "release_observe"}
+    ]
+    if release_gates and all(
+        effective_gates.get(name) in PASSING_GATE_STATES for name in release_gates
+    ):
+        return "release_ready"
+    return "candidate_frozen"
 
 
 def _release_outcome(
@@ -568,6 +715,7 @@ def inspect_change_status(change_dir: Union[str, Path]) -> StatusReport:
     if state.blockers:
         issues.append(f"{len(state.blockers)} blocker(s) remain")
     lifecycle = _lifecycle(state, complete, total, effective_gates)
+    release_outcome = _release_outcome(state, effective_gates)
     if missing_artifacts and total > 0 and complete == total:
         lifecycle = "ready_for_gate"
     return StatusReport(
@@ -577,10 +725,13 @@ def inspect_change_status(change_dir: Union[str, Path]) -> StatusReport:
         phase=state.phase,
         framework_contract=state.framework_contract,
         release=state.release,
-        release_outcome=_release_outcome(state, effective_gates),
+        release_outcome=release_outcome,
         complete=complete,
         total=total,
         lifecycle=lifecycle,
+        verification_milestone=_verification_milestone(
+            state, effective_gates, release_outcome
+        ),
         consistent=not issues,
         issues=tuple(issues),
         evidence=state.evidence,
@@ -588,6 +739,11 @@ def inspect_change_status(change_dir: Union[str, Path]) -> StatusReport:
         dependencies=state.dependencies,
         impact_paths=tuple(str(item) for item in state.impact.get("paths", [])),
         impact_analysis=state.impact_analysis,
+        change_risk={
+            "declared": dict(state.change_risk),
+            "effective_level": state.gate_plan.change_risk_level,
+            "reasons": list(state.gate_plan.change_risk_reasons),
+        },
         blockers=state.blockers,
         conflicts_with=state.conflicts_with,
         effective_gates=effective_gates,

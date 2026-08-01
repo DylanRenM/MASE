@@ -14,6 +14,37 @@ adapter:
   inputs: []
 change_points: []
 approved_paths: []
+approved_symbols: []
+forbidden_paths: []
+protected_invariants: []
+call_graph:
+  status: unverified
+  reason: 通用适配器尚未生成修改前后调用边差异
+  baseline_edges: []
+  planned_changes: []
+  actual_changes: []
+  unplanned_changes: []
+protected_tests:
+  baseline: commit:BASE
+  selectors: []
+  manifest_digest: pending
+  no_tests_reason: 待确认是否存在修改前受保护测试
+  changes: []
+effect_budget:
+  status: unverified
+  reason: 待选择静态或运行时副作用观测方式
+  allowed:
+    file_reads: []
+    file_writes: []
+    persistence_writes: []
+    external_calls: []
+    messages: []
+  forbidden: []
+  observed_extra: []
+change_declaration:
+  spec_changes: []
+  incidental_changes: []
+  non_spec_changes: []
 callers: []
 implicit_channels:
   - {kind: serialization, status: unverified, risk: controlled}
@@ -39,4 +70,6 @@ reconciliation:
   actual_diff_digest: ""
   actual_paths: []
   unplanned_paths: []
+  actual_symbols: []
+  unplanned_symbols: []
 residual_risks: []

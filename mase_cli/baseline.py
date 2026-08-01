@@ -17,16 +17,33 @@ from mase_cli.schema import GovernanceError, load_yaml_document, validate_payloa
 
 
 PathInput = Union[str, os.PathLike]
-HARD_GATES = frozenset(
-    {
-        "api_contract",
-        "p0_e2e",
-        "credential_scan",
-        "security_scan",
-        "data_integrity",
-        "destructive_migration",
-    }
-)
+HARD_GATES = frozenset({
+    "api_contract", "p0_e2e", "credential_scan", "security_scan",
+    "data_integrity", "destructive_migration",
+})
+
+
+def hard_gate_names() -> frozenset[str]:
+    """Derive non-baselineable gates from current Profiles and risk policy."""
+
+    from mase_cli.profiles import ProfileRegistry
+    from mase_cli.risk import (
+        RELEASE_ARTIFACT_GATES, RELEASE_LIVE_GATES, RELEASE_OBSERVE_GATES,
+        RELEASE_PREFLIGHT_GATES, load_risk_registry,
+    )
+
+    registry = ProfileRegistry()
+    names = set(HARD_GATES)
+    for profile_name in registry.names:
+        names.update(registry.get(profile_name).hard_gates)
+    for definition in load_risk_registry().values():
+        if registry.get(str(definition.get("minimum_profile", "lite"))).rank >= registry.get("strict").rank:
+            names.update(str(item) for item in definition.get("gates", []))
+    names.update(RELEASE_ARTIFACT_GATES)
+    names.update(RELEASE_PREFLIGHT_GATES)
+    names.update(RELEASE_LIVE_GATES)
+    names.update(RELEASE_OBSERVE_GATES)
+    return frozenset(names)
 
 
 class BaselineError(GovernanceError):
@@ -161,7 +178,8 @@ def approve_candidates(
     _parse_expiry(expires)
     if not str(remediation_change).strip():
         raise BaselineError("remediation change is required", code="baseline")
-    hard = sorted({item.gate for item in candidates.failures if item.gate in HARD_GATES})
+    hard_gates = hard_gate_names()
+    hard = sorted({item.gate for item in candidates.failures if item.gate in hard_gates})
     if hard:
         raise BaselineError(
             "hard gate failures cannot enter a normal baseline: " + ", ".join(hard),

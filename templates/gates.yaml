@@ -6,19 +6,29 @@ overlap_warning_threshold: 0.8
 gates: {}
 # impact_classification:
 #   stage: analysis
+#   required_at: development
 #   command: [mase, impact, classify, runtime, --change, "{change}"]
 #   inputs: [openspec/changes]
 # impact_analysis:
 #   stage: analysis
+#   required_at: development
 #   command: [mase, impact, validate, --change, "{change}"]
 #   inputs: [openspec/changes]
 # impact_reconcile:
 #   stage: capability
+#   required_at: merge
 #   command: [mase, impact, status, --change, "{change}", --require-matched]
 #   inputs: [openspec/changes, src, tests]
 # 动态浏览器门禁示例：测试 ID/selector/path 定义在 `.mase/tests.yaml`。
 # p0_e2e:
 #   stage: capability
+#   required_at: release
 #   command: [npx, playwright, test, "{selected_tests}", --workers=1]
 #   inputs: [src, templates, e2e]
 #   test_tiers: [p0_journey]
+#   dependency_locks: [package-lock.json]
+#   fixture_inputs: [e2e/fixtures]
+#   config_inputs: [playwright.config.js]
+#   toolchain: node-22-playwright
+#   environment: strict
+#   requires: [api_contract]

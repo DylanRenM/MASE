@@ -1,0 +1,261 @@
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: commit:69c7b1c
+  diff_digest: pending
+  spec_inputs:
+  - openspec/changes/define-mase-delivery-purpose-and-speed-baseline/specs
+  contract_inputs:
+  - project-rules.md
+  - framework-manifest.yaml
+  - training/mase-framework/mase-training-v2.4.yaml
+adapter:
+  name: documentation-generator-and-ppt-manifest
+  version: '1.0'
+  rules_digest: mase-2.4-impact-policy
+  confidence: high
+  inputs:
+  - project-rules.md
+  - mase_cli/rules.py
+  - docs
+  - agents
+  - training/mase-framework
+  - tests
+change_points:
+- id: canonical-purpose
+  path: project-rules.md
+  symbol: MASE design purpose and efficiency policy
+  change_type: business_semantics
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: adapter-output
+  path: mase_cli/rules.py
+  symbol: RuleSynchronizer.render
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: speed-estimator
+  path: scripts/estimate_mase_speed_gain.py
+  symbol: estimate_from_repository
+  change_type: external_contract
+  core_path: false
+  call_frequency: low
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: training-narrative
+  path: training/mase-framework/mase-training-v2.4.yaml
+  symbol: purpose and efficiency slides
+  change_type: external_contract
+  core_path: false
+  call_frequency: low
+  semantics_preserved: false
+  side_effects_preserved: true
+approved_paths:
+- project-rules.md
+- README.md
+- docs/MASE-framework.md
+- docs/design-principles.md
+- docs/user-guide.md
+- docs/glossary.md
+- agents/agent-1-orchestrator/SKILL.md
+- agents/agent-2-requirements/SKILL.md
+- agents/agent-3-development/SKILL.md
+- agents/agent-4-quality/SKILL.md
+- mase_cli/rules.py
+- AGENTS.md
+- CLAUDE.md
+- CONVENTIONS.md
+- .github/copilot-instructions.md
+- scripts/estimate_mase_speed_gain.py
+- training/mase-framework/mase-training-v2.4.yaml
+- training/mase-framework/MASE框架培训讲义V2.4.pptx
+- tests/test_mase_delivery_purpose.py
+- tests/test_mase_training_deck.py
+- tests/test_mase_state_and_rules.py
+approved_symbols:
+- mase_cli/rules.py:RuleSynchronizer.render
+- scripts/estimate_mase_speed_gain.py:estimate_from_repository
+- training/mase-framework/mase-training-v2.4.yaml:slides
+forbidden_paths:
+- ../pilot/**
+- /Users/dylanren/Documents/trae_projects/pilot/**
+protected_invariants:
+- MASE 版本仍为 2.4.0
+- 硬门禁不因提速估算被删除
+- 少于三个样本不宣称 percentile
+- 受保护 V1 课件字节不变
+- Pilot 始终在禁止范围
+call_graph:
+  status: verified
+  baseline_edges: []
+  planned_changes: []
+  actual_changes: []
+  unplanned_changes: []
+protected_tests:
+  baseline: commit:69c7b1c
+  selectors:
+  - tests/test_mase_training_deck.py
+  - tests/test_mase_state_and_rules.py
+  manifest_digest: framework-regression-241-python-15-node
+  changes:
+  - selector: tests/test_mase_training_deck.py
+    action: modified
+    rationale: 增加设计宗旨、五个结果维度和低置信度速度估算回归
+    approval: user-request:define-MASE-design-purpose
+effect_budget:
+  status: verified
+  allowed:
+    file_reads:
+    - MASE 规则、文档、evidence 索引、课件源和测试
+    file_writes:
+    - 批准的 MASE 规则、文档、生成 adapter、2.4 课件和测试
+    persistence_writes: []
+    external_calls: []
+    messages: []
+  forbidden:
+  - Pilot 文件、数据和测试
+  - 受保护 V1 课件
+  observed_extra: []
+change_declaration:
+  spec_changes:
+  - 建立 MASE 顶层设计宗旨和五个可验证结果
+  - 建立分阶段低置信度速度估算与样本边界
+  - 将叙事融合到现行课件
+  incidental_changes: []
+  non_spec_changes: []
+callers:
+- id: project-init
+  path: mase_cli/commands/init_project.py
+  symbol: generated rule adapter setup
+  depth: 2
+  first_party: true
+  via: RuleSynchronizer
+  capability: framework-self-governance
+- id: project-update
+  path: mase_cli/commands/update_project.py
+  symbol: generated rule adapter update
+  depth: 2
+  first_party: true
+  via: RuleSynchronizer
+  capability: framework-self-governance
+- id: deck-builder
+  path: scripts/build_mase_training_deck.py
+  symbol: build_deck
+  depth: 1
+  first_party: true
+  via: YAML source
+  capability: current-mase-training-deck
+- id: deck-verifier
+  path: scripts/verify_mase_training_deck.py
+  symbol: verify
+  depth: 1
+  first_party: true
+  via: PPTX and YAML
+  capability: current-mase-training-deck
+implicit_channels:
+- kind: generated_registration
+  status: discovered
+  risk: controlled
+  evidence: RuleSynchronizer deterministically generates four IDE adapters
+  path: mase_cli/rules.py
+- kind: serialization
+  status: discovered
+  risk: controlled
+  evidence: YAML estimate and training sources have deterministic tests
+  path: training/mase-framework/mase-training-v2.4.yaml
+- kind: template
+  status: discovered
+  risk: controlled
+  evidence: editable PPTX is generated from versioned YAML and protected V1 template
+  path: scripts/build_mase_training_deck.py
+- kind: configuration_spi
+  status: checked_empty
+  risk: controlled
+  evidence: no new runtime configuration registration
+- kind: reflection
+  status: checked_empty
+  risk: controlled
+  evidence: no reflection dispatch
+- kind: async_callback
+  status: checked_empty
+  risk: controlled
+  evidence: synchronous local generation and estimation
+boundaries:
+- id: installed-rule-adapters
+  kind: other
+  path: AGENTS.md
+  depth: 2
+- id: editable-training-deck
+  kind: other
+  path: training/mase-framework/MASE框架培训讲义V2.4.pptx
+  depth: 1
+terminations:
+- branch: installed-rule-adapters
+  reason: system_boundary
+  depth: 2
+- branch: editable-training-deck
+  reason: system_boundary
+  depth: 1
+classification:
+  level: L3
+  reasons:
+  - 修改框架顶层过程语义和安装后 IDE adapter
+  - 修改当前培训分发内容
+decision:
+  status: proceed
+  strategy: versioned documentation and deterministic regeneration
+verification:
+  test_types:
+  - unit
+  - contract
+  - training_visual
+  - full_regression
+  tests:
+  - tests/test_mase_delivery_purpose.py
+  - tests/test_mase_training_deck.py
+  - tests/test_mase_state_and_rules.py
+  fixture_sources:
+  - structured MASE evidence indexes
+  - versioned 2.4 training source
+  - protected V1 deck
+  expected_differences:
+  - 核心表面增加统一宗旨与五个结果维度
+  - 课件增加低置信度 71% 示例和 unknown 边界
+  side_effect_isolation: 只读 evidence 索引，课件重建不修改 V1，不写业务数据
+recovery:
+  strategy: 回退宗旨文案、adapter 输出和 2.4 课件，保留原 2.4 版本
+  data_compatibility: 只修改规则、文档和课件，无数据迁移
+reconciliation:
+  status: matched
+  actual_diff_digest: c7f66edb57a3101fcbfe48f604a5dac390307dd824e077d9b797ad6818bd8dbc
+  actual_paths:
+  - project-rules.md
+  - README.md
+  - docs/MASE-framework.md
+  - docs/design-principles.md
+  - docs/user-guide.md
+  - docs/glossary.md
+  - agents/agent-1-orchestrator/SKILL.md
+  - agents/agent-2-requirements/SKILL.md
+  - agents/agent-3-development/SKILL.md
+  - agents/agent-4-quality/SKILL.md
+  - mase_cli/rules.py
+  - AGENTS.md
+  - CLAUDE.md
+  - CONVENTIONS.md
+  - .github/copilot-instructions.md
+  - scripts/estimate_mase_speed_gain.py
+  - training/mase-framework/mase-training-v2.4.yaml
+  - training/mase-framework/MASE框架培训讲义V2.4.pptx
+  - tests/test_mase_delivery_purpose.py
+  - tests/test_mase_training_deck.py
+  unplanned_paths: []
+  actual_symbols: []
+  unplanned_symbols: []
+residual_risks:
+- 54 条记录中 5 个 gate 样本不足，71% 只能作为低置信度方向性估算
+- L3 独立综合评审仍需非实现者确认

@@ -5,13 +5,11 @@
   "_comment": "E2E Sandbox 配置 — 声明需要快照管理的资源，测试完成后自动恢复",
   "snapshot": {
     "directories": [
-      "data/uploads/",
-      "data/exports/",
-      "data/logs/"
+      "tests/e2e/sandbox/uploads/",
+      "tests/e2e/sandbox/exports/",
+      "tests/e2e/sandbox/logs/"
     ],
-    "files": [
-      ".env"
-    ],
+    "files": [],
     "env_vars": [
       "APP_ENV",
       "DEBUG"

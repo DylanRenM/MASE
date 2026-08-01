@@ -4,6 +4,7 @@ overlap_warning_threshold: 0.8
 gates:
   impact_analysis:
     stage: analysis
+    required_at: development
     command:
     - python3
     - -m
@@ -20,8 +21,12 @@ gates:
     - schemas/mase-impact-scan.schema.json
     - schemas/mase-state.schema.json
     - profiles
+    dependency_locks: [pyproject.toml]
+    toolchain: python-3
+    environment: standard
   impact_reconcile:
     stage: capability
+    required_at: merge
     command:
     - python3
     - -m
@@ -37,22 +42,32 @@ gates:
     - mase_cli/state.py
     - schemas/mase-impact-analysis.schema.json
     - tests/test_mase_impact_analysis.py
+    requires: [impact_analysis]
+    dependency_locks: [pyproject.toml]
+    toolchain: python-3
+    environment: standard
   contract_differential:
     stage: micro
+    required_at: development
     command:
     - python3
     - -m
     - pytest
     - -q
-    - tests/test_mase_impact_analysis.py
+    - "{selected_tests}"
     inputs:
     - mase_cli/impact.py
     - schemas/mase-impact-analysis.schema.json
     - tests/test_mase_impact_analysis.py
-    tests:
-    - tests/test_mase_impact_analysis.py
+    test_ids:
+    - impact-contract-differential
+    requires: [impact_analysis]
+    dependency_locks: [pyproject.toml]
+    toolchain: python-3
+    environment: standard
   impact_review:
     stage: capability
+    required_at: merge
     mode: manual
     command:
     - manual
@@ -62,6 +77,7 @@ gates:
     - docs/design-principles.md
   architecture_review:
     stage: capability
+    required_at: merge
     mode: manual
     command:
     - manual
@@ -71,14 +87,13 @@ gates:
     - schemas/mase-impact-analysis.schema.json
   full_chain_smoke:
     stage: capability
+    required_at: merge
     command:
     - python3
     - -m
     - pytest
     - -q
-    - tests/test_mase_impact_analysis.py
-    - tests/test_mase_gate_planning.py
-    - tests/test_mase_cli_operations.py
+    - "{selected_tests}"
     inputs:
     - mase_cli
     - schemas
@@ -87,20 +102,21 @@ gates:
     - tests/test_mase_impact_analysis.py
     - tests/test_mase_gate_planning.py
     - tests/test_mase_cli_operations.py
-    tests:
-    - tests/test_mase_impact_analysis.py
-    - tests/test_mase_gate_planning.py
-    - tests/test_mase_cli_operations.py
+    test_ids:
+    - impact-full-chain-smoke
+    requires: [api_contract, integration_tests]
+    dependency_locks: [pyproject.toml]
+    toolchain: python-3
+    environment: standard
   rollback_verification:
     stage: capability
+    required_at: release
     command:
     - python3
     - -m
     - pytest
     - -q
-    - tests/test_mase_update.py
-    - tests/test_mase_cli_stacks.py
-    - tests/test_mase_impact_analysis.py
+    - "{selected_tests}"
     inputs:
     - mase_cli/commands/init_project.py
     - mase_cli/commands/update_project.py
@@ -109,65 +125,53 @@ gates:
     - tests/test_mase_update.py
     - tests/test_mase_cli_stacks.py
     - tests/test_mase_impact_analysis.py
-    tests:
-    - tests/test_mase_update.py
-    - tests/test_mase_cli_stacks.py
-    - tests/test_mase_impact_analysis.py
+    test_ids:
+    - framework-rollback-smoke
+    requires: [integration_tests]
+    dependency_locks: [pyproject.toml]
+    toolchain: python-3
+    environment: standard
   related_tests:
     stage: capability
+    required_at: development
     command:
     - python3
     - -m
     - pytest
     - -q
-    - tests/test_mase_gate_planning.py
     - tests/test_mase_gate_evidence.py
     - tests/test_mase_context.py
     - tests/test_mase_profiles.py
     - tests/test_mase_training_deck.py
-    - tests/test_release_governance.py
-    - tests/test_repository_boundary.py
-    - tests/test_distribution_integrity.py
-    - tests/test_mase_test_selection.py
     - tests/test_webapp_reporter.py
-    - tests/test_mase_impact_analysis.py
     inputs:
-    - mase_cli/gates.py
     - mase_cli/evidence.py
     - mase_cli/state.py
-    - tests/test_mase_gate_planning.py
     - tests/test_mase_gate_evidence.py
     - tests/test_mase_context.py
     - tests/test_mase_profiles.py
     - scripts/build_mase_training_deck.py
     - scripts/verify_mase_training_deck.py
-    - training/mase-framework/mase-training-v2.3.yaml
-    - training/mase-framework/MASE框架培训讲义V2.3.pptx
+    - training/mase-framework/mase-training-v2.4.yaml
+    - training/mase-framework/MASE框架培训讲义V2.4.pptx
     - tests/test_mase_training_deck.py
-    - tests/test_release_governance.py
-    - tests/test_repository_boundary.py
-    - tests/test_distribution_integrity.py
-    - mase_cli/test_selection.py
-    - schemas/mase-test-manifest.schema.json
     - schemas/mase-test-diagnostic.schema.json
     - skills/webapp-testing/mase-reporter.cjs
-    - tests/test_mase_test_selection.py
     - tests/test_webapp_reporter.py
-    - tests/test_mase_impact_analysis.py
     tests:
-    - tests/test_mase_gate_planning.py
     - tests/test_mase_gate_evidence.py
     - tests/test_mase_context.py
     - tests/test_mase_profiles.py
     - tests/test_mase_training_deck.py
-    - tests/test_release_governance.py
-    - tests/test_repository_boundary.py
-    - tests/test_distribution_integrity.py
-    - tests/test_mase_test_selection.py
-    - tests/test_mase_impact_analysis.py
     - tests/test_webapp_reporter.py
+    requires: [impact_analysis]
+    dependency_locks: [pyproject.toml]
+    config_inputs: [.mase/tests.yaml]
+    toolchain: python-3
+    environment: standard
   api_contract:
     stage: capability
+    required_at: merge
     command:
     - python3
     - -m
@@ -178,32 +182,39 @@ gates:
     - tests/test_mase_governance_models.py
     - tests/test_risk_driven_property_testing.py
     - tests/test_release_governance.py
-    - tests/test_distribution_integrity.py
     - tests/test_mase_test_selection.py
     - tests/test_mase_impact_analysis.py
     inputs:
     - mase_cli
     - schemas
+    - templates
+    - profiles
     - tests/test_mase_gate_planning.py
     - tests/test_mase_cli_operations.py
     - tests/test_mase_governance_models.py
     - tests/test_risk_driven_property_testing.py
     - tests/test_release_governance.py
-    - tests/test_distribution_integrity.py
     - mase_cli/test_selection.py
     - schemas/mase-test-manifest.schema.json
     - schemas/mase-test-diagnostic.schema.json
     - tests/test_mase_test_selection.py
+    - tests/test_mase_impact_analysis.py
     tests:
     - tests/test_mase_gate_planning.py
     - tests/test_mase_cli_operations.py
     - tests/test_mase_governance_models.py
     - tests/test_risk_driven_property_testing.py
     - tests/test_release_governance.py
-    - tests/test_distribution_integrity.py
     - tests/test_mase_test_selection.py
+    - tests/test_mase_impact_analysis.py
+    requires: [contract_differential, related_tests]
+    dependency_locks: [pyproject.toml]
+    config_inputs: [.mase/gates.yaml]
+    toolchain: python-3
+    environment: standard
   integration_tests:
     stage: capability
+    required_at: merge
     command:
     - python3
     - -m
@@ -229,8 +240,14 @@ gates:
     - tests/test_mase_governance_migration.py
     - tests/test_repository_boundary.py
     - tests/test_distribution_integrity.py
+    requires: [api_contract]
+    dependency_locks: [pyproject.toml]
+    config_inputs: [.mase/gates.yaml]
+    toolchain: python-3
+    environment: standard
   security_review:
     stage: capability
+    required_at: merge
     command:
     - python3
     - -m
@@ -260,8 +277,14 @@ gates:
     - release-authority
     - release-overlay-applicability
     - repository-boundary
+    requires: [api_contract]
+    dependency_locks: [pyproject.toml]
+    config_inputs: [.mase/gates.yaml]
+    toolchain: python-3
+    environment: strict
   code_review:
     stage: capability
+    required_at: merge
     mode: manual
     command:
     - manual
@@ -270,14 +293,17 @@ gates:
     - .mase/gates.yaml
   independent_review:
     stage: capability
+    required_at: merge
     mode: manual
     command:
     - manual
     inputs:
     - project-rules.md
     - .mase/gates.yaml
+    requires: [api_contract, integration_tests]
   full_regression:
     stage: final
+    required_at: release
     candidate_bound: true
     command:
     - python3
@@ -299,8 +325,13 @@ gates:
     - project-rules.md
     - scripts/build_mase_training_deck.py
     - scripts/verify_mase_training_deck.py
-    - training/mase-framework/mase-training-v2.3.yaml
-    - training/mase-framework/MASE框架培训讲义V2.3.pptx
+    - training/mase-framework/mase-training-v2.4.yaml
+    - training/mase-framework/MASE框架培训讲义V2.4.pptx
     tests:
     - tests
     - tests/sandbox/sandbox.test.js
+    requires: [integration_tests, security_review]
+    dependency_locks: [pyproject.toml, package-lock.json]
+    config_inputs: [.mase/gates.yaml, .mase/tests.yaml, vitest.config.js]
+    toolchain: python-node
+    environment: strict

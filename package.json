@@ -1,6 +1,6 @@
 {
   "name": "mase",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "MASE v2 E2E sandbox test support",
   "private": true,
   "directories": {

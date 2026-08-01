@@ -11,6 +11,7 @@ This change therefore needs both a process contract and a machine-readable excha
 - Require a fresh pre-design impact decision for non-exempt historical behavior changes.
 - Reconcile the planned analysis against the actual implementation diff before verification.
 - Represent explicit callers, implicit channels, traversal boundaries, uncertainty, L1/L2/L3 level, tests, rollout, and rollback in one canonical artifact.
+- Provide negative assurance through a bounded change envelope, call-edge diff, protected pre-change regression baseline, side-effect budget, and structured non-Spec declaration.
 - Derive mandatory gates and human escalation from deterministic policy.
 - Keep impact levels orthogonal to Lite/Standard/Strict and preserve existing hard-gate floors.
 - Make analysis/review evidence stale when its baseline, diff, rules, Specs, contracts, or affected scope changes.
@@ -70,6 +71,20 @@ Old/new comparison uses authorized, minimized fixtures and records normalization
 
 The artifact digest binds baseline, changed symbols/paths, Spec and contract inputs, scanner version/rules, tests, and decisions. Actual diff reconciliation compares planned and realized change points. Any unapproved addition makes analysis/review evidence stale and routes work back to analysis/design.
 
+### 10. Negative assurance is part of impact reconciliation
+
+`approved_paths` remains the compatibility field for the file envelope and is complemented by approved symbols, forbidden paths, and protected invariants. Scanner-capable projects record baseline/planned/actual call-edge changes; generic adapters state that edge comparison is unverified. The framework validates reported edge sets and prevents unplanned edges from producing `matched` reconciliation.
+
+Protected regression tests are identified by baseline identity, selectors and a manifest digest. Tests created by the active change are useful evidence for new behavior but cannot replace this baseline. Any removed, skipped, weakened or materially modified protected test requires a rationale and human approval.
+
+L2/L3 changes declare an effect budget for filesystem, persistence, network/external calls, and messages/events. Static or runtime adapters may report observed extras; generic projects retain an explicit unverified residual risk. Structured AI self-report separates Spec, incidental and non-Spec changes but never acts as approval.
+
+These controls extend `impact_analysis`, `impact_reconcile`, `contract_differential` and related-test execution. They do not create five new gates or another Profile.
+
+### 11. Reconciliation digest is semantic and live
+
+`reconciliation.actual_diff_digest` is the canonical `path_digest` of the reconciled actual paths. Status, planning and freeze recompute it from the current project tree. A subsequent edit therefore makes matched reconciliation inconsistent immediately instead of relying on a later gate to notice the change.
+
 ## Risks / Trade-offs
 
 - [False confidence from static analysis] → expose unverified channels, confidence, scanner coverage, and residual risks; upgrade unknowns to L2.
@@ -79,6 +94,8 @@ The artifact digest binds baseline, changed symbols/paths, Spec and contract inp
 - [Production samples leak sensitive data] → require authorization, sanitization, minimization, and persisted provenance without raw secrets.
 - [Existing projects lack analysis gates] → keep old states readable, emit migration diagnostics, and provide a manual structured fallback until adapters are installed.
 - [Analysis becomes stale frequently] → use scoped input digests and exact reuse rather than rerunning unrelated Capability analysis.
+- [Protected tests become a reason never to improve tests] → allow reviewed test changes with explicit rationale; protect behavior and oracle strength, not accidental formatting.
+- [Side-effect declarations create false confidence] → treat declarations as budgets and require observed evidence where supported; preserve unverified channels as residual risk.
 
 ## Migration Plan
 

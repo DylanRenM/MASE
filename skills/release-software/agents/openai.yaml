@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Software"
+  short_description: "Plan and verify safe software releases"
+  default_prompt: "Use $release-software to plan and verify this release safely."

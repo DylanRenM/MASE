@@ -1,0 +1,87 @@
+schema: mase-project/v2
+profile: standard
+stack: python
+toolchains: []
+framework_contract:
+  name: MASE
+  version: 2.4.0
+  interface: installed-cli-and-versioned-schemas
+phase: verify
+product:
+  has_ui: false
+  has_public_contract: true
+  ui_platform: null
+impact:
+  ui_changed: false
+  ui_change_kind: none
+  paths:
+  - mase_cli/risk.py
+  - mase_cli/fix.py
+  - mase_cli/state.py
+  - mase_cli/main.py
+  - profiles/risks.yaml
+  - profiles/strict.yaml
+  - schemas/mase-state.schema.json
+  - templates/mase-state.yaml
+change_risk:
+  level: L3
+  dimensions:
+    public_contract: true
+    core_calculation: true
+    data_write: true
+    authentication: false
+    authorization: false
+    secrets: false
+    quota: false
+    concurrency: false
+    cross_system: false
+    persistent_state_machine: false
+    reversible: true
+    stable_regression: true
+risk:
+  triggers:
+  - public_contract_change
+  - core_calculation
+  capabilities:
+    risk_adaptive_workflow:
+      profile: standard
+      triggers:
+      - public_contract_change
+      - core_calculation
+      paths:
+      - mase_cli/risk.py
+      - mase_cli/fix.py
+      - mase_cli/state.py
+      - profiles
+      - schemas
+gates:
+  impact_analysis: pending
+  impact_reconcile: pending
+  contract_differential: pending
+  related_tests: pending
+  api_contract: pending
+  integration_tests: pending
+  impact_review: pending
+  architecture_review: pending
+  full_chain_smoke: pending
+  rollback_verification: pending
+  independent_review: pending
+  full_regression: pending
+evidence: []
+dependencies: []
+conflicts_with: []
+blockers: []
+capabilities:
+- change-risk-governance
+- lite-change-workflow
+- adaptive-process-profiles
+- risk-scoped-review-routing
+impact_analysis:
+  applicability: required
+  level: L3
+  decision: proceed
+  artifact: impact-analysis.yaml
+  artifact_digest: sha256:c9aa45f2b59d87ebe89e055f896797ecc17e73d7b4660c2bbdee76d0c2635bb8
+  baseline_digest: commit:69c7b1c
+  diff_digest: 0291169bc7afa2d15bf4aa6451c2fc533a5855e8332e3540ce22d52dcd86f3f8
+  reconciliation: matched

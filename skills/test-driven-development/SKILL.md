@@ -19,6 +19,10 @@ Do not add production behavior before observing a relevant test fail for the exp
 
 Load `references/red-green-refactor.md` only when test design or cycle discipline is unclear.
 
+When a contract has a large combinatorial input space, parsing/serialization, numerical boundaries, collection/pagination semantics, a state machine, untrusted input, concurrency invariants or compatibility changes, evaluate property/model testing and load `references/property-based-testing.md`. Do not load that reference for a small explicit input set.
+
+Property tests supplement rather than replace deterministic canonical examples, exact error contracts and regression cases. Every property must cite its Spec/Scenario and define its domains, boundaries, oracle and isolation; equality remains valid when it is the correct oracle. Do not infer idempotency, Round-trip, defaults or compatibility behavior that the Spec or public protocol does not declare.
+
 ## Capability boundary
 
 Run relevant integration tests, concurrency/resource tests and risk-triggered review. Do not run unrelated UI E2E after every pure-function change.
@@ -29,4 +33,4 @@ Run all tests required by the effective Profile, including applicable API contra
 
 ## Good tests
 
-Test observable behavior, boundary values, failure atomicity and deterministic state. Avoid asserting implementation trivia, sleeps, order without a contract, or mocks that merely reproduce the implementation.
+Test observable behavior, boundary values, failure atomicity and deterministic state. Generated failures must be replayable from a minimized counterexample and seed or equivalent parameters; retain material counterexamples as deterministic regressions. Avoid asserting implementation trivia, sleeps, order without a contract, or mocks that merely reproduce the implementation.

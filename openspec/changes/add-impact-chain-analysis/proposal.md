@@ -8,6 +8,7 @@ AI-assisted changes to established code can preserve the edited symbol's local t
 - Add language-neutral explicit-caller and implicit-dependency analysis, bounded traversal, uncertainty disclosure, system-boundary detection, and L1/L2/L3 verification routing.
 - Block AI-autonomous continuation when more than 10 first-party callers, at least 3 system boundaries, unresolved depth-three traversal, or uncontrolled hidden dependencies are found; require a human architecture decision.
 - Require post-implementation reconciliation against the actual diff and make prior analysis/review evidence stale when its bound inputs change.
+- Add negative-assurance controls: approved file/symbol envelopes, baseline-versus-actual call-edge diffs, protected pre-change regression tests, declared/observed side-effect budgets, and a structured declaration of non-Spec changes.
 - Add a canonical `mase-impact-analysis/v1` artifact and generate the human-readable impact scope, test scope, and rollback views from that single source.
 - Extend GatePlan and gate execution with a pre-design `analysis` stage, impact-specific automatic/manual gates, and candidate binding.
 - Add `mase impact` CLI commands for classification, validation/status, reconciliation, and document generation while keeping language scanners behind project/toolchain adapters.

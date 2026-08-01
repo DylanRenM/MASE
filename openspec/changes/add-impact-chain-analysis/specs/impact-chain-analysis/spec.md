@@ -62,6 +62,41 @@ MASE MUST perform impact reconciliation after implementation and before verifica
 - **WHEN** the actual diff modifies a historical helper absent from the approved analysis
 - **THEN** reconciliation blocks verification and routes the change back to analysis/design
 
+### Requirement: Change envelopes protect non-target code and symbols
+Impact analysis SHALL declare the approved paths and symbols, protected invariants, and explicitly forbidden scope before implementation. Reconciliation MUST report any modified path or symbol outside that envelope; a free-text explanation MUST NOT convert an unapproved edit into approved scope.
+
+#### Scenario: AI edits an unrelated helper
+- **WHEN** the actual diff changes a helper that is absent from the approved paths and symbols
+- **THEN** reconciliation is expanded and implementation returns to analysis even when all generated tests pass
+
+### Requirement: Call-graph edge changes are compared with the baseline
+For adapters that can produce call edges, MASE SHALL record the baseline call edges, planned edge changes, actual edge changes, and unplanned edge changes. Added, removed, or rerouted edges MUST be reviewed as dependency changes; unsupported adapters SHALL declare the edge comparison unverified rather than claim no change.
+
+#### Scenario: An unplanned side-effect call is introduced
+- **WHEN** implementation adds a call edge from a changed calculation function to an audit or persistence operation that was not planned
+- **THEN** reconciliation reports the edge as unplanned and blocks matched status
+
+### Requirement: Pre-change regression tests are protected
+MASE SHALL distinguish protected tests that existed at the comparison baseline from tests added by the current change. AI-authored new tests MAY prove requested additions but MUST NOT by themselves prove non-regression. Removing, skipping, weakening, or materially modifying a protected test requires an explicit rationale and authorized review.
+
+#### Scenario: A legacy assertion is weakened to make the build green
+- **WHEN** a protected pre-change test changes from an exact behavioral assertion to a weaker assertion without approval
+- **THEN** the protected-regression check fails even if the revised suite passes
+
+### Requirement: Side effects use a declared and observed budget
+L2 and L3 impact analysis SHALL declare the allowed file reads/writes, persistence mutations, external calls, messages/events, and other applicable effects, plus forbidden effects. Where platform evidence is available, reconciliation SHALL compare observed effects with that budget; unobserved channels MUST remain explicit residual risk.
+
+#### Scenario: Runtime writes an undeclared file
+- **WHEN** verification observes a write outside the declared effect budget
+- **THEN** reconciliation is expanded and the write is treated as suspected collateral damage
+
+### Requirement: Non-Spec changes are declared but not self-approved
+The implementation SHALL provide a structured declaration separating Spec-requested changes, incidental changes, and non-Spec changes. AI self-report is review input only; non-Spec or incidental behavior changes require accepted scope and independent evidence before reconciliation can match.
+
+#### Scenario: AI reports an incidental logging change
+- **WHEN** the implementation declaration lists a logging or caching adjustment absent from the accepted Spec
+- **THEN** MASE requires scope disposition and does not treat the AI declaration itself as approval
+
 ### Requirement: Impact outputs have one canonical source
 Each analyzed change SHALL use a schema-validated `mase-impact-analysis/v1` artifact as the canonical fact source and SHALL generate an impact scope statement, test scope confirmation, and rollback plan carrying the source digest.
 

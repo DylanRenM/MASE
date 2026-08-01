@@ -95,3 +95,86 @@ def test_context_plan_cli_emits_json_without_file_contents(tmp_path, capsys):
     assert payload["change"] == "demo"
     assert payload["characters"] > 0
     assert "print('feature')" not in json.dumps(payload)
+
+
+def test_context_plan_task_scope_uses_declared_reads_only(tmp_path):
+    root = _project(tmp_path)
+    change = root / "openspec" / "changes" / "demo"
+    (root / "src" / "unrelated.py").write_text("unrelated", encoding="utf-8")
+    (change / "tasks.md").write_text(
+        "- [ ] 1.1 implement feature\n  reads: src/feature.py, tests/test_feature.py\n"
+        "- [ ] 1.2 unrelated\n  reads: src/unrelated.py\n",
+        encoding="utf-8",
+    )
+
+    plan = build_context_plan(root, "demo", task="1.1")
+
+    included = {item.path for item in plan.included}
+    assert "src/feature.py" in included
+    assert "tests/test_feature.py" in included
+    assert "src/unrelated.py" not in included
+    assert plan.scope_kind == "task" and plan.scope_name == "1.1"
+
+
+def test_task_reads_can_include_canonical_hidden_governance_files(tmp_path):
+    root = _project(tmp_path)
+    change = root / "openspec" / "changes" / "demo"
+    (root / ".mase" / "gates.yaml").write_text("schema: mase-gates/v1\n", encoding="utf-8")
+    (root / ".mase" / "tests.yaml").write_text("schema: mase-test-manifest/v1\n", encoding="utf-8")
+    (root / ".env").write_text("SECRET=do-not-load\n", encoding="utf-8")
+    (change / "tasks.md").write_text(
+        "- [ ] 1.1 inspect plan\n  reads: .mase/gates.yaml, .mase/tests.yaml, .env\n",
+        encoding="utf-8",
+    )
+
+    plan = build_context_plan(root, "demo", task="1.1")
+
+    included = {item.path for item in plan.included}
+    excluded = {item.path for item in plan.excluded}
+    assert {".mase/gates.yaml", ".mase/tests.yaml"} <= included
+    assert ".env" in excluded
+
+
+def test_context_plan_change_scope_does_not_expand_broad_directory(tmp_path):
+    root = _project(tmp_path)
+    state = root / "openspec" / "changes" / "demo" / "mase-state.yaml"
+    payload = yaml.safe_load(state.read_text())
+    payload["impact"]["paths"] = ["src"]
+    state.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    plan = build_context_plan(root, "demo")
+
+    assert "src/feature.py" not in {item.path for item in plan.included}
+    assert any(item.startswith("broad_scope:src:") for item in plan.diagnostics)
+
+
+def test_context_plan_capability_scope_and_budget_override_reason(tmp_path):
+    root = _project(tmp_path)
+    state = root / "openspec" / "changes" / "demo" / "mase-state.yaml"
+    payload = yaml.safe_load(state.read_text())
+    payload["risk"]["capabilities"] = {
+        "feature": {"profile": "standard", "paths": ["src/feature.py"]}
+    }
+    state.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    manifest = {
+        "default_context_excludes": [],
+        "context_budgets": {"standard": {"input_tokens": 10, "max_files": 1, "max_characters": 1}},
+    }
+
+    plan = build_context_plan(
+        root, "demo", capability="feature", allow_over_budget=True,
+        budget_reason="人工调试单个能力", manifest=manifest,
+    )
+
+    assert plan.over_budget is True
+    assert plan.budget_override_reason == "人工调试单个能力"
+
+
+def test_context_plan_excludes_hidden_binary_files(tmp_path):
+    root = _project(tmp_path)
+    hidden = root / "src" / ".DS_Store"
+    hidden.write_bytes(b"\x00binary")
+
+    plan = build_context_plan(root, "demo", explicit_reads=["src"])
+
+    assert "src/.DS_Store" not in {item.path for item in plan.included}

@@ -9,6 +9,18 @@ triggers:
   public_contract_change:
     minimum_profile: standard
     gates: [impact_analysis, impact_reconcile, api_contract, architecture_review, full_chain_smoke, rollback_verification]
+  core_algorithm:
+    minimum_profile: standard
+    gates: [api_contract, integration_tests, independent_review]
+  cross_system:
+    minimum_profile: standard
+    gates: [api_contract, integration_tests, full_chain_smoke]
+  persistent_state_machine:
+    minimum_profile: standard
+    gates: [api_contract, integration_tests, rollback_verification]
+  quota:
+    minimum_profile: strict
+    gates: [api_contract, security_review, independent_review]
   architecture_coupling:
     minimum_profile: standard
     gates: [architecture_review, impact_review]
@@ -50,7 +62,7 @@ triggers:
     gates: [full_regression, rollback_verification, security_review, independent_review]
   ui_change:
     minimum_profile: lite
-    gates: [p0_e2e]
+    gates: [ui_contract]
   cross_platform_deployment:
     minimum_profile: standard
     gates: [release_target_preflight]
