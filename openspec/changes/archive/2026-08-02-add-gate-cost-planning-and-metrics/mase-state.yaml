@@ -1,0 +1,95 @@
+schema: mase-project/v2
+profile: standard
+stack: python
+toolchains:
+- node
+framework_contract:
+  name: MASE
+  version: 2.4.0
+  interface: installed-cli-and-versioned-schemas
+phase: verify
+product:
+  has_ui: false
+  has_public_contract: true
+  ui_platform: null
+impact:
+  ui_changed: false
+  ui_change_kind: none
+  paths:
+  - mase_cli/gates.py
+  - mase_cli/main.py
+  - pyproject.toml
+  - package.json
+  - package-lock.json
+  - framework-manifest.yaml
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.4.yaml
+  - training/mase-framework/MASE框架培训讲义V2.4.pptx
+change_risk:
+  level: L3
+  dimensions:
+    public_contract: true
+    core_calculation: true
+    data_write: false
+    authentication: false
+    authorization: false
+    secrets: false
+    quota: false
+    concurrency: false
+    cross_system: false
+    persistent_state_machine: false
+    reversible: true
+    stable_regression: true
+risk:
+  triggers:
+  - public_contract_change
+  - core_calculation
+  capabilities:
+    gate_cost_and_distribution:
+      profile: standard
+      triggers:
+      - public_contract_change
+      - core_calculation
+      paths:
+      - mase_cli/gates.py
+      - mase_cli/main.py
+      - framework-manifest.yaml
+      - training/mase-framework
+gates:
+  impact_analysis: pending
+  impact_reconcile: pending
+  contract_differential: pending
+  related_tests: pending
+  api_contract: pending
+  integration_tests: pending
+  impact_review: pending
+  architecture_review: pending
+  full_chain_smoke: pending
+  rollback_verification: pending
+  independent_review: pending
+  full_regression: pending
+evidence: []
+dependencies:
+- change: separate-development-merge-release-verification
+  phase: verify
+- change: add-risk-adaptive-lite-change-workflow
+  phase: verify
+- change: add-gate-dag-subsumption-and-cache
+  phase: verify
+conflicts_with: []
+blockers: []
+capabilities:
+- gate-cost-planning
+- stage-aware-gate-planning
+- current-mase-training-deck
+- framework-distribution-integrity
+impact_analysis:
+  applicability: required
+  level: L3
+  decision: proceed
+  artifact: impact-analysis.yaml
+  artifact_digest: sha256:dc5be3c193f6d8f8dbde9e0c415bc27049de7a89afadc6f4148acaeb415db808
+  baseline_digest: commit:69c7b1c
+  diff_digest: 6fbe6542ab18c40464694bea9230b8bd52389f03a3350ce83687906975968ede
+  reconciliation: matched

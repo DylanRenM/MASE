@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mase.dev/schemas/mase-impact-analysis.schema.json",
+  "title": "MASE impact-chain analysis",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "applicability"],
+  "properties": {
+    "schema": {"const": "mase-impact-analysis/v1"},
+    "applicability": {"enum": ["required", "exempt"]},
+    "exemption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "evidence"],
+      "properties": {
+        "kind": {"enum": ["comments", "formatting", "non_machine_wording"]},
+        "evidence": {"type": "string", "minLength": 1},
+        "classifier": {"type": "string", "minLength": 1}
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "diff_digest"],
+      "properties": {
+        "baseline": {"type": "string", "minLength": 1},
+        "diff_digest": {"type": "string", "minLength": 1},
+        "spec_inputs": {"$ref": "#/$defs/strings"},
+        "contract_inputs": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "rules_digest", "confidence"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "rules_digest": {"type": "string", "minLength": 1},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "inputs": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "change_points": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/changePoint"}
+    },
+    "approved_paths": {"$ref": "#/$defs/strings"},
+    "approved_symbols": {"$ref": "#/$defs/strings"},
+    "forbidden_paths": {"$ref": "#/$defs/strings"},
+    "protected_invariants": {"$ref": "#/$defs/strings"},
+    "call_graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "baseline_edges", "planned_changes", "actual_changes", "unplanned_changes"],
+      "properties": {
+        "status": {"enum": ["verified", "unverified"]},
+        "reason": {"type": "string"},
+        "baseline_edges": {"type": "array", "items": {"$ref": "#/$defs/callEdge"}},
+        "planned_changes": {"type": "array", "items": {"$ref": "#/$defs/edgeChange"}},
+        "actual_changes": {"type": "array", "items": {"$ref": "#/$defs/edgeChange"}},
+        "unplanned_changes": {"type": "array", "items": {"$ref": "#/$defs/edgeChange"}}
+      }
+    },
+    "protected_tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "selectors", "manifest_digest", "changes"],
+      "properties": {
+        "baseline": {"type": "string", "minLength": 1},
+        "selectors": {"$ref": "#/$defs/strings"},
+        "manifest_digest": {"type": "string", "minLength": 1},
+        "no_tests_reason": {"type": "string"},
+        "changes": {"type": "array", "items": {"$ref": "#/$defs/protectedTestChange"}}
+      }
+    },
+    "effect_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "allowed", "forbidden", "observed_extra"],
+      "properties": {
+        "status": {"enum": ["verified", "unverified"]},
+        "reason": {"type": "string"},
+        "allowed": {"$ref": "#/$defs/effectSet"},
+        "forbidden": {"$ref": "#/$defs/strings"},
+        "observed_extra": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "change_declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spec_changes", "incidental_changes", "non_spec_changes"],
+      "properties": {
+        "spec_changes": {"$ref": "#/$defs/strings"},
+        "incidental_changes": {"$ref": "#/$defs/strings"},
+        "non_spec_changes": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "callers": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/caller"}
+    },
+    "implicit_channels": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/implicitChannel"}
+    },
+    "boundaries": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/boundary"}
+    },
+    "terminations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/termination"}
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "reasons"],
+      "properties": {
+        "level": {"enum": ["L1", "L2", "L3"]},
+        "reasons": {"$ref": "#/$defs/nonEmptyStrings"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "strategy"],
+      "properties": {
+        "status": {
+          "enum": [
+            "proceed", "architecture-review-required", "version-isolation",
+            "feature-flag", "split-change", "terminate"
+          ]
+        },
+        "strategy": {"type": "string", "minLength": 1},
+        "approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["actor", "reference", "residual_risk"],
+          "properties": {
+            "actor": {"type": "string", "minLength": 1},
+            "reference": {"type": "string", "minLength": 1},
+            "residual_risk": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "test_types", "tests", "fixture_sources", "expected_differences",
+        "side_effect_isolation"
+      ],
+      "properties": {
+        "test_types": {"$ref": "#/$defs/nonEmptyStrings"},
+        "tests": {"$ref": "#/$defs/strings"},
+        "fixture_sources": {"$ref": "#/$defs/nonEmptyStrings"},
+        "expected_differences": {"$ref": "#/$defs/strings"},
+        "side_effect_isolation": {"type": "string", "minLength": 1},
+        "production_sample_authorization": {"type": "string"},
+        "sanitization": {"type": "string"},
+        "normalization": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "data_compatibility"],
+      "properties": {
+        "strategy": {"type": "string", "minLength": 1},
+        "data_compatibility": {"type": "string", "minLength": 1},
+        "stop_conditions": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "actual_diff_digest", "actual_paths", "unplanned_paths"],
+      "properties": {
+        "status": {"enum": ["pending", "matched", "expanded"]},
+        "actual_diff_digest": {"type": "string"},
+        "actual_paths": {"$ref": "#/$defs/strings"},
+        "unplanned_paths": {"$ref": "#/$defs/strings"},
+        "actual_symbols": {"$ref": "#/$defs/strings"},
+        "unplanned_symbols": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "residual_risks": {"$ref": "#/$defs/strings"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"applicability": {"const": "exempt"}}, "required": ["applicability"]},
+      "then": {"required": ["exemption"]},
+      "else": {
+        "required": [
+          "comparison", "adapter", "change_points", "callers", "implicit_channels",
+          "boundaries", "terminations", "classification", "decision", "verification",
+          "recovery", "reconciliation"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "strings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "nonEmptyStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "callEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caller", "callee", "via"],
+      "properties": {
+        "caller": {"type": "string", "minLength": 1},
+        "callee": {"type": "string", "minLength": 1},
+        "via": {"type": "string", "minLength": 1}
+      }
+    },
+    "edgeChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "caller", "callee", "via"],
+      "properties": {
+        "operation": {"enum": ["add", "remove", "reroute"]},
+        "caller": {"type": "string", "minLength": 1},
+        "callee": {"type": "string", "minLength": 1},
+        "via": {"type": "string", "minLength": 1}
+      }
+    },
+    "protectedTestChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "action", "rationale"],
+      "properties": {
+        "selector": {"type": "string", "minLength": 1},
+        "action": {"enum": ["modified", "removed", "skipped", "weakened"]},
+        "rationale": {"type": "string", "minLength": 1},
+        "approval": {"type": "string", "minLength": 1}
+      }
+    },
+    "effectSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file_reads", "file_writes", "persistence_writes", "external_calls", "messages"],
+      "properties": {
+        "file_reads": {"$ref": "#/$defs/strings"},
+        "file_writes": {"$ref": "#/$defs/strings"},
+        "persistence_writes": {"$ref": "#/$defs/strings"},
+        "external_calls": {"$ref": "#/$defs/strings"},
+        "messages": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "changePoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "path", "symbol", "change_type", "core_path", "call_frequency",
+        "semantics_preserved", "side_effects_preserved"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "symbol": {"type": "string", "minLength": 1},
+        "change_type": {
+          "enum": [
+            "internal_implementation", "external_contract", "business_semantics",
+            "configuration", "serialization", "persistence", "deletion", "rename",
+            "replacement", "reroute"
+          ]
+        },
+        "core_path": {"type": "boolean"},
+        "call_frequency": {"enum": ["low", "high", "unknown"]},
+        "semantics_preserved": {"type": "boolean"},
+        "side_effects_preserved": {"type": "boolean"}
+      }
+    },
+    "caller": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "symbol", "depth", "first_party"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "symbol": {"type": "string", "minLength": 1},
+        "depth": {"type": "integer", "minimum": 1, "maximum": 3},
+        "first_party": {"type": "boolean"},
+        "via": {"type": "string"},
+        "capability": {"type": "string"}
+      }
+    },
+    "implicitChannel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "status", "risk"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "serialization", "proxy_aop", "reflection", "configuration_spi",
+            "dependency_injection", "message_event", "scheduled_job",
+            "async_callback", "persistence_format", "cache_key", "template",
+            "generated_registration", "other"
+          ]
+        },
+        "status": {"enum": ["discovered", "checked_empty", "unverified", "outside_repository"]},
+        "risk": {"enum": ["controlled", "uncontrolled"]},
+        "evidence": {"type": "string"},
+        "path": {"type": "string"}
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "depth"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "kind": {
+          "enum": ["rest", "message_consumer", "scheduled_job", "cli", "listener", "third_party", "jdk_native", "other"]
+        },
+        "path": {"type": "string", "minLength": 1},
+        "depth": {"type": "integer", "minimum": 1, "maximum": 3}
+      }
+    },
+    "termination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "reason", "depth"],
+      "properties": {
+        "branch": {"type": "string", "minLength": 1},
+        "reason": {"enum": ["direct_caller", "system_boundary", "depth_limit", "repository_boundary", "third_party", "jdk_native"]},
+        "depth": {"type": "integer", "minimum": 1, "maximum": 3}
+      }
+    }
+  }
+}

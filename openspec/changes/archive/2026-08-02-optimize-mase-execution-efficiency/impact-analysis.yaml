@@ -1,0 +1,110 @@
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: worktree-before-change
+  diff_digest: pending-uncommitted-worktree
+  spec_inputs:
+    - specs/enforced-context-routing/spec.md
+    - specs/compact-active-evidence/spec.md
+    - specs/stage-aware-gate-planning/spec.md
+    - specs/capability-scoped-gate-plan/spec.md
+  contract_inputs:
+    - project-rules.md
+    - schemas/mase-state.schema.json
+    - schemas/mase-evidence.schema.json
+adapter:
+  name: generic-manifest
+  version: "1.0"
+  rules_digest: pending
+  confidence: medium
+  inputs: [.mase/gates.yaml, .mase/tests.yaml]
+change_points:
+  - {id: context-plan, path: mase_cli/context.py, symbol: build_context_plan, change_type: external_contract, core_path: true, call_frequency: high, semantics_preserved: false, side_effects_preserved: true}
+  - {id: evidence-load, path: mase_cli/state.py, symbol: ChangeState.load, change_type: serialization, core_path: true, call_frequency: high, semantics_preserved: true, side_effects_preserved: true}
+  - {id: gate-plan, path: mase_cli/gates.py, symbol: build_gate_plan, change_type: business_semantics, core_path: true, call_frequency: high, semantics_preserved: false, side_effects_preserved: true}
+approved_paths:
+  - mase_cli/context.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - mase_cli/gates.py
+  - mase_cli/main.py
+  - mase_cli/risk.py
+  - schemas
+  - templates
+  - profiles
+  - agents
+  - docs
+  - tests
+  - .mase/gates.yaml
+  - .mase/tests.yaml
+  - project-rules.md
+approved_symbols: [build_context_plan, ChangeState.load, run_gate, build_gate_plan]
+forbidden_paths: [training, openspec/changes/archive]
+protected_invariants:
+  - API 契约、适用 P0、最终回归和影响复扫不得弱化
+  - 旧式内嵌 evidence 必须继续可读
+  - 默认状态不得展开完整 evidence 历史
+call_graph:
+  status: unverified
+  reason: Python CLI 直接调用已由定向测试覆盖；动态导入按现有入口保持兼容
+  baseline_edges:
+    - {caller: mase_cli.main, callee: mase_cli.context.build_context_plan, via: direct}
+    - {caller: mase_cli.evidence.run_gate, callee: mase_cli.state.ChangeState, via: state-write}
+  planned_changes:
+    - {operation: reroute, caller: mase_cli.evidence.run_gate, callee: mase_cli.state.ChangeState, via: evidence-sidecar}
+  actual_changes: []
+  unplanned_changes: []
+protected_tests:
+  baseline: worktree-before-change
+  selectors: [tests/test_mase_context.py, tests/test_mase_gate_evidence.py, tests/test_mase_gate_planning.py]
+  manifest_digest: pending
+  changes: []
+effect_budget:
+  status: verified
+  reason: 写入仅限项目内状态、日志与 .mase/evidence sidecar
+  allowed:
+    file_reads: [MASE runtime and change files]
+    file_writes: [mase-state.yaml, .mase/evidence]
+    persistence_writes: []
+    external_calls: []
+    messages: []
+  forbidden: [产品数据, 采用项目代码]
+  observed_extra: []
+change_declaration:
+  spec_changes: [上下文路由, 紧凑证据, GatePlan 与测试去重]
+  incidental_changes: []
+  non_spec_changes: []
+callers:
+  - {id: cli-entry, path: mase_cli/main.py, symbol: main, depth: 1, first_party: true, via: direct}
+  - {id: agent-guidance, path: agents, symbol: context-and-gate-guidance, depth: 1, first_party: true, via: documentation}
+implicit_channels:
+  - {kind: serialization, status: discovered, risk: controlled, path: mase-state.yaml}
+  - {kind: configuration_spi, status: discovered, risk: controlled, path: .mase/gates.yaml}
+  - {kind: reflection, status: checked_empty, risk: controlled}
+  - {kind: proxy_aop, status: checked_empty, risk: controlled}
+  - {kind: async_callback, status: checked_empty, risk: controlled}
+boundaries:
+  - {id: mase-cli, kind: cli, path: mase_cli/main.py, depth: 1}
+  - {id: state-schema, kind: other, path: schemas/mase-state.schema.json, depth: 1}
+terminations:
+  - {branch: mase-cli, reason: system_boundary, depth: 1}
+  - {branch: state-schema, reason: system_boundary, depth: 1}
+classification: {level: L3, reasons: [公共 CLI 与状态契约变化]}
+decision: {status: proceed, strategy: scoped-change}
+verification:
+  test_types: [unit, contract_differential, integration, full_regression]
+  tests: [tests/test_mase_context.py, tests/test_mase_gate_evidence.py, tests/test_mase_gate_planning.py]
+  fixture_sources: [historical-test, temporary-project]
+  expected_differences: [默认 GatePlan 更短, 活动状态只保存 evidence 摘要]
+  side_effect_isolation: 临时项目与项目内 .mase/evidence
+recovery:
+  strategy: 回退运行时代码并继续读取已生成 sidecar；不删除完整证据
+  data_compatibility: 旧内嵌记录与新 sidecar 由双读路径兼容
+reconciliation:
+  status: pending
+  actual_diff_digest: ""
+  actual_paths: []
+  unplanned_paths: []
+  actual_symbols: []
+  unplanned_symbols: []
+residual_risks: [未提交工作树完成后仍需按实际 diff 复扫]

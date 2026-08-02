@@ -1,0 +1,71 @@
+schema: mase-framework/v2
+version: 2.4.0
+license: MIT
+
+canonical:
+  rules: project-rules.md
+  package: pyproject.toml
+  state_template: templates/mase-state.yaml
+  gate_template: templates/gates.yaml
+  test_manifest_template: templates/tests.yaml
+  impact_analysis_template: templates/impact-analysis.yaml
+  spec_template: templates/specs/_capability_/spec.md
+
+profiles:
+  directory: profiles
+  default: standard
+
+context_budgets:
+  lite: {input_tokens: 8000, max_files: 12, max_characters: 32000}
+  standard: {input_tokens: 16000, max_files: 24, max_characters: 64000}
+  strict: {input_tokens: 24000, max_files: 36, max_characters: 96000}
+
+ide_adapters:
+  - AGENTS.md
+  - CLAUDE.md
+  - CONVENTIONS.md
+  - .github/copilot-instructions.md
+
+runtime:
+  - project-rules.md
+  - requirements-runtime.txt
+  - requirements-offline.txt
+  - profiles
+  - schemas
+  - templates
+  - agents
+  - skills
+  - docs/MASE-framework.md
+  - docs/coding-standards.md
+  - docs/design-principles.md
+  - docs/glossary.md
+  - docs/project-structure-spec.md
+  - docs/user-guide.md
+
+default_context_excludes:
+  - .build
+  - dist
+  - node_modules
+  - openspec/master
+  - openspec/archive
+  - openspec/changes/archive
+  - openspec/changes/_archived
+  - openspec/changes/*/poc
+  - .mase/evidence
+  - e2e/playwright-report
+  - e2e/test-results
+  - logs
+  - data
+  - output
+  - reports
+  - coverage
+  - training
+
+generated:
+  - AGENTS.md
+  - CLAUDE.md
+  - CONVENTIONS.md
+  - .github/copilot-instructions.md
+  - verification-summary.md
+  - test-traceability.md
+  - openspec/master

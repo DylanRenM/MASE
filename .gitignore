@@ -21,12 +21,12 @@ node_modules/
 *.tmp
 *.bak
 *~
-
-# Backup
-.backup/
+.build/
+dist/
 
 # E2E Sandbox (runtime artifacts)
 e2e/sandbox/
 
-# Local-only (bazi-encyclopedia backup)
-bazi-encyclopedia/
+# Local MASE migration/runtime artifacts
+.mase-backup/
+.mase/cache/

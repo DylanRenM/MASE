@@ -1,0 +1,85 @@
+schema: mase-project/v2
+profile: standard
+stack: python
+toolchains:
+- node
+framework_contract:
+  name: MASE
+  version: 2.4.0
+  interface: installed-cli-and-versioned-schemas
+phase: verify
+product:
+  has_ui: false
+  has_public_contract: true
+  ui_platform: null
+impact:
+  ui_changed: false
+  ui_change_kind: none
+  paths:
+  - mase_cli/gates.py
+  - mase_cli/state.py
+  - mase_cli/main.py
+  - schemas/mase-gates.schema.json
+  - schemas/mase-state.schema.json
+  - templates/gates.yaml
+  - templates/mase-state.yaml
+change_risk:
+  level: L3
+  dimensions:
+    public_contract: true
+    core_calculation: false
+    data_write: false
+    authentication: false
+    authorization: false
+    secrets: false
+    quota: false
+    concurrency: false
+    cross_system: false
+    persistent_state_machine: true
+    reversible: true
+    stable_regression: true
+risk:
+  triggers:
+  - public_contract_change
+  - persistent_state_machine
+  capabilities:
+    verification_milestones:
+      profile: standard
+      triggers:
+      - public_contract_change
+      - persistent_state_machine
+      paths:
+      - mase_cli/gates.py
+      - mase_cli/state.py
+      - schemas
+gates:
+  impact_analysis: pending
+  impact_reconcile: pending
+  contract_differential: pending
+  related_tests: pending
+  api_contract: pending
+  integration_tests: pending
+  impact_review: pending
+  architecture_review: pending
+  full_chain_smoke: pending
+  rollback_verification: pending
+  independent_review: pending
+  full_regression: pending
+evidence: []
+dependencies: []
+conflicts_with: []
+blockers: []
+capabilities:
+- verification-milestones
+- stage-aware-gate-planning
+- single-source-project-state
+- release-governance
+impact_analysis:
+  applicability: required
+  level: L3
+  decision: proceed
+  artifact: impact-analysis.yaml
+  artifact_digest: sha256:1cf08a1b084a958126d94b9cb6953a76892319b71677d8e5aaa9d93d87d53bca
+  baseline_digest: commit:69c7b1c
+  diff_digest: cb0d9550f54f0cf26da3505bc7f0dc871ce58521c1195264790db67d7232c0f9
+  reconciliation: matched

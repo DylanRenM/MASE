@@ -1,0 +1,31 @@
+schema: mase-test-manifest/v1
+tests:
+  - id: impact-contract-differential
+    tier: contract
+    runner: pytest
+    selectors:
+      - tests/test_mase_impact_analysis.py::test_schema_and_policy_accept_l1_and_reject_adapter_downgrade
+      - tests/test_mase_impact_analysis.py::test_policy_upgrades_hidden_uncertainty_and_contract_boundaries
+      - tests/test_mase_impact_analysis.py::test_negative_assurance_rejects_unplanned_call_edges
+    capabilities: [impact_governance]
+    paths: [mase_cli/impact.py, schemas/mase-impact-analysis.schema.json]
+  - id: impact-full-chain-smoke
+    tier: integration
+    runner: pytest
+    selectors:
+      - tests/test_mase_impact_analysis.py::test_analysis_stage_defers_later_gates_until_fresh
+      - tests/test_mase_impact_analysis.py::test_gate_runner_materializes_change_placeholder
+      - tests/test_mase_impact_analysis.py::test_reconcile_updates_scope_and_render_generates_three_bound_views
+      - tests/test_mase_impact_analysis.py::test_impact_cli_reports_status_and_rejects_unsafe_change
+    capabilities: [impact_governance]
+    paths: [mase_cli, schemas, templates, profiles]
+  - id: framework-rollback-smoke
+    tier: integration
+    runner: pytest
+    selectors:
+      - tests/test_mase_update.py::TestApplyUpdates::test_marked_rule_extensions_survive_core_update
+      - tests/test_mase_update.py::TestApplyUpdates::test_dry_run_does_not_modify
+      - tests/test_mase_update.py::TestApplyUpdates::test_backup_created_before_update
+      - tests/test_mase_cli_stacks.py::test_legacy_python_arguments_remain_compatible
+    capabilities: [impact_governance]
+    paths: [mase_cli/commands, templates]

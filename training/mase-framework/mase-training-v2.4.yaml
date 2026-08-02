@@ -1,0 +1,1547 @@
+schema: mase-training/v2
+title: MASE v2.4 开发过程框架
+source_version: 2.4.0
+slide_count: 66
+default_track: core
+template:
+  path: training/mase-framework/MASE框架培训讲义V1.pptx
+  sha256: fcdf4bd0b8fe3adb5316c8dbccf6e70d91b0274857a5f97827709053886fe188
+  slides: 37
+output: training/mase-framework/MASE框架培训讲义V2.4.pptx
+forbidden_claims:
+  - 每 20 次对话
+  - 人不读需求文档
+  - 测试绿灯 = 实现正确
+  - GWT 是唯一事实源
+  - 整个流水线的唯一真相源
+  - 六阶段 · 层层递进
+  - cp -r openspec/changes/_template/
+  - 所有外部依赖编写验证脚本并跑通
+  - 每个功能必须有自动化测试
+  - 人不需逐行审阅代码
+  - MASE_SOURCE
+  - ../MASE
+  - 相邻 MASE 源码
+  - 六步教学主线
+  - 三 Profile
+  - Release Overlay
+  - Web 验证与 Sandbox
+  - UI contract
+  - P0 journey
+  - P1 regression
+  - 保存 seed
+  - shrink
+  - fixture
+  - adapter
+  - flaky
+  - trace/
+  - AI 写的测试绝不可信
+slides:
+  - number: 1
+    title: MASE v2.4 开发过程框架
+    template_slide: 1
+    updates:
+      - shape: 1
+        slot: title
+        text: MASE v2.4 开发过程框架
+      - shape: 2
+        slot: subtitle
+        text: 四 Agent · 六步开发主线 · 风险自适应 · 契约与证据闭环
+      - shape: 3
+        slot: brand
+        text: MASE (Measures AI Software Engineering) · v2.4.0
+
+  - number: 2
+    title: 为什么需要统一框架
+    template_slide: 2
+    updates:
+      - shape: 3
+        slot: problem-1
+        text: |-
+          过程容易失控
+          AI 写得快，但需求、设计、代码和测试可能各说各话
+      - shape: 5
+        slot: problem-2
+        text: |-
+          小事流程过重
+          所有 change 都套完整设计，时间花在仪式而非风险上
+      - shape: 7
+        slot: problem-3
+        text: |-
+          全绿仍可能误伤
+          新测试证明新增行为，却未必发现旧逻辑、调用边或副作用被削弱
+      - shape: 8
+        slot: goal
+        text: 让 Agentic Coding 高效交付正确、健壮、优化且易于维护的代码
+
+  - number: 3
+    title: 学习目标与课程地图
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "深入学习 · 导航"}
+      - {shape: 1, slot: title, text: "学习目标与课程地图"}
+      - {shape: 2, slot: subtitle, text: "完成课程后，能够为一个真实变更选择重量、分析影响并组织证据"}
+      - {shape: 4, slot: card-1, text: "会选择\n区分轻量、标准、严格三种过程档位"}
+      - {shape: 6, slot: card-2, text: "会分析\n识别调用链、隐性依赖和系统边界"}
+      - {shape: 8, slot: card-3, text: "会验证\n设计分层测试、门禁计划和回滚验证"}
+      - {shape: 10, slot: card-4, text: "会取证\n判断通过、过期、缺失和无效证据"}
+      - {shape: 12, slot: footer, text: "高效交付 · 需求正确 · 运行健壮 · 质量优化 · 整洁可维护"}
+
+  - number: 4
+    title: 框架全景
+    template_slide: 3
+    updates:
+      - shape: 1
+        slot: subtitle
+        text: 四 Agent · 六步开发主线 · 三种过程档位 · 可选发布附加流程
+      - shape: 3
+        slot: agent-1
+        text: |-
+          A1 计划与统管
+          判断风险 → 选择过程档位 → 维护门禁
+      - shape: 5
+        slot: agent-2
+        text: |-
+          A2 需求
+          目标 → 场景 → Spec / 原型
+      - shape: 7
+        slot: agent-3
+        text: |-
+          A3 开发
+          契约 → RED → 实现
+      - shape: 9
+        slot: agent-4
+        text: |-
+          A4 质量
+          评审 · 验证 · BUG 闭环
+      - shape: 32
+        slot: phase-6
+        text: 完成 Complete
+      - shape: 33
+        slot: phase-6-pdca
+        text: Evidence
+
+  - number: 5
+    title: 六项开发原则
+    template_slide: 4
+    updates:
+      - shape: 1
+        slot: title
+        text: 六项开发原则
+    principles:
+      - number: "01"
+        title: 用户价值先行
+        description: 先确认可见结果、边界和不做什么
+      - number: "02"
+        title: 风险适配，保护存量
+        description: 先锁定旧行为与变更边界；风险越高验证越深
+      - number: "03"
+        title: 契约优先
+        description: 先定义公共边界、不变量和失败语义
+      - number: "04"
+        title: 测试先行
+        description: 从相关失败测试开始，再写最小实现
+      - number: "05"
+        title: 人做判断
+        description: 人决定目标、验收、取舍和最终接受
+      - number: "06"
+        title: 证据闭环
+        description: 自动门禁绑定输入、日志和当前候选
+
+  - number: 6
+    title: 工程规则
+    template_slide: 5
+    updates:
+      - shape: 3
+        slot: rule-1
+        text: |-
+          需求先确认
+          先说清用户看得见的结果；UI 变化再确认原型
+      - shape: 5
+        slot: rule-2
+        text: |-
+          影响链先行
+          锁定文件、符号、调用边、受保护测试和副作用预算
+      - shape: 7
+        slot: rule-3
+        text: |-
+          TDD
+          先看到相关测试失败，再写最小实现
+      - shape: 9
+        slot: rule-4
+        text: |-
+          硬门禁
+          API 契约与适用的 P0 E2E 必须通过
+      - shape: 11
+        slot: rule-5
+        text: |-
+          根因分析
+          修 BUG 前先取得失败证据，写出可证伪假设
+      - shape: 13
+        slot: rule-6
+        text: |-
+          系统化解决
+          修根因、补测试、查同类问题，不遮蔽症状
+      - shape: 15
+        slot: rule-7
+        text: |-
+          提交节奏
+          按纵向工作包或 Capability 提交，不按对话次数
+      - shape: 17
+        slot: rule-8
+        text: |-
+          备份机制
+          删除、回退或迁移前先 dry-run 并备份
+
+  - number: 7
+    title: 验证职责分层
+    template_slide: 6
+    updates:
+      - shape: 1
+        slot: title
+        text: 验证职责分层
+      - shape: 2
+        slot: subtitle
+        text: 六项原则落地时，让人、AI 和自动化各自承担合适职责
+      - shape: 5
+        slot: requirement-vv
+        text: |-
+          人确认需求与验收
+          目标、边界、取舍和最终接受由人决定
+      - shape: 8
+        slot: design-vv
+        text: |-
+          AI 辅助设计评审
+          检查影响与负向保证；附带变更只能由人批准
+      - shape: 11
+        slot: implementation-vv
+        text: |-
+          自动化取证
+          门禁运行器记录命令、输入、日志和结果
+
+  - number: 8
+    title: 原则落地：三次回看
+    template_slide: 7
+    updates:
+      - shape: 1
+        slot: title
+        text: 原则落地：三次回看
+      - shape: 2
+        slot: subtitle
+        text: 核心理念前置到开发停止点；发现偏差就回到上一份承诺
+      - shape: 4
+        slot: responsibility-1
+        text: |-
+          开发前：目标与验收
+          结果可见吗？边界合理吗？错误能恢复吗？
+      - shape: 6
+        slot: responsibility-2
+        text: |-
+          实现前：风险与契约
+          旧行为、调用边、副作用和禁止范围锁定了吗？
+      - shape: 8
+        slot: responsibility-3
+        text: |-
+          完成前：测试与证据
+          受保护测试仍完整吗？实际变化超出预算了吗？
+      - shape: 9
+        slot: responsibility-summary
+        text: 人负责判断，AI 辅助分析，自动化提供证据；三者不能互相替代
+
+  - number: 9
+    title: Agent 层
+    template_slide: 8
+    updates:
+      - shape: 2
+        slot: section-subtitle
+        text: 四个角色 · 一条连续流程 · 风险越高越强调独立
+      - shape: 3
+        slot: section-note
+        text: Orchestrator + 需求 + 开发 + 质量；轻量档可由一个 Agent 连续完成
+
+  - number: 10
+    title: 计划与统管
+    template_slide: 9
+    updates:
+      - shape: 3
+        slot: responsibility
+        text: |-
+          核心职责
+          接收变更 → 判断档位与影响 → 生成门禁计划 → 路由角色 → 归档
+      - shape: 5
+        slot: abilities
+        text: |-
+          门禁计划
+          影响超限先阻断；其余按风险列出检查、顺序与状态
+      - shape: 6
+        slot: takeaway
+        text: 门禁运行器按规范命令执行检查，并绑定输入、日志、结果和证据
+
+  - number: 11
+    title: 需求
+    template_slide: 10
+    updates:
+      - shape: 3
+        slot: requirement-discovery
+        text: |-
+          需求探索
+          理解目的、约束和成功标准，只问会改变结果的问题
+      - shape: 5
+        slot: prototype
+        text: |-
+          交互原型
+          只有 UI 行为变化时才做，用来确认“看得见、点得动”
+      - shape: 7
+        slot: spec
+        text: |-
+          Spec 与测试设计
+          Spec 写不变量与允许差异；独立测试用例用 Test ID 追踪
+      - shape: 8
+        slot: outputs
+        text: 产出：proposal / specs + 测试设计；UI 变化时附可确认原型
+
+  - number: 12
+    title: 开发
+    template_slide: 11
+    updates:
+      - shape: 3
+        slot: research
+        text: |-
+          技术预研
+          只为未知工具链、外部依赖或高风险行为做可重跑 POC
+      - shape: 5
+        slot: design
+        text: |-
+          风险与契约驱动设计
+          先锁定变更边界与旧根基；公共边界再定义契约
+      - shape: 7
+        slot: tdd
+        text: |-
+          分级 TDD
+          Spec → 契约 → RED → 最小实现 → 能力验证
+      - shape: 9
+        slot: vv
+        text: V&V：先得到相关 RED，再让可重放证据说话
+      - shape: 10
+        slot: flow
+        text: 影响与预算 → 受保护测试 + RED → 最小实现 → 实际差异复扫
+      - shape: 11
+        slot: takeaway
+        text: 人确定验收和取舍，AI 完成调研与实现，门禁记录结果
+
+  - number: 13
+    title: 质量
+    template_slide: 12
+    updates:
+      - shape: 3
+        slot: design-review
+        text: |-
+          设计评审
+          对照文件、符号、调用边、隐性依赖和副作用预算
+      - shape: 5
+        slot: ui-review
+        text: |-
+          UI 评审
+          只有 UI 变化时检查视觉、交互、响应式和无障碍
+      - shape: 7
+        slot: code-quality
+        text: |-
+          代码质量
+          越界复扫 + 受保护测试 + diff 评审 + API 契约
+      - shape: 9
+        slot: bug-loop
+        text: |-
+          BUG 修复
+          失败证据 → 根因假设 → 系统修复 → 回归 → 同类扫描
+
+  - number: 14
+    title: 贯穿案例：订单规则升级
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "深入学习 · 案例"}
+      - {shape: 1, slot: title, text: "贯穿案例：订单规则升级"}
+      - {shape: 2, slot: subtitle, text: "历史订单服务增加新折扣，同时必须保护旧客户端、消息与结算结果"}
+      - {shape: 4, slot: card-1, text: "需求\n会员订单支持分级折扣，旧订单结果不变"}
+      - {shape: 6, slot: card-2, text: "存量\nREST、消息消费者和定时结算都依赖订单模型"}
+      - {shape: 8, slot: card-3, text: "风险\n金额语义、序列化兼容和重复消费可能变化"}
+      - {shape: 10, slot: card-4, text: "目标\n用影响链和证据证明新行为成立且旧根基未削弱"}
+      - {shape: 12, slot: footer, text: "贯穿案例 · 后续页面持续引用"}
+
+  - number: 15
+    title: 阶段层
+    template_slide: 13
+    updates:
+      - shape: 2
+        slot: section-subtitle
+        text: 六步开发主线（不是状态枚举）· 连续推进 · 风险决定门禁重量
+      - shape: 3
+        slot: section-note
+        text: "Schema 九 phase：draft / proposal / design / build / verify · retro / release / complete / archived"
+        font_sizes: [16]
+
+  - number: 16
+    title: 二维风险模型
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "档位与风险"}
+      - {shape: 1, slot: title, text: "二维风险模型"}
+      - {shape: 2, slot: subtitle, text: "基础档位与本次变更风险分开表达，影响链等级再决定存量保护深度"}
+      - {shape: 4, slot: card-1, text: "基础档位\n产品或能力的长期风险：轻量、标准、严格"}
+      - {shape: 6, slot: card-2, text: "变更风险\n本次修改的治理重量：L1—L4"}
+      - {shape: 8, slot: card-3, text: "影响等级\n历史代码波及验证深度：L1—L3"}
+      - {shape: 10, slot: card-4, text: "最终门禁\n三者与不可降级硬触发取并集"}
+      - {shape: 12, slot: footer, text: "三个维度各司其职 · 不再用档位包办一切"}
+
+  - number: 17
+    title: 变更风险 L1—L4
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "档位与风险"}
+      - {shape: 1, slot: title, text: "变更风险 L1—L4"}
+      - {shape: 2, slot: subtitle, text: "风险越高，设计、独立判断与候选认证越深；开发阶段仍从最小验证开始"}
+      - {shape: 4, slot: card-1, text: "L1 低风险\n失败测试、聚焦验证；可在 5 分钟内交付手测"}
+      - {shape: 6, slot: card-2, text: "L2 一般风险\n增加相关契约、集成与正式构建"}
+      - {shape: 8, slot: card-3, text: "L3 高风险\n完整设计、分层测试、一次独立综合审查"}
+      - {shape: 10, slot: card-4, text: "L4 严格风险\n安全、恢复、发布批准与线上观察"}
+      - {shape: 12, slot: footer, text: "L1/L2 不虚构形式化人工证据"}
+
+  - number: 18
+    title: 硬触发与界面三分类
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "档位与风险"}
+      - {shape: 1, slot: title, text: "硬触发与界面三分类"}
+      - {shape: 2, slot: subtitle, text: "认证、迁移等风险不能降级；界面变化不再一律运行关键旅程"}
+      - {shape: 4, slot: card-1, text: "至少 L4\n认证、授权、密钥、额度、迁移、不可逆写入"}
+      - {shape: 6, slot: card-2, text: "至少 L3\n公共接口、核心算法、跨系统、并发、持久状态机"}
+      - {shape: 8, slot: card-3, text: "纯展示 / 一般交互\n运行聚焦界面契约或视觉断言"}
+      - {shape: 10, slot: card-4, text: "关键交互 / 业务旅程\n登录、提交、支付、恢复等才强制 P0"}
+      - {shape: 12, slot: footer, text: "硬风险不降级 · 界面验证按行为分类"}
+
+  - number: 19
+    title: 门禁计划如何生成
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "门禁机制"}
+      - {shape: 1, slot: title, text: "门禁计划如何生成"}
+      - {shape: 2, slot: subtitle, text: "门禁计划把风险选择、最晚要求时点、依赖图和历史成本编译成下一步"}
+      - {shape: 4, slot: card-1, text: "输入\n基础档位、变更风险、影响等级与硬触发"}
+      - {shape: 6, slot: card-2, text: "时点\n开发、合并、发布、观察；昂贵门禁延后"}
+      - {shape: 8, slot: card-3, text: "依赖\n前序、覆盖、缓存、候选绑定分别建模"}
+      - {shape: 10, slot: card-4, text: "输出\n当前必需门禁、预计耗时、诊断和最小下一步"}
+      - {shape: 12, slot: footer, text: "质量要求不降 · 等待发生在真正需要的时点"}
+
+  - number: 20
+    title: 门禁状态与下一步
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "门禁机制"}
+      - {shape: 1, slot: title, text: "门禁状态与下一步"}
+      - {shape: 2, slot: subtitle, text: "状态不是颜色标签，而是当前输入下可以执行的动作"}
+      - {shape: 4, slot: card-1, text: "可运行 / 可复用\n前序完成；或完整执行签名仍新鲜"}
+      - {shape: 6, slot: card-2, text: "被覆盖\n更严格门禁已包含同一测试对象，保留来源"}
+      - {shape: 8, slot: card-3, text: "延后 / 阻断\n当前时点未到，或前序、候选尚未满足"}
+      - {shape: 10, slot: card-4, text: "过期 / 无效\n输入、环境、日志、制品或候选发生变化"}
+      - {shape: 12, slot: footer, text: "先执行最小下一步 · 不提前刷全量"}
+
+  - number: 21
+    title: 工作包上下文预算
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "效率治理"}
+      - {shape: 1, slot: title, text: "工作包上下文预算"}
+      - {shape: 2, slot: subtitle, text: "上下文计划按任务或能力收窄；宽泛目录只报告，不自动递归加载"}
+      - {shape: 4, slot: card-1, text: "默认读取\n当前 Spec、相关接口、相关测试、diff 和交接摘要"}
+      - {shape: 6, slot: card-2, text: "轻量修复\nL1/L2 只维护 change.md；风险上升再无损提升"}
+      - {shape: 8, slot: card-3, text: "任务声明\n在工作包写 reads；宽泛目录不自动展开"}
+      - {shape: 10, slot: card-4, text: "预算阻断\n上下文超限先收窄；字符数只是 Token 代理"}
+      - {shape: 12, slot: footer, text: "文档与上下文都按当前风险付费"}
+
+  - number: 22
+    title: 活动状态与证据索引
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "效率治理"}
+      - {shape: 1, slot: title, text: "活动状态与证据索引"}
+      - {shape: 2, slot: subtitle, text: "可手测、可发布和质量调整后效率分开测量；不用少测冒充提速"}
+      - {shape: 4, slot: card-1, text: "可手测等待\n只计代码完成到开发已验证的关键路径"}
+      - {shape: 6, slot: card-2, text: "后续成本\n发布认证、返工和逸出缺陷仍独立报告"}
+      - {shape: 8, slot: card-3, text: "样本边界\n54 条记录；5 个 gate 仅 2 样本，p50/p90 仍未知"}
+      - {shape: 10, slot: card-4, text: "本仓样本约 71%\n58.4s → 17.2s；低置信度，项目必须重算"}
+      - {shape: 12, slot: footer, text: "1 - 17.2 / 58.4 ≈ 71% · 只表达早反馈等待收益"}
+
+  - number: 23
+    title: 项目结构与框架边界
+    template_slide: 23
+    updates:
+      - shape: 1
+        slot: title
+        text: 项目结构与框架边界
+      - shape: 5
+        slot: src-detail
+        text: 产品仓库自有源码；不进入 MASE 框架仓库
+      - shape: 9
+        slot: tests-detail
+        text: 产品仓库自有测试、测试数据与适配器
+      - shape: 11
+        slot: change-dir
+        text: .mase/
+      - shape: 12
+        slot: change-label
+        text: 门禁证据
+      - shape: 13
+        slot: change-detail
+        text: .mase/gates.yaml · tests.yaml · evidence · baseline（Brownfield）
+      - shape: 15
+        slot: mase-dir
+        text: openspec
+      - shape: 16
+        slot: mase-label
+        text: 变更事实
+      - shape: 17
+        slot: mase-detail
+        text: proposal · specs · tasks · mase-state.yaml + framework_contract
+      - shape: 18
+        slot: rules
+        text: 边界：产品独立仓库 | 已安装 CLI + 版本化 Schema | 框架用临时采用项目自测
+
+  - number: 24
+    title: Skills 矩阵
+    template_slide: 24
+    updates:
+      - shape: 3
+        slot: requirements
+        text: |-
+          需求阶段
+          brainstorming
+          UI 原型（按需）
+      - shape: 5
+        slot: design
+        text: |-
+          设计阶段
+          project-planning
+          contract-first
+          design-review
+      - shape: 7
+        slot: build
+        text: |-
+          构建阶段
+          TDD
+          PBT（按风险）
+          code-review
+          安全评审（按风险）
+      - shape: 9
+        slot: verify
+        text: |-
+          验证阶段
+          缺陷修复
+          门禁运行器
+          隔离环境
+      - shape: 11
+        slot: complete
+        text: |-
+          完成 / 发布
+          freeze / status
+          release-software
+          git-commit
+
+  - number: 25
+    title: 六步主线的输入与输出
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "六步开发主线"}
+      - {shape: 1, slot: title, text: "六步主线的输入与输出"}
+      - {shape: 2, slot: subtitle, text: "六步是连续开发主线，不是六个等待审批的状态"}
+      - {shape: 4, slot: card-1, text: "需求\n目标与约束 → Proposal、Spec、测试设计"}
+      - {shape: 6, slot: card-2, text: "风险与设计\n影响和契约 → 设计、任务、门禁计划"}
+      - {shape: 8, slot: card-3, text: "构建与验证\nRED 和实现 → 能力证据、复扫、缺陷闭环"}
+      - {shape: 10, slot: card-4, text: "复盘与完成\n稳定候选 → 改进、最终验证、可选发布"}
+      - {shape: 12, slot: footer, text: "每一步都要有可消费的输出"}
+
+  - number: 26
+    title: 需求 Proposal
+    template_slide: 14
+    updates:
+      - shape: 3
+        slot: discovery
+        text: |-
+          需求探索
+          确认可观察目标、约束、成功标准和不做什么
+      - shape: 5
+        slot: prototype
+        text: |-
+          交互原型
+          产品有 UI 且本 change 修改 UI 时，用原型确认核心操作
+      - shape: 7
+        slot: scenarios
+        text: |-
+          验收场景
+          Given / When / Then 表达典型、边界和错误路径，不机械穷举
+      - shape: 9
+        slot: vv
+        text: |-
+          V&V：人审阅目标与关键场景
+          Spec 是验收行为来源；原型帮助确认 UI，但不能反向发明需求
+      - shape: 10
+        slot: outputs
+        text: 产出：proposal / specs；有 UI 变化时附原型  |  决策：基础过程档位
+
+  - number: 27
+    title: Proposal 的退出条件
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "六步开发主线"}
+      - {shape: 1, slot: title, text: "Proposal 的退出条件"}
+      - {shape: 2, slot: subtitle, text: "需求阶段结束不是“文档写完”，而是关键行为可以被验收"}
+      - {shape: 4, slot: card-1, text: "目标可观察\n用户能看到、操作或确认什么结果"}
+      - {shape: 6, slot: card-2, text: "边界清楚\n典型、错误、不做什么和兼容要求"}
+      - {shape: 8, slot: card-3, text: "测试可设计\n每条承诺能映射稳定 Spec ID 与 Test ID"}
+      - {shape: 10, slot: card-4, text: "原型按需\n只有界面行为变化才需要确认原型"}
+      - {shape: 12, slot: footer, text: "退出标准 · 可验收而非字数足够"}
+
+  - number: 28
+    title: 需求澄清（brainstorming）
+    template_slide: 25
+    updates:
+      - shape: 1
+        slot: title
+        text: 需求澄清（brainstorming）
+      - shape: 2
+        slot: subtitle
+        text: 把“想做什么”变成团队可以验收的结果
+      - shape: 4
+        slot: card-1
+        text: |-
+          用户目标
+          先理解为什么做、谁会使用、什么结果有价值
+      - shape: 6
+        slot: card-2
+        text: |-
+          可见结果
+          用操作、输出和错误行为描述成功，不只列功能名
+      - shape: 8
+        slot: card-3
+        text: |-
+          约束与风险
+          技术栈、时间、合规、不可信输入和不可逆操作
+      - shape: 10
+        slot: card-4
+        text: |-
+          批量澄清
+          只问会改变验收结果的问题，减少来回打断
+
+  - number: 29
+    title: 交互原型（frontend-skill）
+    template_slide: 26
+    updates:
+      - shape: 1
+        slot: title
+        text: 交互原型（frontend-skill）
+      - shape: 2
+        slot: subtitle
+        text: 只在 UI 行为变化时使用，让需求“看得见、点得动”
+      - shape: 4
+        slot: card-1
+        text: |-
+          先看参考
+          优先沿用用户给定页面、设计系统和现有交互
+      - shape: 6
+        slot: card-2
+        text: |-
+          确认核心流程
+          覆盖用户真正要操作的主路径，不追求所有装饰细节
+      - shape: 8
+        slot: card-3
+        text: |-
+          异常也要可见
+          空状态、失败提示、权限不足和恢复动作要能演示
+      - shape: 10
+        slot: card-4
+        text: |-
+          原型不是需求源
+          冲突时回到用户目标和 Spec，不让原型自行加需求
+
+  - number: 30
+    title: 任务与上下文规划
+    template_slide: 27
+    updates:
+      - shape: 1
+        slot: title
+        text: 任务与上下文规划
+      - shape: 2
+        slot: subtitle
+        text: 任务拆成可验收工作包；上下文只带真正需要的信息
+      - shape: 4
+        slot: card-1
+        text: |-
+          纵向任务
+          每项从 Spec 到测试和实现，交付一个可验证结果
+      - shape: 6
+        slot: card-2
+        text: |-
+          依赖与并行
+          先标出真实依赖，再并行没有共享写入的工作
+      - shape: 8
+        slot: card-3
+        text: |-
+          上下文路由
+          默认只读当前 Spec、相关接口与测试、diff 和交接摘要
+      - shape: 10
+        slot: card-4
+        text: |-
+          产出 tasks.md
+          每项写清 reads 与 verify，避免“做完但无法验收”
+
+  - number: 31
+    title: 风险分诊与技术预研
+    template_slide: 15
+    updates:
+      - shape: 1
+        slot: title
+        text: 风险分诊与技术预研
+      - shape: 3
+        slot: lite
+        text: |-
+          轻量档（Lite）
+          例如：文档、小型本地工具；走最短路径和相关测试
+      - shape: 5
+        slot: standard
+        text: |-
+          标准档（Standard）
+          例如：UI、文件、外部依赖、并发或持久化
+      - shape: 7
+        slot: strict
+        text: |-
+          严格档（Strict）
+          例如：鉴权、支付、监管、密钥或不可逆迁移
+      - shape: 9
+        slot: escalation
+        text: |-
+          能力局部升级
+          能力命中高风险时只加深该能力，不能删除硬门禁
+      - shape: 10
+        slot: outputs
+        text: 产出：过程档位 + L1 / L2 / L3 影响等级 + 门禁计划
+
+  - number: 32
+    title: 风险分诊案例
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "六步开发主线"}
+      - {shape: 1, slot: title, text: "风险分诊案例"}
+      - {shape: 2, slot: subtitle, text: "订单折扣同时命中历史行为、公共契约、持久化和异步消息"}
+      - {shape: 4, slot: card-1, text: "历史行为\n触发影响分析和修改后复扫"}
+      - {shape: 6, slot: card-2, text: "公共契约\n触发契约测试、架构评审与全链路验证"}
+      - {shape: 8, slot: card-3, text: "持久化消息\n增加集成测试、兼容样本和副作用预算"}
+      - {shape: 10, slot: card-4, text: "结论\n标准档 + L3，不新建第四种过程档位"}
+      - {shape: 12, slot: footer, text: "风险注册表把判断编译成门禁"}
+
+  - number: 33
+    title: 技术预研的停止条件
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "六步开发主线"}
+      - {shape: 1, slot: title, text: "技术预研的停止条件"}
+      - {shape: 2, slot: subtitle, text: "预研只解决未知事实，已验证事实直接引用证据"}
+      - {shape: 4, slot: card-1, text: "需要预研\n未知工具链、外部依赖或高风险行为"}
+      - {shape: 6, slot: card-2, text: "可重跑\n固定输入、命令、版本和结果"}
+      - {shape: 8, slot: card-3, text: "达到目标\n关键可行性问题已有明确证据"}
+      - {shape: 10, slot: card-4, text: "立即停止\n不要为了“更完整”继续消耗上下文和时间"}
+      - {shape: 12, slot: footer, text: "预研回答问题 · 不制造长期分支"}
+
+  - number: 34
+    title: 按风险做设计
+    template_slide: 16
+    updates:
+      - shape: 1
+        slot: title
+        text: 按风险做设计
+      - shape: 4
+        slot: architecture
+        text: architecture.md
+      - shape: 5
+        slot: architecture-detail
+        text: 标准 / 严格档：架构、模块边界、关键取舍
+      - shape: 8
+        slot: contract
+        text: contract.md
+      - shape: 9
+        slot: contract-detail
+        text: API / 公共协议：输入、输出、不变量、错误语义
+      - shape: 13
+        slot: tasks-detail
+        text: 纵向工作包 + reads + verify
+      - shape: 17
+        slot: specs-detail
+        text: 用户可观察的验收行为与边界
+      - shape: 20
+        slot: self-review
+        text: 风险自检
+      - shape: 21
+        slot: self-review-detail
+        text: 调用方和隐性依赖查全了吗？契约、回滚和降级一致吗？
+      - shape: 23
+        slot: vv
+        font_sizes: [20, 13]
+        text: |-
+          V&V：设计深度由风险决定
+          轻量档不强制完整设计；复杂模型或迁移才局部加深
+      - shape: 24
+        slot: exit
+        text: 设计被后续任务和测试使用，才有价值
+
+  - number: 35
+    title: 设计包按风险增减
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "六步开发主线"}
+      - {shape: 1, slot: title, text: "设计包按风险增减"}
+      - {shape: 2, slot: subtitle, text: "设计产物的多少由后续决策需要决定，不按模板全家桶决定"}
+      - {shape: 4, slot: card-1, text: "轻量档\n行为 Spec 与可执行工作包通常足够"}
+      - {shape: 6, slot: card-2, text: "标准档\n增加聚焦设计和公共契约"}
+      - {shape: 8, slot: card-3, text: "严格档\n增加可行性、架构、详细设计和恢复约束"}
+      - {shape: 10, slot: card-4, text: "判断标准\n文档是否被任务、评审、测试或回滚真正使用"}
+      - {shape: 12, slot: footer, text: "产物服务决策 · 不服务仪式"}
+
+  - number: 36
+    title: 契约优先（Contract First）
+    template_slide: 28
+    updates:
+      - shape: 1
+        slot: title
+        text: 契约优先（Contract First）
+      - shape: 2
+        slot: subtitle
+        text: 先把边界说清楚，再把它变成失败测试
+      - shape: 4
+        slot: card-1
+        text: |-
+          来自 Spec
+          契约只提炼已确认的行为，不凭空发明默认值或幂等性
+      - shape: 6
+        slot: card-2
+        text: |-
+          四类内容
+          前置条件、后置结果、不变量和错误响应
+      - shape: 8
+        slot: card-3
+        text: |-
+          公共边界必做
+          API 和公共协议必须做契约测试；内部函数按风险
+      - shape: 10
+        slot: card-4
+        text: |-
+          建立追踪
+          Spec ID → Contract ID → Test ID，失败时知道哪条承诺没兑现
+
+  - number: 37
+    title: 契约从 Spec 而来
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "六步开发主线"}
+      - {shape: 1, slot: title, text: "契约从 Spec 而来"}
+      - {shape: 2, slot: subtitle, text: "契约提炼已确认行为，不能凭接口形式发明幂等、默认值或兼容语义"}
+      - {shape: 4, slot: card-1, text: "前置条件\n哪些输入、权限、状态允许调用"}
+      - {shape: 6, slot: card-2, text: "后置结果\n返回值、状态变化和外部可观察效果"}
+      - {shape: 8, slot: card-3, text: "不变量\n金额、顺序、归属和并发约束"}
+      - {shape: 10, slot: card-4, text: "错误语义\n异常类型、错误响应、重试与原子性"}
+      - {shape: 12, slot: footer, text: "Spec ID → Contract ID → Test ID"}
+
+  - number: 38
+    title: 设计评审（design-review）
+    template_slide: 29
+    updates:
+      - shape: 1
+        slot: title
+        text: 设计评审（design-review）
+      - shape: 2
+        slot: subtitle
+        text: 评审重点随风险变化，不让所有项目都背同样重量
+      - shape: 4
+        slot: card-1
+        text: |-
+          风险匹配
+          轻量档看 diff；标准档看能力边界；严格档做独立评审
+      - shape: 6
+        slot: card-2
+        text: |-
+          需求一致
+          设计是否覆盖受影响 Spec？有没有多做或漏做？
+      - shape: 8
+        slot: card-3
+        text: |-
+          契约与失败
+          API、状态机、并发和资源生命周期是否说清异常语义？
+      - shape: 10
+        slot: card-4
+        text: |-
+          回滚与恢复
+          迁移、配置、数据和外部依赖出错时如何回到安全状态？
+
+  - number: 39
+    title: 影响链触发与豁免
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "影响链实战"}
+      - {shape: 1, slot: title, text: "影响链触发与豁免"}
+      - {shape: 2, slot: subtitle, text: "历史运行时代码、契约、配置、Schema、消息或持久化变化都要分析"}
+      - {shape: 4, slot: card-1, text: "必须执行\n缺陷、需求、重构、性能、安全导致的历史行为修改"}
+      - {shape: 6, slot: card-2, text: "可豁免\n纯注释、格式和非机器消费文案"}
+      - {shape: 8, slot: card-3, text: "不可豁免\n监控、审计或程序消费的日志变化"}
+      - {shape: 10, slot: card-4, text: "豁免证据\n必须证明没有行为、契约和机器消费变化"}
+      - {shape: 12, slot: footer, text: "先分类 · 再设计与实现"}
+
+  - number: 40
+    title: 显性调用扫描
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "影响链实战"}
+      - {shape: 1, slot: title, text: "显性调用扫描"}
+      - {shape: 2, slot: subtitle, text: "静态使用关系只是起点，还要记录路径、符号、层级和停止原因"}
+      - {shape: 4, slot: card-1, text: "修改点\n锁定批准文件、符号和禁止范围"}
+      - {shape: 6, slot: card-2, text: "直接调用\nIDE 使用查找、AST 或语言服务器"}
+      - {shape: 8, slot: card-3, text: "继续追踪\n契约或语义变化递归到系统边界"}
+      - {shape: 10, slot: card-4, text: "保存证据\n调用方、深度、路径、能力和终止原因"}
+      - {shape: 12, slot: footer, text: "显性调用不等于完整影响"}
+
+  - number: 41
+    title: 隐性依赖扫描
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "影响链实战"}
+      - {shape: 1, slot: title, text: "隐性依赖扫描"}
+      - {shape: 2, slot: subtitle, text: "没有普通函数调用边的依赖，往往是历史代码最容易被误伤的地方"}
+      - {shape: 4, slot: card-1, text: "数据通道\nJSON、Protobuf、持久化格式和缓存键"}
+      - {shape: 6, slot: card-2, text: "运行时通道\n代理、切面、反射和依赖注入"}
+      - {shape: 8, slot: card-3, text: "注册通道\n配置、SPI、模板和生成注册表"}
+      - {shape: 10, slot: card-4, text: "异步通道\n消息、定时任务、监听器和回调"}
+      - {shape: 12, slot: footer, text: "每个通道标记已发现、查空、未验证或库外"}
+
+  - number: 42
+    title: 递归停止与人工介入
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "影响链实战"}
+      - {shape: 1, slot: title, text: "递归停止与人工介入"}
+      - {shape: 2, slot: subtitle, text: "停止是有证据的边界，不是因为扫描太麻烦"}
+      - {shape: 4, slot: card-1, text: "正常停止\n到达 REST、消息、任务、监听器或命令入口"}
+      - {shape: 6, slot: card-2, text: "库外停止\n进入第三方依赖或运行时原生类"}
+      - {shape: 8, slot: card-3, text: "深度上限\n三层未到边界，停止自动递归并告警"}
+      - {shape: 10, slot: card-4, text: "人工介入\n判断耦合、拆分、隔离、开关或终止"}
+      - {shape: 12, slot: footer, text: "深度三层未收敛不能宣称分析完整"}
+
+  - number: 43
+    title: L1、L2、L3 验证矩阵
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "影响链实战"}
+      - {shape: 1, slot: title, text: "L1、L2、L3 验证矩阵"}
+      - {shape: 2, slot: subtitle, text: "影响等级独立于过程档位，用来决定本次历史变更的验证深度"}
+      - {shape: 4, slot: card-1, text: "L1 低影响\n调用方单元测试 + 新旧差异契约"}
+      - {shape: 6, slot: card-2, text: "L2 中影响\nL1 + 适用集成 + AI 差异说明 + 人工影响评审"}
+      - {shape: 8, slot: card-3, text: "L3 高影响\nL2 + 架构评审 + 全链路 + 灰度停止 + 回滚"}
+      - {shape: 10, slot: card-4, text: "独立判断\n低档项目也可能出现 L3 历史契约变更"}
+      - {shape: 12, slot: footer, text: "等级决定深度 · 档位决定基础过程"}
+
+  - number: 44
+    title: 波及过大的处置策略
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "影响链实战"}
+      - {shape: 1, slot: title, text: "波及过大的处置策略"}
+      - {shape: 2, slot: subtitle, text: "调用方超过 10 个、系统边界达到 3 个或隐性依赖不可控时，AI 必须停止"}
+      - {shape: 4, slot: card-1, text: "版本隔离\n新建 V2 与适配层，保留旧消费者"}
+      - {shape: 6, slot: card-2, text: "特性开关\n小范围灰度，设定停止条件后逐步放量"}
+      - {shape: 8, slot: card-3, text: "拆分变更\n把契约、迁移和消费者升级分成可回滚步骤"}
+      - {shape: 10, slot: card-4, text: "终止变更\n风险无法控制时由架构师重新设计"}
+      - {shape: 12, slot: footer, text: "影响超限是决策门禁，不是警告文字"}
+
+  - number: 45
+    title: 修改前分析与修改后复扫
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "影响链实战"}
+      - {shape: 1, slot: title, text: "修改前分析与修改后复扫"}
+      - {shape: 2, slot: subtitle, text: "计划影响范围保护实现方向，实际 diff 复扫证明没有越界"}
+      - {shape: 4, slot: card-1, text: "修改前\n批准路径、符号、不变量、历史测试和副作用预算"}
+      - {shape: 6, slot: card-2, text: "实现中\n新增调用方或边界立即返回分析与设计"}
+      - {shape: 8, slot: card-3, text: "修改后\n重算实际路径、符号、调用边和观察到的副作用"}
+      - {shape: 10, slot: card-4, text: "不匹配\n任何越界使复扫失效，不能靠自述批准"}
+      - {shape: 12, slot: footer, text: "计划范围 ≠ 实际事实 · 二者必须对账"}
+
+  - number: 46
+    title: 测试用例设计与追踪
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "六步开发主线"}
+      - {shape: 1, slot: title, text: "测试用例设计与追踪"}
+      - {shape: 2, slot: subtitle, text: "Spec 保存行为承诺；测试用例独立维护可执行条件与数据"}
+      - {shape: 4, slot: card-1, text: "行为场景\n典型、边界、错误和允许差异"}
+      - {shape: 6, slot: card-2, text: "测试设计\n前置数据、步骤、预期结果和清理方式"}
+      - {shape: 8, slot: card-3, text: "稳定标识\nSpec ID、Test ID 与 selector 建立追踪"}
+      - {shape: 10, slot: card-4, text: "历史保护\n新测试与修改前受保护测试分开登记"}
+      - {shape: 12, slot: footer, text: "测试代码独立 · 追踪关系稳定"}
+
+  - number: 47
+    title: 构建 Build
+    template_slide: 17
+    updates:
+      - shape: 3
+        slot: step-1
+        text: |-
+          先写契约测试
+          Spec → 前置 / 后置 / 不变量 → RED
+      - shape: 5
+        slot: step-2
+        text: |-
+          最小实现
+          只写让当前失败转绿的必要代码
+      - shape: 7
+        slot: step-3
+        text: |-
+          微循环
+          相关 unit / contract：红 → 绿 → 重构
+      - shape: 9
+        slot: step-4
+        text: |-
+          能力验证
+          复扫路径、符号、调用边和副作用；回放受保护测试
+      - shape: 11
+        slot: step-5
+        text: |-
+          评审与安全
+          风险命中才加安全、回滚或独立评审
+      - shape: 13
+        slot: vv
+        font_sizes: [18, 11]
+        text: |-
+          V&V：新增测试证明新行为；负向保证保护旧根基
+          仍要对照 Spec、调用边、受保护测试和副作用预算
+      - shape: 14
+        slot: exit
+        text: 聚焦验证通过形成“开发已验证”，即可交付本地手测
+
+  - number: 48
+    title: 分级 TDD 与属性测试
+    template_slide: 30
+    updates:
+      - shape: 1
+        slot: title
+        text: 分级 TDD 与属性测试
+      - shape: 2
+        slot: subtitle
+        text: 先跑相关检查，能力边界再扩展，最后只验证冻结候选
+      - shape: 4
+        slot: card-1
+        text: |-
+          Micro 微循环
+          当前 unit / contract：确认 RED → 最小实现 → 重构
+      - shape: 6
+        slot: card-2
+        text: |-
+          属性测试
+          复杂输入、解析、数值边界或状态机命中时使用
+      - shape: 8
+        slot: card-3
+        text: |-
+          可重放失败
+          保存随机种子、工具版本、重放命令和收缩后的最小反例
+      - shape: 10
+        slot: card-4
+        text: |-
+          补充而不替代
+          属性测试补充确定性样例，不能替代 Spec 和典型回归测试
+
+  - number: 49
+    title: 分阶段验证节奏
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "测试与证据"}
+      - {shape: 1, slot: title, text: "分阶段验证节奏"}
+      - {shape: 2, slot: subtitle, text: "可手测、可合并、可发布、可观察分别由新鲜证据派生"}
+      - {shape: 4, slot: card-1, text: "开发已验证\nRED、最小实现、聚焦测试；允许本地手测"}
+      - {shape: 6, slot: card-2, text: "合并已验证\n相关契约、集成、构建与适用审查"}
+      - {shape: 8, slot: card-3, text: "发布已就绪\n冻结候选，全量、安全、恢复与发布前检查"}
+      - {shape: 10, slot: card-4, text: "线上已验证 / 已观察\n真实消费者路径与观察窗口"}
+      - {shape: 12, slot: footer, text: "状态拆开 · 昂贵门禁延迟 · 质量不降低"}
+
+  - number: 50
+    title: 门禁依赖图与精确复用
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "测试与证据"}
+      - {shape: 1, slot: title, text: "门禁依赖图与精确复用"}
+      - {shape: 2, slot: subtitle, text: "前序、覆盖、缓存和候选绑定是四种不同关系"}
+      - {shape: 4, slot: card-1, text: "前序关系\n形成无环依赖图，按拓扑顺序给出下一步"}
+      - {shape: 6, slot: card-2, text: "覆盖关系\n测试与输入为超集时，目标显示“被覆盖”"}
+      - {shape: 8, slot: card-3, text: "精确缓存\n绑定源码、测试、锁文件、工具链、配置与环境"}
+      - {shape: 10, slot: card-4, text: "候选绑定\n最终结论只属于同一冻结候选"}
+      - {shape: 12, slot: footer, text: "关系显式 · 来源可审计 · 不误用旧证据"}
+
+  - number: 51
+    title: 验证里程碑时间线
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "测试与证据"}
+      - {shape: 1, slot: title, text: "验证里程碑时间线"}
+      - {shape: 2, slot: subtitle, text: "过程阶段描述工作进度；验证里程碑描述当前证据允许做什么"}
+      - {shape: 4, slot: card-1, text: "工作中 → 开发已验证\n聚焦测试完成，即可本地手测"}
+      - {shape: 6, slot: card-2, text: "合并已验证 → 候选已冻结\n合并门禁完成后记录候选摘要"}
+      - {shape: 8, slot: card-3, text: "发布已就绪\n对同一候选完成全量、安全和恢复检查"}
+      - {shape: 10, slot: card-4, text: "线上已验证 → 已观察\n真实消费者路径与观察证据闭环"}
+      - {shape: 12, slot: footer, text: "人工确认可选 · 证据状态不可手写"}
+
+  - number: 52
+    title: 验证 Verify
+    template_slide: 18
+    updates:
+      - shape: 3
+        slot: bug-loop
+        text: |-
+          BUG 修复闭环
+          失败证据 → 可证伪根因 → 系统修复 → 回归测试 → 同类扫描
+      - shape: 4
+        slot: principles
+        text: 原则：不从猜测改代码 · 不遮蔽症状 · 不漏掉同类风险
+      - shape: 5
+        slot: tools
+        text: 工具：缺陷修复流程 + 相关门禁运行器；三次错误假设后停止并补证据
+
+  - number: 53
+    title: 证据新鲜度闭环
+    template_slide: 21
+    updates:
+      - shape: 0
+        slot: section-label
+        text: 证据机制
+      - shape: 1
+        slot: title
+        text: 证据新鲜度闭环
+      - shape: 3
+        slot: input-number
+        text: 输入
+        font_sizes: [24]
+      - shape: 4
+        slot: input-title
+        text: 绑定检查范围
+      - shape: 5
+        slot: input-detail
+        text: Spec、变更边界、调用边、受保护测试、副作用和候选
+      - shape: 7
+        slot: run-number
+        text: 执行
+        font_sizes: [24]
+      - shape: 8
+        slot: run-title
+        text: 执行规范命令
+      - shape: 9
+        slot: run-detail
+        text: 执行规范命令并保存完整日志
+      - shape: 11
+        slot: evidence-number
+        text: 证据
+        font_sizes: [24]
+      - shape: 12
+        slot: evidence-title
+        text: 记录可重放结果
+      - shape: 13
+        slot: evidence-detail
+        text: 记录结果、摘要、依赖锁、工具链、配置、制品和候选
+      - shape: 15
+        slot: freshness-number
+        text: 新鲜度
+        font_sizes: [24]
+      - shape: 16
+        slot: freshness-title
+        text: 变化即重新验证
+      - shape: 17
+        slot: freshness-detail
+        text: 输入变化即过期，必须重新验证
+
+  - number: 54
+    title: 需求到证据的追踪链
+    template_slide: 22
+    updates:
+      - shape: 0
+        slot: section-label
+        text: 追踪机制
+      - shape: 1
+        slot: title
+        text: 需求到证据的追踪链
+      - shape: 2
+        slot: subtitle
+        text: 行为留在 Spec；可执行用例独立维护；通过稳定 ID 关联
+      - shape: 4
+        slot: spec
+        text: |-
+          Spec 场景
+          用户可观察行为、边界、错误与验收条件
+      - shape: 6
+        slot: contract-test
+        text: |-
+          测试设计
+          新行为 Test ID + 受保护历史测试 + 预期差异
+      - shape: 8
+        slot: implementation-evidence
+        text: |-
+          可执行测试与证据
+          测试代码独立维护；门禁记录当前结果
+      - shape: 9
+        slot: trace
+        text: Spec ID → Test ID → selector → 门禁证据  |  任一变化都可追踪
+
+  - number: 55
+    title: 网页验证与隔离环境
+    template_slide: 31
+    updates:
+      - shape: 0
+        slot: section-label
+        text: 构建阶段 · 技能
+      - shape: 1
+        slot: title
+        text: 网页验证与隔离环境
+      - shape: 2
+        slot: subtitle
+        text: 框架定义通用契约；产品维护自己的测试、测试数据和适配器
+      - shape: 4
+        slot: card-1
+        text: |-
+          三层浏览器测试
+          界面契约 · P0 关键旅程 · P1 回归测试
+      - shape: 6
+        slot: card-2
+        text: |-
+          按能力选择 P0
+          已安装 MASE 选测；未映射界面保守执行全部关键旅程
+      - shape: 8
+        slot: card-3
+        text: |-
+          确定性隔离
+          独立服务和数据根；测试数据结构与摘要绑定
+      - shape: 10
+        slot: card-4
+        text: |-
+          自动诊断减负
+          跟踪文件、日志和分类；重试后通过仍记录为不稳定
+      - shape: 12
+        slot: footer
+        text: 技能 · 网页测试
+
+  - number: 56
+    title: 测试去重不降低质量
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "测试与证据"}
+      - {shape: 1, slot: title, text: "测试去重不降低质量"}
+      - {shape: 2, slot: subtitle, text: "只消除同候选、同输入、等价环境和同一时点的冗余，不删除合理再验证"}
+      - {shape: 4, slot: card-1, text: "稳定 Test ID\n门禁选择最小 node selector，不用整文件代替语义"}
+      - {shape: 6, slot: card-2, text: "包含率诊断\n小集合被大集合完全包含也能被发现"}
+      - {shape: 8, slot: card-3, text: "被覆盖可审计\n完整等价才��记“被覆盖”，保留来源执行"}
+      - {shape: 10, slot: card-4, text: "合理再验证\n开发聚焦与发布候选全量不算重复"}
+      - {shape: 12, slot: footer, text: "同一验证对象冗余为零 · 不同对象各负其责"}
+
+  - number: 57
+    title: 代码评审（code-review）
+    template_slide: 32
+    updates:
+      - shape: 1
+        slot: title
+        text: 代码评审（code-review）
+      - shape: 2
+        slot: subtitle
+        text: 围绕受影响行为和当前 diff，给出可执行的分级反馈
+      - shape: 4
+        slot: card-1
+        text: |-
+          Spec 与契约
+          实现是否覆盖受影响行为？错误语义是否一致？
+      - shape: 6
+        slot: card-2
+        text: |-
+          可达代码
+          检查显性调用、隐性依赖、调用边差异和副作用预算
+      - shape: 8
+        slot: card-3
+        text: |-
+          问题驱动复审
+          首轮无异议即结束；有问题、候选变化或证据失效时继续复审
+      - shape: 10
+        slot: card-4
+        text: |-
+          结构化反馈
+          检查受保护测试弱化；AI 自述不能代替审批
+
+  - number: 58
+    title: 安全评审（security-review）
+    template_slide: 33
+    updates:
+      - shape: 1
+        slot: title
+        text: 安全评审（security-review）
+      - shape: 2
+        slot: subtitle
+        text: 由风险触发，不是每个标准档 change 都做深度扫描
+      - shape: 4
+        slot: card-1
+        text: |-
+          触发条件
+          不可信输入、归档、鉴权、支付、密钥或迁移
+      - shape: 6
+        slot: card-2
+        text: |-
+          输入与权限
+          注入、越权、租户隔离、资源上限和失败原子性
+      - shape: 8
+        slot: card-3
+        text: |-
+          密钥与日志
+          凭据不落盘、不回显；证据日志必须脱敏
+      - shape: 10
+        slot: card-4
+        text: |-
+          迁移与回滚
+          先 dry-run、备份和分阶段切换，再执行不可逆动作
+
+  - number: 59
+    title: BUG 修复闭环
+    template_slide: 34
+    updates:
+      - shape: 1
+        slot: title
+        text: BUG 修复闭环
+      - shape: 2
+        slot: subtitle
+        text: 先证明为什么坏，再修根因并防止同类问题复发
+      - shape: 5
+        slot: item-1-title
+        text: 失败证据
+      - shape: 6
+        slot: item-1-body
+        text: 先复现或取日志
+      - shape: 9
+        slot: item-2-title
+        text: 根因假设
+      - shape: 10
+        slot: item-2-body
+        text: 必须可证伪
+      - shape: 13
+        slot: item-3-title
+        text: 系统修复
+      - shape: 14
+        slot: item-3-body
+        text: 不遮蔽症状
+      - shape: 17
+        slot: item-4-title
+        text: 回归测试
+      - shape: 18
+        slot: item-4-body
+        text: 固化失败场景
+      - shape: 21
+        slot: item-5-title
+        text: 同类扫描
+      - shape: 22
+        slot: item-5-body
+        text: 查找相同风险
+      - shape: 25
+        slot: item-6-title
+        text: 证据更新
+      - shape: 26
+        slot: item-6-body
+        text: 相关 gate 重跑
+      - shape: 29
+        slot: item-7-title
+        text: 停止条件
+      - shape: 30
+        slot: item-7-body
+        text: 三次错假设就补证据
+      - shape: 33
+        slot: item-8-title
+        text: 知识沉淀
+      - shape: 34
+        slot: item-8-body
+        text: 重大重复才记录
+      - shape: 36
+        slot: flow
+        text: |-
+          科学修复流程
+          复现 → 假设 → 验证 → 修根因 → 回归 → 同类扫描 → 更新证据
+
+  - number: 60
+    title: 复盘 Retro
+    template_slide: 19
+    updates:
+      - shape: 3
+        slot: collect
+        text: |-
+          收集
+          本轮失败证据、评审意见、最小反例和门禁日志
+      - shape: 5
+        slot: analyze
+        text: |-
+          分析
+          高发 BUG、测试盲区、证据 stale 原因和流程短板
+      - shape: 7
+        slot: improve
+        text: |-
+          改进
+          更新规则、模板、测试或 gate；不把经验只留在聊天里
+      - shape: 8
+        slot: takeaway
+        text: 重大、重复或可复用的问题才沉淀；小事不强制写复盘报告
+
+  - number: 61
+    title: 完成
+    template_slide: 20
+    updates:
+      - shape: 1
+        slot: title
+        text: 完成
+      - shape: 3
+        slot: step-1
+        text: |-
+          确认开发候选稳定
+          负向保证、任务、相关门禁和人工确认都完成
+      - shape: 5
+        slot: step-2
+        text: |-
+          候选冻结
+          固定代码、影响产物与输入摘要；相关变化使证据过期
+      - shape: 7
+        slot: step-3
+        text: |-
+          最终验证
+          门禁运行器对冻结候选跑一次适用全量测试
+      - shape: 9
+        slot: step-4
+        text: |-
+          发布时启用附加流程
+          仅在打包、发布、部署、线上验证或恢复时启用
+      - shape: 11
+        slot: footer
+        text: 候选 → 制品 → 目标 → 线上 → 观察
+        font_sizes: [13]
+
+  - number: 62
+    title: 提交、发布与证据
+    template_slide: 35
+    updates:
+      - shape: 1
+        slot: title
+        text: 提交、发布与证据
+      - shape: 2
+        slot: subtitle
+        text: 开发、制品、线上与观察是不同事实；输入变化时证据会过期
+      - shape: 4
+        slot: card-1
+        text: |-
+          提交与不可变制品
+          工作包可回滚；制品绑定身份、来源与最终内容
+      - shape: 6
+        slot: card-2
+        text: |-
+          发布状态
+          candidate_ready / artifact_ready / target_ready
+      - shape: 8
+        slot: card-3
+        text: |-
+          线上验证
+          artifact_ready ≠ live_verified；必须走真实消费者路径
+      - shape: 10
+        slot: card-4
+        text: |-
+          观察与恢复
+          观察窗口结束前保留上一版、备份和恢复控制
+
+  - number: 63
+    title: 发布与恢复演练
+    track: deep-dive
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "发布与恢复"}
+      - {shape: 1, slot: title, text: "发布与恢复演练"}
+      - {shape: 2, slot: subtitle, text: "制品就绪、线上可用和观察完成是三个不同事实"}
+      - {shape: 4, slot: card-1, text: "不可变制品\n绑定候选、来源和最终内容摘要"}
+      - {shape: 6, slot: card-2, text: "真实验证\n沿订单消费者路径下单、结算并检查消息"}
+      - {shape: 8, slot: card-3, text: "停止条件\n错误率、金额差异或消息积压越线立即停止"}
+      - {shape: 10, slot: card-4, text: "恢复路径\n切回旧版本，验证数据兼容并保留观察窗口"}
+      - {shape: 12, slot: footer, text: "发布成功 = 真实消费者验证 + 观察 + 可恢复"}
+
+  - number: 64
+    title: 三步启动
+    template_slide: 36
+    updates:
+      - shape: 3
+        slot: step-1
+        text: |-
+          初始化
+          mase init demo --profile standard --stack python
+      - shape: 5
+        slot: step-2
+        text: |-
+          检查并创建 change
+          先写 proposal / specs / tasks，再做影响链分析
+      - shape: 7
+        slot: step-3
+        text: |-
+          按门禁推进
+          mase impact status；再 gate plan / run / freeze
+      - shape: 9
+        slot: command-1
+        text: 命令：mase init
+      - shape: 11
+        slot: command-2
+        text: 迁移：update --dry-run
+
+  - number: 65
+    title: 分组演练与行动清单
+    track: exercise
+    template_slide: 25
+    updates:
+      - {shape: 0, slot: section-label, text: "案例与速查"}
+      - {shape: 1, slot: title, text: "分组演练与行动清单"}
+      - {shape: 2, slot: subtitle, text: "为订单规则升级完成一次从风险判断到候选验证的最小闭环"}
+      - {shape: 4, slot: card-1, text: "练习一\n分别判断基础档位、变更风险和影响等级"}
+      - {shape: 6, slot: card-2, text: "练习二\n画出显性、隐性调用链与递归终止点"}
+      - {shape: 8, slot: card-3, text: "练习三\n列出四个时点、门禁依赖图、预算和回滚"}
+      - {shape: 10, slot: card-4, text: "带回团队\n先做一个真实 change，再用证据调整流程重量"}
+      - {shape: 12, slot: footer, text: "风险决定重量 · 契约定义边界 · 证据证明完成"}
+  - number: 66
+    title: 课程总结
+    template_slide: 37
+    updates:
+      - shape: 1
+        slot: title
+        text: 课程总结
+      - shape: 2
+        slot: subtitle
+        text: 高效交付 · 需求正确 · 运行健壮 · 质量优化 · 整洁可维护
+      - shape: 3
+        slot: footer
+        text: MASE v2.4.0  |  学以致用 · 持续改进

@@ -34,27 +34,14 @@ agent: "agent-2-requirements"
 - [ ] <成功标准1>
 - [ ] <成功标准2>
 
-## 操作流程
-1. <步骤1>
-2. <步骤2>
-...
+## Acceptance References
 
-## 系统测试用例
-| 用例ID | 前置条件 | 操作步骤 | 预期结果 |
-|--------|---------|---------|---------|
-| TC-001 | <前置> | <操作> | <预期> |
+<!-- 不在 Proposal 重复测试全文；引用 specs 中稳定 Requirement/Scenario ID。 -->
 
-## E2E 验收场景（has_ui: true 时必填）
+- `<REQ-ID>`: <为什么它是成功标准；P0/P1/P2>
 
-> P0 = 核心业务流程，必须 100% E2E 覆盖。
-> P1 = 重要辅助功能，应当覆盖。
-> P2 = 边缘场景，可人工探索。
+## Risk and Profile
 
-### 场景 1: <场景名称>
-- 用户故事: 作为<角色>，我希望<操作>，以便<价值>
-- 前置条件: <条件>
-- 操作步骤:
-  1. <步骤>
-  2. <步骤>
-- 预期结果: <可验证的断言>
-- 优先级: P0（核心）/ P1（重要）/ P2（次要） |
+- Base profile: lite / standard / strict
+- Risk triggers: <不可信输入/并发/鉴权/迁移等；无则填 none>
+- Capability escalation: <需要局部升级的 capability；无则填 none>

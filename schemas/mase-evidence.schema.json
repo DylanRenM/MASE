@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mase.dev/schemas/mase-evidence.schema.json",
+  "title": "MASE complete gate evidence sidecar",
+  "type": "object",
+  "required": ["gate", "kind", "result", "at", "execution_id"],
+  "properties": {
+    "gate": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["automatic", "manual", "legacy"]},
+    "result": {"enum": ["passed", "subsumed", "failed", "skipped", "pending", "stale", "passed_with_baseline"]},
+    "at": {"type": "string", "minLength": 1},
+    "execution_id": {"type": "string", "minLength": 8},
+    "command": {"type": "array", "items": {"type": "string"}},
+    "inputs": {"type": "array", "items": {"type": "string"}},
+    "selected_tests": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "input_digest": {"type": "string"},
+    "execution_signature": {"type": "string"},
+    "environment_digest": {"type": "string"},
+    "log_path": {"type": "string"},
+    "actor": {"type": "string"},
+    "subject": {"type": "string"},
+    "reference": {"type": "string"}
+    ,"review_kind": {"enum": ["self", "independent"]}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,644 @@
+schema: mase-project/v2
+profile: standard
+stack: generic
+toolchains:
+- python
+- javascript
+phase: complete
+product:
+  has_ui: false
+  ui_platform: null
+impact:
+  ui_changed: false
+  paths:
+  - mase_cli/**
+  - profiles/**
+  - schemas/**
+  - templates/**
+  - skills/**
+  - scripts/**
+  - tests/**
+  - docs/**
+  - training/mase-framework/**
+  - openspec/**
+  - project-rules.md
+  - framework-manifest.yaml
+  - pyproject.toml
+risk:
+  triggers:
+  - untrusted_input
+  capabilities:
+    release-safety:
+      profile: standard
+      triggers:
+      - irreversible_write
+      paths:
+      - mase_cli/gates.py
+      - mase_cli/evidence.py
+      - mase_cli/release.py
+      - mase_cli/state.py
+    sandbox-safety:
+      profile: standard
+      triggers:
+      - untrusted_input
+      paths:
+      - skills/webapp-testing/sandbox.js
+      - schemas/sandbox-config-v1.schema.json
+gates:
+  api_contract: passed
+  related_tests: passed
+  integration_tests: passed
+  security_review: passed
+  code_review: passed
+  full_regression: passed
+evidence:
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:26:32.488518Z'
+  duration_seconds: 11.362801334
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 0af6d271e128bdac778b5b4ce192d0f4388ff7c9444ae3983b150b82a5f137ff
+  input_digest: 1e2bf4edb6613fdf0a4e8d62f5418a19980ae32afa47561e85c520a8e8d5a8c8
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/related_tests-20260728T162632Z-0365cbf1.log
+  test_digest: 16d4c950c0cffded6704a3fffb77ba5385bc4fe2818f796302508cab6cfe889c
+  execution_signature: 499626d310e6c8d7546a29defd14104b4f9b23da356c52d1a3463cd0aaf8e6d3
+  execution_id: 00cd35c8fa984f62989458620fec0499
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:26:42.299837Z'
+  duration_seconds: 9.466364417
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 4c649f16be5926af25567b7137b7cf93923e1895b55ec7bc8625efefd11ec365
+  input_digest: 1175a5d3b064c30ca50aba5ff75cb1008fd7943475612ce57ad127ae709bff91
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/api_contract-20260728T162642Z-2432fc05.log
+  test_digest: 7c3756f9cb62832d32ded09b4e3bf85c80eff853f11a9d987710124b812bf532
+  execution_signature: 59be655658e679d68f2149c63ae015eda1649406688330e12df843009573578e
+  execution_id: 89d5dcdcad0746d38df3f33d5f466381
+- gate: integration_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:26:43.976814Z'
+  duration_seconds: 1.34143775
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: fe22601087a5de939ecb4aafb7e455b92fe8ffcbb7771ae5d997884245847347
+  input_digest: 6a59fc386984220e1223e3ec2f4e1bd2a1a336bafbfab8b72b80a0004367d1f9
+  inputs:
+  - mase_cli
+  - templates
+  - framework-manifest.yaml
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/integration_tests-20260728T162643Z-46e2d4c8.log
+  test_digest: ee731f361bdd25538d5b13f3edddf9a1e9c0f8dee63e378c8acd631aa1f997df
+  execution_signature: 46f64fc4d3ede9921b584adac2d743e0931edfa2e057aa942772abb49e3c6f2c
+  execution_id: 43c42b87f26848168a5d5bcebaf62522
+- gate: security_review
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:26:45.399664Z'
+  duration_seconds: 1.070621667
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_evidence.py::test_gate_runner_redacts_persisted_command_environment_and_log
+  - tests/test_mase_cli_operations.py::test_gate_cli_rejects_unsafe_change_before_running_command
+  - tests/test_mase_cli_operations.py::test_install_rejects_manifest_path_traversal
+  - tests/test_mase_gate_planning.py::test_gate_loader_validates_schema_and_rejects_escaping_inputs
+  - tests/test_release_governance.py::test_read_only_authority_blocks_effectful_release_before_command
+  - tests/test_release_governance.py::test_release_gate_not_selected_by_overlay_intent_is_blocked
+  - tests/test_repository_boundary.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 878f1dd9277664952d1aed9a7d48adffc9c5fea136c5d199fa613d908e1a6e38
+  input_digest: aea25b9d7f189feccadb16ffae1c56d1dfafb04a0c283d85f2c789d5de689d66
+  inputs:
+  - mase_cli/evidence.py
+  - mase_cli/gates.py
+  - mase_cli/main.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/security_review-20260728T162645Z-0fbb31e0.log
+  test_digest: 4947f19d13ed79f5684ce9606be752ffaacba5893a15d1a28385fcb86533d59c
+  execution_signature: da6270b04f3b39015f1f1406fb466c80d315d5ddb13f85820d6859d6ebff3563
+  execution_id: 6d941519bcbf4257becb575ab920d3d8
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:28:08.832738Z'
+  duration_seconds: 11.339464375
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: a68c608588d566014feb0408c2059c506748d8f0f8b61029e0734986d14f6b65
+  input_digest: 94644fb6e27d33426702c97a821872a32a8a08fe1d91cb1ad4f9920b536a3421
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/related_tests-20260728T162808Z-2035d77d.log
+  test_digest: 16d4c950c0cffded6704a3fffb77ba5385bc4fe2818f796302508cab6cfe889c
+  execution_signature: 5b9f30be0a02365d479c7fe0714b63d4d61e26ee24f7431b313ed691aab87f70
+  execution_id: 30bae204a10646f590c3c2b71d74b83e
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:28:18.613973Z'
+  duration_seconds: 9.370441709
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: d32e1160540b6f402aedb0b4bdf0295a66a355e4f85aa52b0a54f121c70aee83
+  input_digest: de22ea1d3e4a3103d20071850470193a6589c30492b86cb173f35c4de89556f7
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/api_contract-20260728T162818Z-458e99ec.log
+  test_digest: 7c3756f9cb62832d32ded09b4e3bf85c80eff853f11a9d987710124b812bf532
+  execution_signature: 901067538d1a19a956178730f8b7348d9162f30bd740b982b9689f4bb145824c
+  execution_id: 3a7b79cd69b54fbb898113630466fa41
+- gate: integration_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:28:20.202442Z'
+  duration_seconds: 1.213455333
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 5e47b299f0420cbbe1df16f46489dc5c8f48fb81d0dd57cd2a4162990cedc678
+  input_digest: 6e832399db3a4506e23bdc4000428255535e3becd41bde516b7d0a4f82bdefe9
+  inputs:
+  - mase_cli
+  - templates
+  - framework-manifest.yaml
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/integration_tests-20260728T162820Z-3bd47fa4.log
+  test_digest: ee731f361bdd25538d5b13f3edddf9a1e9c0f8dee63e378c8acd631aa1f997df
+  execution_signature: dc11ac5b1803a48faf99846f30bc3a92370eb8bf5551da30fb930a077f47dd70
+  execution_id: 326639a687ea463d839f216963da632f
+- gate: security_review
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:28:21.571452Z'
+  duration_seconds: 0.9910424170000001
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_evidence.py::test_gate_runner_redacts_persisted_command_environment_and_log
+  - tests/test_mase_cli_operations.py::test_gate_cli_rejects_unsafe_change_before_running_command
+  - tests/test_mase_cli_operations.py::test_install_rejects_manifest_path_traversal
+  - tests/test_mase_gate_planning.py::test_gate_loader_validates_schema_and_rejects_escaping_inputs
+  - tests/test_release_governance.py::test_read_only_authority_blocks_effectful_release_before_command
+  - tests/test_release_governance.py::test_release_gate_not_selected_by_overlay_intent_is_blocked
+  - tests/test_repository_boundary.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: aefa4de9ddd00cf78a7f947e26e8d95b65e5e98ae9013538a2e5476834ac1dae
+  input_digest: 38e5d880502965efbf0210ecfa04134e145aefff85011acbe8b17dca50527a18
+  inputs:
+  - mase_cli/evidence.py
+  - mase_cli/gates.py
+  - mase_cli/main.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/security_review-20260728T162821Z-3f23aefd.log
+  test_digest: 4947f19d13ed79f5684ce9606be752ffaacba5893a15d1a28385fcb86533d59c
+  execution_signature: 27006a6c27dc0bbeb70625d717ec9304eba9db8500796b8b10f6d87f63100ab9
+  execution_id: 4c2d6562ae9c4e079d2b24794c5a1950
+- gate: code_review
+  kind: manual
+  result: passed
+  at: '2026-07-28T16:28:21.893932Z'
+  duration_seconds: 0.0
+  input_digest: 30aa085120d8be73a9f50dd2dc26209418b60275008fff404dc2ed063b3315fb
+  inputs:
+  - .mase/gates.yaml
+  - docs/**
+  - framework-manifest.yaml
+  - mase_cli/**
+  - openspec/**
+  - openspec/changes/close-mase-governance-and-safety-gaps/design.md
+  - openspec/changes/close-mase-governance-and-safety-gaps/proposal.md
+  - openspec/changes/close-mase-governance-and-safety-gaps/specs
+  - openspec/changes/close-mase-governance-and-safety-gaps/tasks.md
+  - profiles/**
+  - project-rules.md
+  - pyproject.toml
+  - schemas/**
+  - scripts/**
+  - skills/**
+  - templates/**
+  - tests/**
+  - training/mase-framework/**
+  actor: Codex framework reviewer
+  subject: MASE governance and safety gap closure
+  reference: openspec/changes/close-mase-governance-and-safety-gaps/design.md
+  execution_signature: 88b473418c3627c4c1432b1f2a16dd896fca254bb22bdbf5e618fa770d67aec4
+- gate: code_review
+  kind: manual
+  result: passed
+  at: '2026-07-28T16:29:30.463407Z'
+  duration_seconds: 0.0
+  input_digest: 8d6ced5ff932d00d234c011be1f80d2c6a476125ecdab1695384492d79ad2c2c
+  inputs:
+  - .mase/gates.yaml
+  - docs/**
+  - framework-manifest.yaml
+  - mase_cli/**
+  - openspec/**
+  - openspec/changes/close-mase-governance-and-safety-gaps/design.md
+  - openspec/changes/close-mase-governance-and-safety-gaps/proposal.md
+  - openspec/changes/close-mase-governance-and-safety-gaps/specs
+  - openspec/changes/close-mase-governance-and-safety-gaps/tasks.md
+  - profiles/**
+  - project-rules.md
+  - pyproject.toml
+  - schemas/**
+  - scripts/**
+  - skills/**
+  - templates/**
+  - tests/**
+  - training/mase-framework/**
+  actor: Codex framework reviewer
+  subject: MASE governance and safety gap closure
+  reference: openspec/changes/close-mase-governance-and-safety-gaps/design.md
+  execution_signature: aff63c00beb2e34dc765604eb81fd58aee1f86f598bc334e5ed580afd91e8b8f
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:30:39.450334Z'
+  duration_seconds: 10.601094709
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 37cace1c5270757a74148de277dacab45875e5a1497f5a8ecc2fcd025ed7beb6
+  input_digest: c5c0328b827f89c47f3e58a96fadc8b668d2f186c75426c3a2fab06805540c45
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/related_tests-20260728T163039Z-028d696f.log
+  test_digest: 16d4c950c0cffded6704a3fffb77ba5385bc4fe2818f796302508cab6cfe889c
+  execution_signature: 4919bf8bceae7441aa5e1a072113de20d32be02fe55383628193536bf5470f68
+  execution_id: e41d5687559d4219813a1f492ccbe978
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:30:49.005877Z'
+  duration_seconds: 9.138674167
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: fba3ba7a34f4bda2c0e000cf894a297d40849756caff4b9a1c916a5da9ade02c
+  input_digest: a500957da2f8b1cd76ad2610069762bfaf86e563583ac8f8a6a13f94bdd411e5
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/api_contract-20260728T163049Z-b43ec9d0.log
+  test_digest: 7c3756f9cb62832d32ded09b4e3bf85c80eff853f11a9d987710124b812bf532
+  execution_signature: ecd28c42c735eb311ece8a571dd26bed4c0a5aba7c139dca0038a3fd3fd2090e
+  execution_id: 8c85ab6c660e4e32bc7edb34cdeb52df
+- gate: integration_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:30:50.684339Z'
+  duration_seconds: 1.252283083
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 68be1271a1505da18f316626c75834c0bfca0a125b09ab4dcc5516ccfc394189
+  input_digest: 390e7f49ba837c132856b8c7715631b8491374834a8dccf32a9ebb834d1c102a
+  inputs:
+  - mase_cli
+  - templates
+  - framework-manifest.yaml
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/integration_tests-20260728T163050Z-be7b362e.log
+  test_digest: ee731f361bdd25538d5b13f3edddf9a1e9c0f8dee63e378c8acd631aa1f997df
+  execution_signature: 92449e143da80307aee77a49ae89dcfc1c55f107282ea6a75639daa9a0e79e19
+  execution_id: 964ff321b0ba477c9a2d526092d4c71a
+- gate: security_review
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:30:52.065705Z'
+  duration_seconds: 0.9483591670000001
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_evidence.py::test_gate_runner_redacts_persisted_command_environment_and_log
+  - tests/test_mase_cli_operations.py::test_gate_cli_rejects_unsafe_change_before_running_command
+  - tests/test_mase_cli_operations.py::test_install_rejects_manifest_path_traversal
+  - tests/test_mase_gate_planning.py::test_gate_loader_validates_schema_and_rejects_escaping_inputs
+  - tests/test_release_governance.py::test_read_only_authority_blocks_effectful_release_before_command
+  - tests/test_release_governance.py::test_release_gate_not_selected_by_overlay_intent_is_blocked
+  - tests/test_repository_boundary.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: ebf63b05097da455a2c8be641e1bc4e6532fce2db6c186dfcd89473eea9d1620
+  input_digest: 5c8ab674bf286cc5df6c6ffd31df4d9e4e30c5110de5f84cad57d6bff1e23e42
+  inputs:
+  - mase_cli/evidence.py
+  - mase_cli/gates.py
+  - mase_cli/main.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/security_review-20260728T163052Z-b0cad3db.log
+  test_digest: 4947f19d13ed79f5684ce9606be752ffaacba5893a15d1a28385fcb86533d59c
+  execution_signature: 842d4f33d222b6a88224d85e2cad13046e33ef91b55e09d3dfeaf7a111fb5aa3
+  execution_id: ae4d3024e3f44146bad5c1fa5f5795e5
+- gate: code_review
+  kind: manual
+  result: passed
+  at: '2026-07-28T16:30:52.432222Z'
+  duration_seconds: 0.0
+  input_digest: cd1a938270823d583ffe00df1faf3c0963804b6bdf8a050c9d6e00a6b4ce006a
+  inputs:
+  - .mase/gates.yaml
+  - docs/**
+  - framework-manifest.yaml
+  - mase_cli/**
+  - openspec/**
+  - openspec/changes/close-mase-governance-and-safety-gaps/design.md
+  - openspec/changes/close-mase-governance-and-safety-gaps/proposal.md
+  - openspec/changes/close-mase-governance-and-safety-gaps/specs
+  - openspec/changes/close-mase-governance-and-safety-gaps/tasks.md
+  - profiles/**
+  - project-rules.md
+  - pyproject.toml
+  - schemas/**
+  - scripts/**
+  - skills/**
+  - templates/**
+  - tests/**
+  - training/mase-framework/**
+  actor: Codex framework reviewer
+  subject: MASE governance and safety gap closure
+  reference: openspec/changes/close-mase-governance-and-safety-gaps/design.md
+  execution_signature: 563e3231cdd7dfd642e4bf31508d20e167fcda782e0c22c28b1fff36ce988fe5
+- gate: full_regression
+  kind: automatic
+  result: passed
+  at: '2026-07-28T16:31:19.346443Z'
+  duration_seconds: 18.207761542
+  exit_code: 0
+  command:
+  - python3
+  - scripts/run_framework_regression.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: f88bcfa6c6e2bef2e4362dad3d2540733e45135a0bd6b9cda8c8c35bd3010cde
+  input_digest: ae5500cb5fa7a28542e5e16d5e574dc5cb10279568d945724e69a7c47a32bd66
+  inputs:
+  - mase_cli
+  - profiles
+  - schemas
+  - templates
+  - skills
+  - docs
+  - scripts
+  - tests
+  - openspec/specs
+  - pyproject.toml
+  - package.json
+  - package-lock.json
+  - framework-manifest.yaml
+  - project-rules.md
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  log_path: .mase/evidence/close-mase-governance-and-safety-gaps/full_regression-20260728T163119Z-310f0836.log
+  candidate_id: 53966b81f5487d96
+  test_digest: ea1f3412e1c5edea0575f113bc766527f79cf6e51086a0e739657a03912e3cc0
+  execution_signature: 20d305712f8dd75d5f6e6a01f3a3921ad1068239cd1509696e38187f8e04434a
+  execution_id: 491dc5e2951e42abacc162e28bf84b60
+dependencies: []
+conflicts_with: []
+blockers: []
+candidate:
+  id: 53966b81f5487d96
+  created_at: '2026-07-28T16:30:52.833056Z'
+  input_digest: f74956140ef1968e897c166b93a676030bc4f51e6bdf10feeb8f6ec119c33072
+  inputs:
+  - .mase/gates.yaml
+  - docs
+  - framework-manifest.yaml
+  - mase_cli
+  - openspec/changes/close-mase-governance-and-safety-gaps/design.md
+  - openspec/changes/close-mase-governance-and-safety-gaps/proposal.md
+  - openspec/changes/close-mase-governance-and-safety-gaps/specs
+  - openspec/changes/close-mase-governance-and-safety-gaps/tasks.md
+  - openspec/specs
+  - package-lock.json
+  - package.json
+  - profiles
+  - project-rules.md
+  - pyproject.toml
+  - schemas
+  - scripts
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - skills
+  - templates
+  - tests
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - training/mase-framework/mase-training-v2.3.yaml

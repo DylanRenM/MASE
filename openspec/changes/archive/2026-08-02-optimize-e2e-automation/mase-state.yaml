@@ -1,0 +1,435 @@
+schema: mase-project/v2
+profile: standard
+stack: python
+toolchains:
+- playwright
+phase: verify
+product:
+  has_ui: false
+  ui_platform: null
+impact:
+  ui_changed: false
+  paths:
+  - mase_cli/test_selection.py
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - mase_cli/commands/**
+  - schemas/**
+  - templates/**
+  - profiles/**
+  - skills/webapp-testing/**
+  - agents/agent-4-quality/**
+  - docs/MASE-framework.md
+  - project-rules.md
+  - framework-manifest.yaml
+  - tests/**
+  - training/mase-framework/**
+risk:
+  triggers:
+  - persistence
+  capabilities:
+    test_selection:
+      profile: standard
+      triggers: []
+      paths:
+      - mase_cli/test_selection.py
+      - schemas/mase-test-manifest.schema.json
+    gate_evidence:
+      profile: standard
+      triggers:
+      - persistence
+      paths:
+      - mase_cli/gates.py
+      - mase_cli/evidence.py
+      - mase_cli/state.py
+      - schemas/mase-state.schema.json
+gates:
+  api_contract: passed
+  code_review: pending
+  related_tests: passed
+  integration_tests: passed
+  full_regression: pending
+evidence:
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-07-30T02:27:15.619999Z'
+  duration_seconds: 11.91206075
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 9ce876396483b332fe2205a184907b090af21a17dbfa5c4e5533d7c84fd81e8f
+  input_digest: 52922744d32823a20314b21269401ebfc68bf9f1ee3034f06d089c5308f7c9b0
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - mase_cli/test_selection.py
+  - schemas/mase-test-manifest.schema.json
+  - schemas/mase-test-diagnostic.schema.json
+  - tests/test_mase_test_selection.py
+  log_path: .mase/evidence/optimize-e2e-automation/api_contract-20260730T022715Z-f3154da9.log
+  test_digest: 23306ff1e859cc4eb0eede3ab0f3b27e87d2d16b0eefe77e77e07d8ad52521b8
+  execution_signature: 0705ae50b1fff059b0641e0ebdd6fa1b856d931892d31e72191410d606f208f8
+  execution_id: 0ae3ef8ce25d421db9b2325bd42bf157
+  selected_tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: integration_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-30T02:27:17.832385Z'
+  duration_seconds: 1.8225873339999998
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: b3d4c6848aa596b177bf4ddc179fcab7464e018c62834ec7badd12af787a3926
+  input_digest: 781c0946d785be069b21cced5f85f8781496ca59025ba601688e6da44d352bf9
+  inputs:
+  - mase_cli
+  - templates
+  - framework-manifest.yaml
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/optimize-e2e-automation/integration_tests-20260730T022717Z-01b85d0f.log
+  test_digest: ee731f361bdd25538d5b13f3edddf9a1e9c0f8dee63e378c8acd631aa1f997df
+  execution_signature: 2163c5cb50aefaec2578b5e78a2ec86bc2d5eb0706cecab1e41d6546fc49861e
+  execution_id: 12326a1fc9f4446dbb3c3b4aaf936954
+  selected_tests:
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-07-30T03:37:45.406567Z'
+  duration_seconds: 11.974996290984564
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  platform: Darwin 25.5.0 · Python 3.14.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 823eb6f47632271436c6177a26bbe4fb3afe9369c3e7ffd8f9bd6f5b8cc44213
+  input_digest: ca84bf327d209aff3892dce878df541ac744e164e954a0e22bb89cfd834bc9d7
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - mase_cli/test_selection.py
+  - schemas/mase-test-manifest.schema.json
+  - schemas/mase-test-diagnostic.schema.json
+  - tests/test_mase_test_selection.py
+  log_path: .mase/evidence/optimize-e2e-automation/api_contract-20260730T033745Z-af666a8b.log
+  test_digest: 23306ff1e859cc4eb0eede3ab0f3b27e87d2d16b0eefe77e77e07d8ad52521b8
+  execution_signature: 14aeb3a22a1622b5ba06af1b93f5ee680b43772832f40cb949d0945efa129a02
+  execution_id: a4108ddb803d4a53acf6321609023f77
+  selected_tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  - tests/test_release_governance.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: integration_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-30T03:37:47.787698Z'
+  duration_seconds: 1.6047694999724627
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  platform: Darwin 25.5.0 · Python 3.14.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: bfb7e9610ce0598d82aa5fc5920503a8509d51121ba84d92d5d34391994667f4
+  input_digest: c8f62d848425dfefd1f8d2d0c076e0c55f1a04f8f5982330deb13811665ba294
+  inputs:
+  - mase_cli
+  - templates
+  - framework-manifest.yaml
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  log_path: .mase/evidence/optimize-e2e-automation/integration_tests-20260730T033747Z-8dc970ce.log
+  test_digest: ee731f361bdd25538d5b13f3edddf9a1e9c0f8dee63e378c8acd631aa1f997df
+  execution_signature: ca341a8a29bf9fa76bf33faebb2c3ac119b5eeaadfd07247295c79885d1f08bd
+  execution_id: b827e3659d594864a99ba1366c7f7c6b
+  selected_tests:
+  - tests/test_mase_cli_stacks.py
+  - tests/test_mase_update.py
+  - tests/test_mase_governance_migration.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-30T05:26:57.223398Z'
+  duration_seconds: 13.608784708019812
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  platform: Darwin 25.5.0 · Python 3.14.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: a0dd9b7be20a58c06973156db352a215e089fdc3489b86a7d2c01b2849bcfb8e
+  input_digest: ca0085daf82642e1d9db85b0a0d215e87a6c816bc8650f9a335fa12350437767
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - mase_cli/test_selection.py
+  - schemas/mase-test-manifest.schema.json
+  - schemas/mase-test-diagnostic.schema.json
+  - skills/webapp-testing/mase-reporter.cjs
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  log_path: .mase/evidence/optimize-e2e-automation/related_tests-20260730T052657Z-ef98d82f.log
+  test_digest: 96f94a489cfdbe371c4c0d80c1cca580220e3f5bebf3589faed507f5eb9c8856
+  execution_signature: 6b786ac8e4f0b03cdebc8c92df8c2d3e234d7c7fc2d8cd15824e182fe9380d77
+  execution_id: 27b0bf5d3520449c8ab940af17994339
+  selected_tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-30T05:41:28.185931Z'
+  duration_seconds: 13.189587874978315
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  platform: Darwin 25.5.0 · Python 3.14.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 08c21e622e6b0e035d6b7281cf2fc1bb7e914aeb0cdfb020ac889fd33964904e
+  input_digest: eb1a26b6c28c2eb3f0b9d437d31bc2538e48ae04a1e06f7e50ea922af3cba45d
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - mase_cli/test_selection.py
+  - schemas/mase-test-manifest.schema.json
+  - schemas/mase-test-diagnostic.schema.json
+  - skills/webapp-testing/mase-reporter.cjs
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  log_path: .mase/evidence/optimize-e2e-automation/related_tests-20260730T054128Z-ca1be703.log
+  test_digest: 96f94a489cfdbe371c4c0d80c1cca580220e3f5bebf3589faed507f5eb9c8856
+  execution_signature: f1b9b37e50495f079b6309ee988a6820e5cb45f62a552429818f84586f62f28f
+  execution_id: 2ffa6d1e292d4164ba2a1ad242f8e1a0
+  selected_tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-30T23:40:22.907272Z'
+  duration_seconds: 14.637543707969598
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  platform: Darwin 25.5.0 · Python 3.14.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 4144518bbe6236c6ce952514223dbf8cda5d8265ae902c49d422d5dec09ea04c
+  input_digest: e0833c9eeb715abdad3eb09bf181ffcac76b808ad433537d3e0d63856cb12967
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - mase_cli/test_selection.py
+  - schemas/mase-test-manifest.schema.json
+  - schemas/mase-test-diagnostic.schema.json
+  - skills/webapp-testing/mase-reporter.cjs
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  log_path: .mase/evidence/optimize-e2e-automation/related_tests-20260730T234022Z-c8868f33.log
+  test_digest: 96f94a489cfdbe371c4c0d80c1cca580220e3f5bebf3589faed507f5eb9c8856
+  execution_signature: 9dff8a1a3c9670cc46f2b611b8184829d5866a5a3fe709b01bc1f350c032a122
+  execution_id: e0f738898f884f5bac435e2e22706ffb
+  selected_tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  - tests/test_release_governance.py
+  - tests/test_repository_boundary.py
+  - tests/test_distribution_integrity.py
+  - tests/test_mase_test_selection.py
+  - tests/test_webapp_reporter.py
+  selection_reason: static_gate_tests
+  first_attempt_result: passed
+  attempts: 1
+dependencies: []
+conflicts_with: []
+blockers: []

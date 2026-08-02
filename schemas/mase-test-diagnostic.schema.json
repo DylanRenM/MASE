@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mase.dev/schemas/mase-test-diagnostic.schema.json",
+  "title": "MASE test adapter diagnostic",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "attempts", "first_attempt_result", "final_result"],
+  "properties": {
+    "schema": {"const": "mase-test-diagnostic/v1"},
+    "attempts": {"type": "integer", "minimum": 1},
+    "first_attempt_result": {"enum": ["passed", "failed"]},
+    "final_result": {"enum": ["passed", "failed"]},
+    "classification": {
+      "enum": ["product", "test", "environment", "test-data", "flaky", "unknown"]
+    },
+    "failed_tests": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    }
+  }
+}

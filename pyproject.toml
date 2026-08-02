@@ -1,12 +1,17 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "mase"
-version = "1.3.0"
+version = "2.4.0"
 description = "MASE (Measures AI Software Engineering) — 麦哲思AI软件开发统一流程 CLI"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 readme = "README.md"
-license = { text = "Proprietary — Measures (麦哲思) 版权所有" }
+license = { text = "MIT" }
 authors = [{ name = "Measures" }]
 keywords = ["ai", "software-engineering", "framework", "tdd", "dev-process"]
+dependencies = ["PyYAML>=6.0", "jsonschema>=4.20"]
 
 [project.scripts]
 mase = "mase_cli.main:main"
@@ -14,5 +19,49 @@ mase = "mase_cli.main:main"
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.9"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+
 [tool.setuptools.packages.find]
 include = ["mase_cli*"]
+
+[tool.setuptools.data-files]
+"share/mase" = ["framework-manifest.yaml", "project-rules.md", "requirements-runtime.txt", "requirements-offline.txt"]
+"share/mase/profiles" = ["profiles/*.yaml"]
+"share/mase/schemas" = ["schemas/*.json"]
+"share/mase/templates" = ["templates/*.md", "templates/*.yaml", "templates/*.json"]
+"share/mase/templates/specs/_capability_" = ["templates/specs/_capability_/*.md"]
+"share/mase/templates/docs/cases/patterns" = ["templates/docs/cases/patterns/*.md"]
+"share/mase/templates/docs/incidents" = ["templates/docs/incidents/*.md"]
+"share/mase/templates/docs/lessons" = ["templates/docs/lessons/*.md"]
+"share/mase/templates/stacks/common" = ["templates/stacks/common/*.tpl"]
+"share/mase/templates/stacks/python" = ["templates/stacks/python/*.tpl"]
+"share/mase/templates/stacks/swift" = ["templates/stacks/swift/*.tpl"]
+"share/mase/agents/agent-1-orchestrator" = ["agents/agent-1-orchestrator/*.md"]
+"share/mase/agents/agent-2-requirements" = ["agents/agent-2-requirements/*.md"]
+"share/mase/agents/agent-3-development" = ["agents/agent-3-development/*.md"]
+"share/mase/agents/agent-4-quality" = ["agents/agent-4-quality/*.md"]
+"share/mase/skills/brainstorming" = ["skills/brainstorming/*.md"]
+"share/mase/skills/bug-fixer" = ["skills/bug-fixer/*.md"]
+"share/mase/skills/bug-fixer/references" = ["skills/bug-fixer/references/*.md"]
+"share/mase/skills/code-quality-controller" = ["skills/code-quality-controller/*.md"]
+"share/mase/skills/code-review" = ["skills/code-review/*.md"]
+"share/mase/skills/code-review/references" = ["skills/code-review/references/*.md"]
+"share/mase/skills/flowchart-review" = ["skills/flowchart-review/*.md"]
+"share/mase/skills/frontend-design" = ["skills/frontend-design/*.md"]
+"share/mase/skills/frontend-skill" = ["skills/frontend-skill/*.md"]
+"share/mase/skills/git-commit" = ["skills/git-commit/*.md"]
+"share/mase/skills/project-planning-expert" = ["skills/project-planning-expert/*.md"]
+"share/mase/skills/release-software" = ["skills/release-software/*.md"]
+"share/mase/skills/release-software/agents" = ["skills/release-software/agents/*.yaml"]
+"share/mase/skills/release-software/assets" = ["skills/release-software/assets/*.yaml"]
+"share/mase/skills/release-software/references" = ["skills/release-software/references/*.md"]
+"share/mase/skills/release-software/scripts" = ["skills/release-software/scripts/*.py"]
+"share/mase/skills/security-review" = ["skills/security-review/*.md"]
+"share/mase/skills/security-review/references" = ["skills/security-review/references/*.md"]
+"share/mase/skills/test-driven-development" = ["skills/test-driven-development/*.md"]
+"share/mase/skills/test-driven-development/references" = ["skills/test-driven-development/references/*.md"]
+"share/mase/skills/webapp-testing" = ["skills/webapp-testing/*.md", "skills/webapp-testing/*.js", "skills/webapp-testing/*.cjs"]
+"share/mase/skills/webapp-testing/references" = ["skills/webapp-testing/references/*.md"]
+"share/mase/docs" = ["docs/MASE-framework.md", "docs/coding-standards.md", "docs/design-principles.md", "docs/glossary.md", "docs/project-structure-spec.md", "docs/user-guide.md"]

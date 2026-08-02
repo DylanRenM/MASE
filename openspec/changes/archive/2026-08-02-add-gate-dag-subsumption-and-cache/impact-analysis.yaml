@@ -1,0 +1,222 @@
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: commit:69c7b1c
+  diff_digest: pending
+  spec_inputs:
+  - openspec/changes/add-gate-dag-subsumption-and-cache/specs
+  contract_inputs:
+  - schemas/mase-gates.schema.json
+  - schemas/mase-evidence.schema.json
+adapter:
+  name: python-static-and-manifest
+  version: '1.0'
+  rules_digest: mase-2.4-impact-policy
+  confidence: high
+  inputs:
+  - mase_cli
+  - schemas
+  - .mase/gates.yaml
+  - tests
+change_points:
+- id: gate-dag
+  path: mase_cli/gates.py
+  symbol: requires DAG and topological planning
+  change_type: business_semantics
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: evidence-cache
+  path: mase_cli/evidence.py
+  symbol: execution environment digest and subsumed evidence
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: gate-schema
+  path: schemas/mase-gates.schema.json
+  symbol: dependency and execution environment fields
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+approved_paths:
+- mase_cli/gates.py
+- mase_cli/evidence.py
+- mase_cli/state.py
+- schemas/mase-gates.schema.json
+- schemas/mase-evidence.schema.json
+- .mase/gates.yaml
+- project-rules.md
+- docs/MASE-framework.md
+- docs/user-guide.md
+- docs/glossary.md
+- tests/test_mase_gate_planning.py
+- tests/test_mase_gate_evidence.py
+- openspec/changes/add-gate-dag-subsumption-and-cache
+approved_symbols:
+- mase_cli/gates.py:GateDefinition
+- mase_cli/gates.py:load_gate_definitions
+- mase_cli/gates.py:plan_change
+- mase_cli/gates.py:execute_defined_gate
+- mase_cli/evidence.py:run_gate
+forbidden_paths:
+- ../pilot/**
+- /Users/dylanren/Documents/trae_projects/pilot/**
+protected_invariants:
+- requires、covers、cache 和 candidate_bound 语义不得混用
+- subsumed 不得伪装为独立 passed
+- 开发聚焦测试与发布候选全量认证不计为冗余
+call_graph:
+  status: verified
+  baseline_edges: []
+  planned_changes: []
+  actual_changes: []
+  unplanned_changes: []
+protected_tests:
+  baseline: commit:69c7b1c
+  selectors:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  manifest_digest: framework-regression-239-python-15-node
+  changes:
+  - selector: tests/test_mase_gate_planning.py
+    action: modified
+    rationale: 增加 DAG、环路、覆盖等价性与缓存失效回归
+    approval: user-request:optimize-MASE-2.4
+  - selector: tests/test_mase_gate_evidence.py
+    action: modified
+    rationale: 增加 subsumed 与环境摘要证据回归
+    approval: user-request:optimize-MASE-2.4
+effect_budget:
+  status: verified
+  allowed:
+    file_reads:
+    - MASE 源码、gate 配置、Schema和测试
+    file_writes:
+    - 批准的框架文件与测试临时 evidence
+    persistence_writes: []
+    external_calls: []
+    messages: []
+  forbidden:
+  - Pilot 项目文件、数据与测试
+  observed_extra: []
+change_declaration:
+  spec_changes:
+  - 通用 requires DAG 与拓扑计划
+  - 可审计 subsumed 证据
+  - 精确环境缓存键与冗余指标
+  incidental_changes: []
+  non_spec_changes: []
+callers:
+- id: cli-gate-plan
+  path: mase_cli/main.py
+  symbol: gate plan dispatch
+  depth: 1
+  first_party: true
+  via: direct import
+  capability: gate-dag-and-subsumption
+- id: gate-runner
+  path: mase_cli/gates.py
+  symbol: execute_defined_gate
+  depth: 1
+  first_party: true
+  via: direct call
+  capability: evidence-freshness-and-reuse
+- id: state-status
+  path: mase_cli/state.py
+  symbol: evidence status derivation
+  depth: 2
+  first_party: true
+  via: evidence index
+  capability: capability-scoped-gate-plan
+implicit_channels:
+- kind: serialization
+  status: discovered
+  risk: controlled
+  evidence: evidence and gate JSON Schema tests
+  path: schemas
+- kind: configuration_spi
+  status: discovered
+  risk: controlled
+  evidence: canonical gate registry validates requires graph
+  path: .mase/gates.yaml
+- kind: generated_registration
+  status: checked_empty
+  risk: controlled
+  evidence: no dynamic gate registration
+- kind: reflection
+  status: checked_empty
+  risk: controlled
+  evidence: no reflection dispatch
+- kind: async_callback
+  status: checked_empty
+  risk: controlled
+  evidence: gate execution records synchronously
+boundaries:
+- id: gate-cli
+  kind: cli
+  path: mase_cli/main.py
+  depth: 1
+- id: installed-gate-schema
+  kind: other
+  path: schemas/mase-gates.schema.json
+  depth: 1
+terminations:
+- branch: gate-cli
+  reason: system_boundary
+  depth: 1
+- branch: installed-gate-schema
+  reason: system_boundary
+  depth: 1
+classification:
+  level: L3
+  reasons:
+  - 修改 gate 计划与 evidence 公共契约
+  - 影响所有门禁执行的核心路径
+decision:
+  status: proceed
+  strategy: explicit configuration with conservative cache invalidation
+verification:
+  test_types:
+  - unit
+  - contract
+  - integration
+  - full_regression
+  tests:
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  fixture_sources:
+  - temporary gate registries
+  - versioned evidence fixtures
+  expected_differences:
+  - 非法环路在执行前失败
+  - 完整等价时才可 subsume 或 cache hit
+  side_effect_isolation: evidence 写入仅在 pytest 临时目录验证
+recovery:
+  strategy: 移除新环境字段并回退 DAG 解析，旧 passed evidence 仍可读
+  data_compatibility: 只增加证据字段，无持久业务数据迁移
+reconciliation:
+  status: matched
+  actual_diff_digest: 23682b8b21a0f675d11b7100d74f2fdcc9171d2e814d467476558c377d1b4ae1
+  actual_paths:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - schemas/mase-gates.schema.json
+  - schemas/mase-evidence.schema.json
+  - .mase/gates.yaml
+  - project-rules.md
+  - docs/MASE-framework.md
+  - docs/user-guide.md
+  - docs/glossary.md
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  unplanned_paths: []
+  actual_symbols: []
+  unplanned_symbols: []
+residual_risks:
+- L3 独立综合评审仍需由非实现者确认

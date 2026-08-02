@@ -1,0 +1,75 @@
+# Change 内的影响链分析唯一事实源；三份 Markdown 视图由 `mase impact render` 生成。
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: commit:BASE
+  diff_digest: pending
+  spec_inputs: []
+  contract_inputs: []
+adapter:
+  name: generic-manifest
+  version: "1.0"
+  rules_digest: pending
+  confidence: low
+  inputs: []
+change_points: []
+approved_paths: []
+approved_symbols: []
+forbidden_paths: []
+protected_invariants: []
+call_graph:
+  status: unverified
+  reason: 通用适配器尚未生成修改前后调用边差异
+  baseline_edges: []
+  planned_changes: []
+  actual_changes: []
+  unplanned_changes: []
+protected_tests:
+  baseline: commit:BASE
+  selectors: []
+  manifest_digest: pending
+  no_tests_reason: 待确认是否存在修改前受保护测试
+  changes: []
+effect_budget:
+  status: unverified
+  reason: 待选择静态或运行时副作用观测方式
+  allowed:
+    file_reads: []
+    file_writes: []
+    persistence_writes: []
+    external_calls: []
+    messages: []
+  forbidden: []
+  observed_extra: []
+change_declaration:
+  spec_changes: []
+  incidental_changes: []
+  non_spec_changes: []
+callers: []
+implicit_channels:
+  - {kind: serialization, status: unverified, risk: controlled}
+  - {kind: proxy_aop, status: unverified, risk: controlled}
+  - {kind: reflection, status: unverified, risk: controlled}
+  - {kind: configuration_spi, status: unverified, risk: controlled}
+  - {kind: async_callback, status: unverified, risk: controlled}
+boundaries: []
+terminations: []
+classification: {level: L2, reasons: [通用适配器尚未验证隐性调用通道]}
+decision: {status: proceed, strategy: scoped-change}
+verification:
+  test_types: [unit, contract_differential]
+  tests: []
+  fixture_sources: [historical-test]
+  expected_differences: []
+  side_effect_isolation: 待确认
+recovery:
+  strategy: 回退到修改前候选版本
+  data_compatibility: 待确认
+reconciliation:
+  status: pending
+  actual_diff_digest: ""
+  actual_paths: []
+  unplanned_paths: []
+  actual_symbols: []
+  unplanned_symbols: []
+residual_risks: []

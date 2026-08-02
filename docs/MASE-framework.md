@@ -1,363 +1,139 @@
-# 麦哲思AI软件开发统一流程 (MASE (Measures AI Software Engineering)) 设计文档
+# MASE v2.4：风险自适应 AI 软件工程框架
 
-> 状态: 已确认 | 日期: 2026-07-17 | 版本: v1.3
+> 现行规范 · 版本由 `framework-manifest.yaml` 定义
 
-## 1. 概述
+## 目标
 
-将 AI 辅助开发的各阶段整合为一个统一的开发框架，采用「一拖三」Agent 架构，实现小步快跑、增量开发、并行开发的工程目标。
+MASE 的设计宗旨是：**让 Agentic Coding 高效交付正确、健壮、优化且易于维护的代码，确保正确满足需求、软件可靠运行，并持续消除坏味道**。
 
-### 核心原则
+这一宗旨落到五个可验证结果：**高效交付、需求正确、运行健壮、质量优化、整洁可维护**。MASE 用可验收需求、风险验证、契约、TDD 和 E2E 保证质量，用影响链与受保护测试支持安全重构，同时让过程重量与实际风险匹配。它不要求每个项目机械执行同一套文档和测试频率，也不用跳过质量要求换取表面速度。
 
-> 与 [project-rules.md](../project-rules.md) 完全对齐，共 9 条。
+## 速度收益如何估算
 
-| 编号 | 原则 | 简释 |
-|------|------|------|
-| R01 | 需求澄清确认 | 先确认真实需求，使用原型确认，不确认不推进 |
-| R02 | 设计预研，消除风险 | POC 验证所有外部依赖，预研报告通过再架构设计 |
-| R03 | 契约式约束 | Design 阶段产出三层契约（API/模块/函数），硬性必做 API 级 |
-| R04 | TDD 驱动 | 内外双循环 — 先写测试再写代码，E2E 测试同步编写 |
-| R05 | 验证与确认检查 | 关键节点验证，功能确认后再推进 |
-| R06 | 根因分析 | BUG 根因定位，避免盲目修改（inverse 逆向分析） |
-| R07 | 系统化解决 | 不做临时补丁，A/B 双修 + 横向扫描同类风险 |
-| R08 | 固定节奏提交 | 每 20 次对话或每个 Capability 完成时 git commit |
-| R09 | 及时备份 | 删除代码或回退前做备份 |
+可手测等待收益按 `1 - T_new(dev_verified) / T_old(pre-hand-test)` 计算。候选冻结到 `release_ready` 的认证耗时、返工耗时和逸出缺陷必须另行报告；延迟到 release 的全量回归没有被删除。
 
----
+MASE 当前 54 条本地自验证记录给出一个低置信度方向性估算：优化前手测前串行等待约 58.4s，2.4 development 验证约 17.2s，即 `1 - 17.2 / 58.4 ≈ 70.5%`，约 **71%**。由于 5 个 gate 只有 2 个等价样本，它们的正式 p50/p90 仍是 `unknown`；采用项目必须用自身 evidence 重算，不得直接套用 71%。
 
-## 2. Agent 架构
+## 三种 Profile
 
-```
-                      用户
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│        Agent 1: 计划与统管 (Orchestrator)       │
-│    接收需求 → 分解 → 调度 → 门禁 → Release       │
-│    工具: project-planning-expert, git-commit    │
-└──────┬────────────┬────────────┬──────────────┘
-       │            │            │
-       ▼            ▼            ▼
-┌──────────┐ ┌────────────┐ ┌──────────────┐
-│ Agent 2  │ │  Agent 3   │ │   Agent 4    │
-│  需求     │ │   开发      │ │    质量       │
-├──────────┤ ├────────────┤ ├──────────────┤
-│Proposal  │ │Design L1   │ │设计评审       │
-│ +        │ │ 技术预研    │ │ code-quality │
-│ HTML原型  │ │ + POC      │ │ frontend     │
-│ +        │ │            │ │ -design      │
-│ 操作流程  │ │Design L2   │ │              │
-│ +        │ │ 架构+详细   │ │Build质量把关  │
-│ 测试用例  │ │ 设计+specs │ │ code-review  │
-│          │ │ +contract  │ │ security-    │
-│          │ │            │ │ review       │
-│          │ │Build       │ │              │
-│          │ │ TDD微循环  │ │Verify        │
-│          │ │ (10步)     │ │ bug-fixer    │
-└──────────┘ └────────────┘ └──────────────┘
+| Profile | 适用范围 | 默认产物 | 评审/测试节奏 |
+|---|---|---|---|
+| Lite | 本地工具、MVP、小变更 | change、Specs、tasks | diff-only；相关测试；最终 P0/API 门禁 |
+| Standard | UI、文件、外部依赖、并发、持久化 | Lite + focused design + API contract | capability 评审；风险命中时安扫；最终全量门禁 |
+| Strict | 鉴权、支付、监管、不可逆迁移 | 完整可行性、架构、详细设计、契约 | 一轮独立评审；有异议/变化时追加；全量回归 |
+
+Profile 的机器定义在 `profiles/*.yaml`，标准风险注册表在 `profiles/risks.yaml`。Profile 表达产品或 Capability 的基础风险；Change Risk L1–L4 表达本次修改的治理重量；影响链 L1–L3 表达历史代码波及验证深度。GatePlan 取三者和硬触发条件的并集，三种等级不可混用。
+
+认证、授权、密钥、额度、迁移和不可逆写入至少是 Change Risk L4；公共接口、核心算法、跨系统行为、并发和持久状态机至少是 L3。UI 变化使用 `presentation / interaction / journey` 分类：纯展示与一般交互运行聚焦界面契约或视觉断言，只有关键交互和业务旅程强制 P0。
+
+## 流程
+
+```text
+需求/已有规格
+   ↓ 差异分析与必要确认
+风险分诊 → Profile + Change Risk / Capability 升级
+   ↓
+历史变更分类 → 计划影响链分析 / 豁免证据
+   ↓ 超限时人工架构决策
+风险驱动设计与 POC
+   ↓
+纵向工作包 TDD
+   ├─ development: RED + 聚焦 unit/contract → dev_verified（可手测）
+   ├─ merge: 契约 + 相关集成/构建/适用审查 → merge_verified
+   ├─ freeze: candidate_frozen
+   ├─ release: 同候选全量/安全/恢复 → release_ready
+   └─ live/observe: live_verified → observed
+   ↓
+可执行/必要人工结构化证据 → complete → archive snapshot
 ```
 
-### Agent 职责
+阶段仍可标为 draft/proposal/design/build/verify/retro/release，但它们描述工作进度，不等同于验证里程碑。`dev_verified` 允许启动本地服务和交付手测，不要求生产构建、候选冻结、全量回归或发布审计；`user_confirmed` 仅在项目明确要求手测证据时出现。
 
-| Agent | 职责 | 使用的 Skills/Subagents |
-|-------|------|------------------------|
-| Agent 1 (计划与统管) | 接收需求、任务分解调度、门禁管理、Release | `project-planning-expert`, `git-commit` |
-| Agent 2 (需求) | 需求探索澄清、生成交互原型、编写操作流程、定义测试用例 | `brainstorming`, `frontend-skill` |
-| Agent 3 (开发) | 技术预研+POC、架构设计、契约推导、Specs 编写、TDD 构建 | `test-driven-development`, `webapp-testing` |
-| Agent 4 (质量) | 设计评审、代码评审+合规检查、安全扫描、端到端验证+Bug修复、复盘分析 | `code-quality-controller`, `frontend-design`, `code-review`, `security-review`, `bug-fixer` |
-| | 可选工具 | `flowchart-review` 🔧 |
+## Release Overlay
 
----
+发布是独立于 Lite/Standard/Strict 的可选覆盖层，不是第四种 Profile。只有 change 声明计划、打包、发布、部署、线上验证或恢复意图时，才在 `mase-state.yaml` 增加 `release`，并组合描述制品、目标、发布策略、状态/配置、消费者接口、外部能力、恢复和观察；旧 change 不受影响。跨平台部署、运行配置、状态升级、公网暴露、多服务和基础设施变更继续通过风险注册表决定是否升级 Profile。
 
-## 3. 阶段流程
+发布结果按证据严格递进：`planned → candidate_ready → artifact_ready → target_ready → live_verified → observed`；恢复完成并重新验证后使用 `recovered`。`artifact_ready` 只说明不可变制品的身份、来源、完整性与禁止内容通过，不能表述为已经上线；`live_verified` 需要目标正在提供准确版本并通过真实消费者/能力路径，仍不等于观察窗口已经完成。
 
-### 3.1 阶段1: 需求 (Proposal) — Agent 2 执行
+发布门禁分为 `release_artifact`、`release_preflight`、`release_live`、`release_observe`。制品或候选输入变化会让绑定证据 stale；计划清单保持 pending，只有 Gate Runner 或在 `.mase/gates.yaml` 声明为 `mode: manual` 的人工 evidence 能通过门禁。Gate Runner 还会检查 Overlay intent、authority、阶段前序和同一 release digest。`mase release plan` 和 `mase release status` 只做校验与报告，不执行构建、上传、停服、切流、发布、基础设施变更或回滚。
 
-**目标**: 确认「要什么」，产出可验证的验收标准。
+所有发布场景遵循八个通用不变量：权限/范围明确、不可变制品身份与来源、最终交付内容等价、状态/配置/密钥兼容、影响前完成可前置检查、受控爆炸半径与停止条件、真实消费者线上证据、观察期内恢复能力。具体 VM、容器/编排、Serverless、Registry、桌面/移动端、App Store 或 Windows/PowerShell 细节由 `release-software` Skill 按目标加载；项目自己的 CI、Helm、Terraform、PowerShell 等仍是执行适配器，MASE 不提供万能生产部署器。
 
-| 产出物 | 形式 | 说明 |
-|--------|------|------|
-| Proposal 文档 | `openspec/changes/{name}/proposal.md` | Why / What Changes / Capabilities / Impact / Out of Scope / Stakeholders / Success Criteria |
-| 界面原型 | 可交互 HTML 文件 | `frontend-skill` 生成，覆盖核心操作流程 |
-| 操作流程 | proposal.md 内嵌章节 | Markdown 编号步骤列表 |
-| 系统测试用例 | proposal.md 内嵌表格 | 用例ID / 前置条件 / 操作步骤 / 预期结果 |
+## 不变的质量底线
 
-**工具**: `brainstorming`（需求澄清）、`frontend-skill`（原型生成）
+- 用户可见行为必须有确认的验收要求。
+- UI 交互变化在开发前确认参考原型；无 UI 和内部重构不需要原型。
+- 未知工具链、外部依赖和高风险边界先做可重跑 POC。
+- API/公共协议契约测试必须通过。
+- 契约具有复杂输入空间、解析/序列化、数值边界、状态机、不可信输入、并发不变量或兼容性变更时，评估属性测试或模型测试。它们补充而不替代确定性业务样例和回归测试。
+- 属性必须从 Spec、版本策略或公共协议推导；幂等、Round-trip、后向兼容、分页、时区和并发等性质只有在相应语义被声明时才成立，不能由测试技术反向发明需求。
+- 属性测试失败必须在既有 gate 日志或制品中保留 Property ID、工具/版本、seed 或等价重放参数及最小反例；重要反例应固化为确定性回归测试。
+- UI 业务旅程或影响关键闭环的交互变化，P0 E2E 必须 100%；纯展示只运行聚焦界面契约/视觉断言；隔离环境必须恢复一致。
+- 浏览器测试分层为 UI contract、P0 journey 和 P1 regression。页面加载、元素/布局检查或 mock 自有 API 的测试下沉到 UI contract；P0 必须完成真实 UI→应用路由→受控持久化的关键用户闭环，只在 LLM、邮件、支付等不可控外部边界使用确定性 fake。
+- `.mase/tests.yaml` 把稳定测试 ID、tier、Capability、selector 和产品路径绑定。GatePlan 按 `impact.paths` 选测；UI change 无法精确映射时执行全部 P0 journey 并报告治理诊断，不能用空集合通过硬门禁。
+- Web hard gate 使用隔离测试根、版本化 fixture 摘要和非复用服务；retry 后通过保留 flaky 诊断，不统计为首次通过。
+- Bug 先有失败证据和根因，再系统修复与补测。
+- 历史行为变更在设计前锁定批准的文件/符号、受保护不变量、显性调用方、隐性依赖和副作用预算，实现后比较实际路径、符号与调用边；超过 10 个第一方调用方、达到 3 个系统边界或三层仍未收敛时由人工架构决策。
+- 新增测试证明新行为，受保护的修改前测试和差异验证证明旧根基未被削弱；删除、跳过、弱化或实质修改受保护测试需要人工审批。
+- Change Risk L1–L4 与影响等级 L1–L3 分开报告；未知调用频率、未验证隐性通道或低置信度不得把影响等级判为 L1。
+- 迁移、覆盖和删除前备份。
+- 自动 passed 必须来自 Gate Runner；输入、日志或制品变化会使证据失效。
+- 候选认证门禁必须绑定已冻结候选；相同执行只有包含 Test ID、源码/测试、依赖锁、工具链、fixture/config、环境和候选的完整签名 fresh 时复用。显式覆盖显示 `subsumed` 并保留来源。
+- API/P0/凭据/数据安全硬门禁不得通过普通 Brownfield 基线绕过。
 
-**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Proposal DoD
+## 单一事实来源
 
----
+| 事实 | 唯一来源 |
+|---|---|
+| 框架版本、发布边界 | `framework-manifest.yaml` |
+| 工程规则 | `project-rules.md` |
+| Profile 策略 | `profiles/*.yaml` |
+| Change 状态/门禁证据 | `mase-state.yaml` |
+| 采用项目绑定的框架版本与公开接口 | `mase-state.yaml` 的可选 `framework_contract` |
+| 发布意图、制品、目标、观察与恢复上下文 | `mase-state.yaml` 的可选 Release Overlay |
+| 门禁执行阶段、最晚要求时点、DAG、命令和基础输入 | `.mase/gates.yaml` |
+| 测试分层、Capability 映射和选择器 | `.mase/tests.yaml` |
+| Brownfield 遗留失败债务 | `.mase/baseline.yaml` |
+| 工作完成事实 | `tasks.md` |
+| 验收行为 | `specs/*/spec.md` |
+| 影响调用图、分级、测试与回滚事实 | change 的 `impact-analysis.yaml`；三份 Markdown 为生成视图 |
 
-### 3.2 阶段2: 设计 (Design) — Agent 3 执行
+IDE 规则、验证摘要、追踪矩阵和 master 都是生成物。`openspec/master/` 仅在 release/archive 生成快照，不在 Design 阶段与 change 双写。
 
-**目标**: 确认「怎么做」，消除技术风险，产出完整设计规格。
+主 `stack` 是项目的执行/构建骨架，只允许 generic、python、swift；SwiftUI、Flutter、Dart、Kotlin、Flask 等辅助技术写入 `toolchains`。`mase status` 无参数时汇总全部非 archived change，并诊断依赖环、缺失依赖、显式互斥、影响路径冲突、损坏状态与过期基线。
 
-#### Layer 1: 技术可行性研究
+## Agent 路由
 
-| 产出物 | 内容 |
-|--------|------|
-| `tech-feasibility.md` | ① 三张汇总表（技术难点方案 / 非功能性需求 / 外部依赖评估）|
-| | ② 高风险项详细调研（成熟方案 + 最新技术 + 接口规范 → 推荐方案 + 遗留风险）|
-| | ③ 可复用构件清单 |
-| | ④ 全量 POC 验证脚本（所有外部依赖在本环境跑通）|
+- Agent 1：区分 Profile、Change Risk 和影响等级，按验证目标路由工作、校验状态和门禁。
+- Agent 2：先读来源、批量澄清、确认原型，并明确受保护不变量、不做什么和允许的业务语义差异。
+- Agent 3：锁定变更边界与副作用预算，执行计划影响扫描、调用边比较和实际 diff 复扫，再按边界运行 TDD。
+- Agent 4：独立检查越界路径/符号/调用边、受保护测试完整性、副作用证据和剩余风险；L1/L2 不生成形式化人工证据，L3 一次综合独立审查，L4 按风险保留安全、恢复和发布判断。
+- `release-software`：规划/校验发布，按目标选择 adapter，并守住权限、不可变制品、线上证据、观察与恢复边界。
 
-**工具**: `WebSearch`（联网调研）、`RunCommand`（POC 验证）
+Lite 可由一个工作 Agent 连续执行；Standard/Strict 才需要更多独立交接。
 
-**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Design L1 DoD
+## Token 路由
 
-#### Layer 2: 架构设计
+单个工作包默认只加载当前 Spec、相关接口/测试、diff 和最近交接摘要。历史、培训、归档、其他产品和未命中的 Skill reference 默认排除。详细排除列表见 manifest。
 
-| 产出物 | 内容 |
-|--------|------|
-| `architecture.md` | 系统架构图、技术栈决策表、组件/模块边界、接口协议、部署拓扑 |
-| `detailed-design.md` | 管道流程设计、数据模型（ER图/表结构）、API 接口定义、关键算法/策略 |
-| `contract.md` | 三层契约（API级/模块级/函数级）— 前置/后置/不变式 |
-| `specs/{capability}/spec.md` | Gherkin 风格验收规格（ADDED/MODIFIED/REMOVED Requirements + Scenario）|
-| `tasks.md` | `project-planning-expert` 编排的开发任务清单 |
+平台提供 usage 时记录 input/output/cache Token；否则只报告文件数和字符数代理，不能把估算称为 Token。GatePlan 另从等价历史 evidence 计算各时点 p50/p90，样本不足时明确 unknown；默认预算为 L1 development 5 分钟、L2 development 15 分钟、L3 merge 30 分钟，超限只提示延迟 release、收窄 selector、消除等价重复或复核分级，不跳过硬门禁。
 
-**节奏**: 分层审批（architecture → detailed-design → specs+contract），capability 可并行
+`mase context plan --task` 或 `--capability` 在实际读取前给出纳入/排除原因和 Profile 预算。宽泛目录不自动递归，超预算必须收窄或显式记录覆盖原因。完整结构化 evidence 与脱敏日志写入 `.mase/evidence` sidecar，活动状态只保留摘要索引；Agent 默认只接收状态、耗时、有限失败摘要和日志路径，人工需要详情时按 execution 读取，需要实时进度时显式使用 `mase gate run --verbose`。
 
-**设计评审** (Agent 4 执行):
-- [ ] `code-quality-controller`: 架构合规性（对照 [设计原则](docs/design-principles.md) — SOLID/GRASP/KISS/DRY/YAGNI/分层原则）、需求一致性、技术可行性一致性、文档一致性
-- [ ] `frontend-design`: 视觉设计原则、交互设计原则、响应式策略、无障碍性、前端性能策略
+## 产物策略
 
-**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Design L2 DoD
+- `tech-feasibility.md`：未知工具链/依赖或高风险才生成。
+- `architecture.md`：Standard/Strict 的跨模块决策。
+- `detailed-design.md`：Strict，或状态机/迁移/复杂数据模型触发。
+- `contract.md`：API 必做；模块/函数风险触发；适用的属性测试记录数据域、边界、oracle、隔离和测试追踪。
+- 验证报告：从 state、Spec ID、测试标签和命令结果生成。
+- E2E 指标：P0 首轮通过率、flaky 率、时长、Capability 旅程覆盖、失败分类率和人工回归时长；真实测量与代理值必须分开。
+- 门禁效率指标：同候选等价冗余率、缓存命中率、失败定位时间、代码完成到可手测、候选冻结到发布认证；缺失事件报告 unknown，不补造 0。
 
----
+## 框架边界
 
-### 3.3 阶段3: 构建 (Build) — Agent 3 执行
+运行时只分发 rules、profiles、schemas、templates、agents、skills 和现行文档。MASE 培训材料保留在独立 `training/mase-framework/`，默认不进入 Agent 上下文；通用培训、研究演示、历史备份、生成站点和产品实例不属于 MASE 仓库，必须物理迁出，不能只靠上下文排除隐藏。
 
-**目标**: TDD 微循环，逐个 Capability、逐个 Scenario 增量构建。
+采用 MASE 的真实产品是框架使用者，不是框架组成部分。产品必须使用独立项目根、`.mase.yaml`、OpenSpec 状态和 Git 仓库；可在 change state 中以 `framework_contract: {name: MASE, version: x.y.z, interface: installed-cli-and-versioned-schemas}` 显式绑定公开接口。MASE 仓库不得依赖产品源码或产品测试才能通过自身门禁，采用项目也不得把相邻 MASE 源码目录作为产品运行时。
 
-每个 Scenario 微循环（10步）:
-1. **复用检查** — 对照 Layer 1 产出的可复用构件清单
-2. **契约翻译 → 测试** — contract.md → TDD RED
-3. **写行为测试** — Spec → TDD RED（pytest 单元测试 + 集成测试）
-4. **写实现代码** — 含运行时断言 require/ensure/invariant_check，遵循 [编码规范](docs/coding-standards.md)
-5. **跑测试** — 单元测试 + 集成测试 + 契约测试
-6. **E2E 测试** — has_ui: true 时，webapp-testing
-7. **功能测试** — `webapp-testing`（如有 UI）
-8. **代码评审** — `code-review`（含 spec 合规检查 + 契约合规 + 代码规约检查）
-9. **安全扫描** — `security-review`
-10. **通过 → git commit**
-
-**工具**: `test-driven-development`、`webapp-testing`、`code-review`、`security-review`
-
-**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Build DoD
-
----
-
-### 3.4 阶段4: 验证 (Verify) — Agent 4 执行
-
-**目标**: 端到端验证，发现并修复所有 Bug，补充测试缺口。
-
-**E2E 自动化回归**（has_ui: true 时强制执行）:
-
-```
-① Playwright 全量回归（P0 100% 硬门禁）
-② E2E Sandbox 环境自动隔离
-   ├ beforeAll: 快照文件/配置/目录状态
-   ├ 测试期间: 写入重定向到 e2e/sandbox/ 临时目录
-   └ afterAll: 自动恢复环境 + 一致性验证（不一致则阻断）
-③ 回归报告输出（通过率/P0覆盖率/BUG拦截率）
-```
-
-**Bug 修复流程**:
-
-```
-人工端到端测试 → 发现 BUG → bug-fixer 微循环:
-
-  修复（A/B双修 + 系统性方案）
-  → 回归验证
-  → 测试缺口复盘（为什么自动化测试没发现？补充用例）
-  → 横向扫描同类 BUG
-  → 经验教训记录（结构化 YAML 格式）
-  → BUG 关闭
-  → 循环至无新 BUG
-```
-
-**工具**: `bug-fixer`（含合并的 TRAE-debugger 运行时调试能力）
-
-**可选工具**: `flowchart-review` 🔧（逻辑流一致性检查，对照设计文档验证代码实现是否偏离设计）
-
-**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Verify DoD
-
----
-
-### 3.5 阶段5: 复盘 (Retrospective) — Agent 4 + Agent 1 协同
-
-**目标**: PDCA 闭环的 A（Act）环节。系统总结本轮开发经验，提炼模式，改进流程。
-
-```
-全部 BUG 关闭
-    │
-    ▼
-┌──────────────────────────────────────────────────┐
-│ 复盘分析                                           │
-│                                                  │
-│ 1. 收集材料                                        │
-│    ├── docs/lessons/ 中本轮所有经验教训               │
-│    ├── docs/cases/bugs/ 中本轮所有 BUG 案例          │
-│    └── 代码评审记录中的反复出现的问题                   │
-│                                                  │
-│ 2. 模式分析                                        │
-│    ├── 高发 BUG 模式：哪些类型的 BUG 反复出现？          │
-│    ├── 测试盲区：哪些场景的测试覆盖始终不够？             │
-│    ├── 设计缺陷：哪些架构决策导致了多个 BUG？            │
-│    └── 流程短板：哪个阶段门禁没有挡住问题？              │
-│                                                  │
-│ 3. 产出复盘报告                                     │
-│    └── docs/lessons/YYYY-MM-DD-{project}-retro.md   │
-│                                                  │
-│ 4. 改进措施（如需要）                                │
-│    ├── 更新 Skill 规则                              │
-│    ├── 更新模板                                    │
-│    ├── 补充代码规约                                 │
-│    └── 调整门禁 Checklist                           │
-└──────────────────────────────────────────────────┘
-```
-
-**产出**: `docs/lessons/YYYY-MM-DD-{project}-retro.md`（复盘报告）
-
-**门禁**: 见 [Agent 1 门禁清单](agents/agent-1-orchestrator/SKILL.md) — Retro DoD
-
----
-
-### 3.6 阶段6: 发布 (Release) — Agent 1 执行
-
-1. **最终合规审查** — 对照全部 spec.md + 项目的设计文档（architecture.md + detailed-design.md + contract.md）全量检查
-2. **自动编写使用手册** — `docs/user-guide.md`
-3. **git commit** — `git-commit` Skill, Conventional Commit + 变更摘要
-4. **归档 OpenSpec Change**
-
-**工具**: `code-review`（合规检查）、`git-commit`
-
----
-
-## 4. Skills 与阶段映射汇总
-
-| Skill / Subagent | Proposal | Design | Build | Verify | Release |
-|-------|:---:|:---:|:---:|:---:|:---:|
-| `brainstorming` | ✅ | | | | |
-| `frontend-skill` | ✅ | | | | |
-| `project-planning-expert` | | ✅ | | | |
-| `code-quality-controller` | | ✅ | | | |
-| `frontend-design` | | ✅ | | | |
-| `test-driven-development` | | | ✅ | | |
-| `webapp-testing` | | | ✅ | | |
-| `code-review` | | | ✅ | | ✅ |
-| `security-review` | | | ✅ | | |
-| `bug-fixer` | | | | ✅ | |
-| `flowchart-review` 🔧 | | | | 🔧 | |
-| `git-commit` | | | | | ✅ |
-
-> ✅ = 必做（门禁依赖） | 🔧 = 可选（辅助工具，按需调用）
-
----
-
-## 5. Skills 变更记录
-
-| Skill | 变更内容 | 状态 |
-|-------|---------|------|
-| `bug-fixer` | + 原则 8「测试反哺原则」; 合并 TRAE-debugger 运行时调试能力（作为路径 A/B 增强模式） | ✅ 已完成 (v3) |
-| `code-review` | + spec 合规检查项 + 代码规约检查项 | ✅ 已完成 (v2) |
-| `TRAE-debugger` | 合入 bug-fixer 后删除 | ✅ 已合入 |
-
----
-
-## 6. 目录结构
-
-> 详见 [项目目录结构规范](project-structure-spec.md)
-
-### 6.1 规范文档层 (openspec/)
-
-```
-openspec/
-  changes/
-    {change-name}/
-      mase-state.yaml
-      proposal.md            # Agent 2 产出
-      tech-feasibility.md     # Agent 3 Layer 1 产出
-      architecture.md         # Agent 3 Layer 2 产出
-      detailed-design.md      # Agent 3 Layer 2 产出
-      contract.md             # Agent 3 Layer 2 产出（契约推导）
-      tasks.md                # Agent 3 Layer 2 产出 (project-planning-expert)
-      specs/
-        {capability}/
-          spec.md             # Agent 3 Layer 2 产出
-```
-
-### 6.2 产品代码层 (src/)
-
-```
-src/
-  {package_name}/
-    {capability}/              # 与 specs/{capability}/ 一一对应
-      models/                  # 数据模型
-      services/                # 业务逻辑
-      routes/                  # API 路由（可选）
-      schemas/                 # 请求/响应 Schema（可选）
-    shared/                    # 跨 capability 共享
-      config/                  # 全局配置
-      database/                # 数据库连接
-      utils/                   # 通用工具
-```
-
-### 6.3 测试代码层 (tests/) — 镜像 src/
-
-```
-tests/
-  unit/
-    {capability}/
-      models/                  # 镜像 src/{capability}/models/
-      services/                # 镜像 src/{capability}/services/
-      routes/                  # 镜像 src/{capability}/routes/
-    shared/                    # 镜像 src/shared/
-  integration/                 # 集成测试
-  e2e/                         # E2E 测试（Playwright）
-  fixtures/{capability}/       # 测试数据，镜像 src/
-  conftest.py                  # pytest 共享 fixtures
-```
-
-### 6.4 文档层 (docs/)
-
-```
-docs/
-  user-guide.md                # Agent 1 Release 产出
-  lessons/                     # 经验教训（bug-fixer 原则7输出）
-    YYYY-MM-DD-{topic}.md
-  cases/                       # 典型案例
-    bugs/                      # BUG 案例
-    patterns/                  # 设计模式
-    pitfalls/                  # 踩坑记录
-  superpowers/
-    specs/
-      YYYY-MM-DD-{topic}-design.md
-```
-
-### 6.5 脚本与配置 (scripts/ config/)
-
-```
-scripts/                       # 工具脚本（非产品代码）
-  run.py                       # 项目入口
-  migrate.py                   # 一次性脚本
-config/                        # 配置文件
-  logging.yaml
-pyproject.toml
-Makefile
-.env.example
-.gitignore
-README.md
-```
-
----
-
-## 7. 自审清单
-
-- [x] 无 TBD/TODO 占位符
-- [x] 6 阶段逻辑自洽，阶段间输入输出明确
-- [x] Agent 职责边界清晰（Agent 2 定义测试用例为 E2E 验收场景 → Agent 3 编写具体 E2E 测试脚本）
-- [x] 每个阶段明确了使用的 Skill/Subagent
-- [x] 门禁机制完整（DoD 清单统一定义在 Agent 1，各阶段引用）
-- [x] TDD 内外双循环明确定义（10步微循环）
-- [x] 核心原则与 project-rules.md 完全对齐（R01-R09）
-- [x] Skills 变更记录全部标注状态
+仓库顶层文件和目录采用显式 allowlist，`python3 scripts/audit_repository_boundary.py` 同时检查未知根、非现行 docs/training、嵌套仓库和 `node_modules`、build 等重型生成残留；Finder `.DS_Store` 与 gitignored Python bytecode 按统一元数据策略忽略。根目录 `pytest` 只收集 `tests/`，使默认验证始终等于 MASE 框架测试；提交前仍应清理本地缓存。

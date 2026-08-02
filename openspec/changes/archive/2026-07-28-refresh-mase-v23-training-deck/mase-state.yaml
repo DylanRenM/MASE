@@ -1,0 +1,235 @@
+schema: mase-project/v2
+profile: lite
+stack: generic
+toolchains:
+- python
+- libreoffice
+phase: complete
+product:
+  has_ui: false
+  ui_platform: null
+impact:
+  ui_changed: false
+  paths:
+  - .mase/gates.yaml
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - tests/test_mase_training_deck.py
+  - openspec/changes/refresh-mase-v23-training-deck/**
+risk:
+  triggers: []
+  capabilities:
+    current_mase_training_deck:
+      profile: lite
+      paths:
+      - training/mase-framework/mase-training-v2.3.yaml
+      - training/mase-framework/MASE框架培训讲义V2.3.pptx
+      - scripts/build_mase_training_deck.py
+      - scripts/verify_mase_training_deck.py
+      - tests/test_mase_training_deck.py
+gates:
+  api_contract: passed
+  related_tests: passed
+  full_regression: passed
+evidence:
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-24T15:04:55.406833Z'
+  duration_seconds: 6.6346305
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: c516d4c405d3ed766e07fe263ae2ef8de1a77398e1f3adf17e32dabb70cc5400
+  input_digest: ab3a57f044ea1964978be0bfa6d38ec07372e586a41152a50ec41350a28f8db3
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  log_path: .mase/evidence/refresh-mase-v23-training-deck/related_tests-20260724T150455Z-f703193f.log
+  test_digest: b0ee9cc2c7fde2c8fb6fade5ff99a8cd315d879d717979838ccd1929c0d776eb
+  execution_signature: a23cf4aaf78a40a16515486913bb2f7ce1b1de362f06099d9a5b1cf52bb47651
+  execution_id: 8567fd76213c4505af3c53b39e1c8094
+- gate: api_contract
+  kind: automatic
+  result: passed
+  at: '2026-07-24T15:05:07.153178Z'
+  duration_seconds: 5.611842
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 6a3b709a6dc89682930cffd37ca335de55b6d8de56ce053941a6272b253a3c40
+  input_digest: 1ac93ef71c92a6c0b862c6726eb1fea98634678093c7a455c7ebc28e0b4cca8c
+  inputs:
+  - mase_cli
+  - schemas
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_cli_operations.py
+  - tests/test_mase_governance_models.py
+  - tests/test_risk_driven_property_testing.py
+  log_path: .mase/evidence/refresh-mase-v23-training-deck/api_contract-20260724T150507Z-16f7d4b3.log
+  test_digest: 1e2b948b7dc1d4aa07eded63e62263d3461844fc20131801afe9e83b6cace079
+  execution_signature: 2abb25e62d4ea9f8a224d943ca4a464d4d67c3f17c7a5fae75d0cdf4679b9f6f
+  execution_id: cb4b8dff920040daace1595236e693f7
+- gate: full_regression
+  kind: automatic
+  result: passed
+  at: '2026-07-24T15:07:02.362893Z'
+  duration_seconds: 7.598461291
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 83df9ebd4ebd4c15f4b0fa082103e3318784ff5b4f1bd4b0ae4eaec69d1c6ef2
+  input_digest: 66d68d36a7d5e30503bd17f8ebb38632b8eb409f7ab0c17be1c21f2fae92c0b7
+  inputs:
+  - mase_cli
+  - profiles
+  - schemas
+  - templates
+  - tests
+  - pyproject.toml
+  - framework-manifest.yaml
+  - project-rules.md
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  log_path: .mase/evidence/refresh-mase-v23-training-deck/full_regression-20260724T150702Z-df438479.log
+  candidate_id: cf7330bf7fbe4d41
+  test_digest: af7f0b2bd342822f2fa8e6a9fda610570f911f30d3108379ea4184c0866727c3
+  execution_signature: 6ce63f4f705d54380d38f3ed329526fbe368cff09e6d2646c66578965eb9e904
+  execution_id: 5246dd5ea3244caba6aec7278be067a1
+- gate: related_tests
+  kind: automatic
+  result: passed
+  at: '2026-07-24T15:44:54.778767Z'
+  duration_seconds: 6.91940375
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - tests/test_mase_training_deck.py
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 6ca0c29f6f426c9f5f199ab6be443bc0169ef7bcef8c5641bd6875f8640e5bc6
+  input_digest: 413724dc59273a778e99d6ebd3ad9ad21f9c5b1410f70cf343fede8b68634ec8
+  inputs:
+  - mase_cli/gates.py
+  - mase_cli/evidence.py
+  - mase_cli/state.py
+  - tests/test_mase_gate_planning.py
+  - tests/test_mase_gate_evidence.py
+  - tests/test_mase_context.py
+  - tests/test_mase_profiles.py
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - tests/test_mase_training_deck.py
+  log_path: .mase/evidence/refresh-mase-v23-training-deck/related_tests-20260724T154454Z-bef60e2e.log
+  test_digest: b0ee9cc2c7fde2c8fb6fade5ff99a8cd315d879d717979838ccd1929c0d776eb
+  execution_signature: 86ddc4b0f42a101888e41e5368d02b5949aae8ebd8ec0b47e4c744be0ffecc7d
+  execution_id: 6ff9afe6629f4931a00c2f6c618537b3
+- gate: full_regression
+  kind: automatic
+  result: passed
+  at: '2026-07-24T15:45:45.952427Z'
+  duration_seconds: 7.9992205
+  exit_code: 0
+  command:
+  - python3
+  - -m
+  - pytest
+  - -q
+  - tests
+  platform: Darwin 25.5.0 · Python 3.9.6
+  commit: b1b06207a0d114c978a399e7ebf6cf1369204d79
+  worktree: 0b61bd2177292bf4c4786d2a607777b494434ee46cfc02e29b90c718ef5f0747
+  input_digest: d894a9ad95e46529935450fa37efd6e425e91d57735462e7961cf22202f2e399
+  inputs:
+  - mase_cli
+  - profiles
+  - schemas
+  - templates
+  - tests
+  - pyproject.toml
+  - framework-manifest.yaml
+  - project-rules.md
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - training/mase-framework/mase-training-v2.3.yaml
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  log_path: .mase/evidence/refresh-mase-v23-training-deck/full_regression-20260724T154545Z-fa4d8591.log
+  candidate_id: 1665a8af5552a8c6
+  test_digest: af7f0b2bd342822f2fa8e6a9fda610570f911f30d3108379ea4184c0866727c3
+  execution_signature: ad34053317d59a8def8b9219c054e3b490bfb67b5a3d0a1d8f44a9c71a872d14
+  execution_id: 7f1286ed87fd4787a21288c07f398a41
+dependencies: []
+conflicts_with: []
+blockers: []
+capabilities:
+- current-mase-training-deck
+candidate:
+  id: 1665a8af5552a8c6
+  created_at: '2026-07-24T15:45:26.194558Z'
+  input_digest: abf5209c5552e6460154b55238fb880f58087df021191128b5851558fe140919
+  inputs:
+  - .mase/gates.yaml
+  - framework-manifest.yaml
+  - mase_cli
+  - openspec/changes/refresh-mase-v23-training-deck/design.md
+  - openspec/changes/refresh-mase-v23-training-deck/proposal.md
+  - openspec/changes/refresh-mase-v23-training-deck/specs
+  - openspec/changes/refresh-mase-v23-training-deck/tasks.md
+  - profiles
+  - project-rules.md
+  - pyproject.toml
+  - schemas
+  - scripts/build_mase_training_deck.py
+  - scripts/verify_mase_training_deck.py
+  - templates
+  - tests
+  - training/mase-framework/MASE框架培训讲义V2.3.pptx
+  - training/mase-framework/mase-training-v2.3.yaml

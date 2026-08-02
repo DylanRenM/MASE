@@ -1,0 +1,64 @@
+schema: mase-project/v2
+profile: standard
+stack: generic
+phase: complete
+risk:
+  triggers:
+  - framework-migration
+  capabilities:
+    stack-aware-cli:
+      profile: standard
+    single-source-project-state:
+      profile: standard
+gates:
+  proposal: stale
+  design: stale
+  openspec_strict: stale
+  framework_python: stale
+  sandbox_javascript: stale
+  cli_check: stale
+  migration: stale
+  morerduo_regression: stale
+evidence:
+- gate: openspec_strict
+  result: stale
+  path: openspec/changes/adaptive-lightweight-mase
+  kind: legacy
+- gate: framework_python
+  result: stale
+  path: tests (47 passed)
+  kind: legacy
+- gate: sandbox_javascript
+  result: stale
+  path: tests/e2e/sandbox.test.js (9 passed)
+  kind: legacy
+- gate: cli_check
+  result: stale
+  path: mase check + generic/python/swift integration tests
+  kind: legacy
+- gate: migration
+  result: stale
+  path: tests/test_mase_update.py + tests/test_mase_cli_operations.py
+  kind: legacy
+- gate: morerduo_regression
+  result: stale
+  path: scripts/verify-morerduo.sh (49 unit, 53 integration, 60 contract, 20 E2E)
+  kind: legacy
+capabilities:
+- adaptive-process-profiles
+- single-source-project-state
+- stack-aware-cli
+- token-efficient-context-routing
+- framework-content-boundaries
+toolchains:
+- node
+- python
+product:
+  has_ui: false
+  ui_platform: null
+impact:
+  ui_changed: false
+  paths: []
+dependencies: []
+conflicts_with: []
+blockers: []

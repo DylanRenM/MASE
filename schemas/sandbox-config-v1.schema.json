@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://measures.local/schemas/sandbox-config-v1.json",
+  "title": "MASE E2E Sandbox configuration",
+  "type": "object",
+  "required": ["version", "snapshot", "safety"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "version": {"const": 1},
+    "adapter": {"type": "string", "minLength": 1},
+    "_comment": {"type": "string"},
+    "snapshot": {
+      "type": "object",
+      "required": ["directories", "files", "env_vars"],
+      "properties": {
+        "directories": {"$ref": "#/$defs/relativePaths"},
+        "files": {"$ref": "#/$defs/relativePaths"},
+        "env_vars": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "properties": {"strict": {"type": "boolean"}},
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "required": ["allowed_roots", "never_backup"],
+      "properties": {
+        "allowed_roots": {"$ref": "#/$defs/nonEmptyRelativePaths"},
+        "never_backup": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {"pattern": "(^[/\\\\]|^[A-Za-z]:[/\\\\]|(^|[/\\\\])\\.\\.([/\\\\]|$))"}
+    },
+    "relativePaths": {"type": "array", "items": {"$ref": "#/$defs/relativePath"}, "uniqueItems": true},
+    "nonEmptyRelativePaths": {"type": "array", "items": {"$ref": "#/$defs/relativePath"}, "minItems": 1, "uniqueItems": true}
+  },
+  "additionalProperties": false
+}

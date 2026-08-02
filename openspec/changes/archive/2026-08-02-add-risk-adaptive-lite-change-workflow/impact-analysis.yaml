@@ -1,0 +1,246 @@
+schema: mase-impact-analysis/v1
+applicability: required
+comparison:
+  baseline: commit:69c7b1c
+  diff_digest: pending
+  spec_inputs:
+  - openspec/changes/add-risk-adaptive-lite-change-workflow/specs
+  contract_inputs:
+  - schemas/mase-state.schema.json
+  - profiles/risks.yaml
+  - profiles/strict.yaml
+adapter:
+  name: python-static-and-manifest
+  version: '1.0'
+  rules_digest: mase-2.4-impact-policy
+  confidence: high
+  inputs:
+  - mase_cli
+  - profiles
+  - schemas
+  - templates
+  - tests
+change_points:
+- id: risk-model
+  path: mase_cli/risk.py
+  symbol: Change Risk resolution and UI routing
+  change_type: business_semantics
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+- id: lite-cli
+  path: mase_cli/fix.py
+  symbol: fix start and promote workflow
+  change_type: external_contract
+  core_path: true
+  call_frequency: low
+  semantics_preserved: false
+  side_effects_preserved: false
+- id: state-contract
+  path: schemas/mase-state.schema.json
+  symbol: change_risk and ui_change_kind
+  change_type: external_contract
+  core_path: true
+  call_frequency: high
+  semantics_preserved: false
+  side_effects_preserved: true
+approved_paths:
+- mase_cli/risk.py
+- mase_cli/fix.py
+- mase_cli/state.py
+- mase_cli/main.py
+- profiles/risks.yaml
+- profiles/strict.yaml
+- schemas/mase-state.schema.json
+- templates/mase-state.yaml
+- project-rules.md
+- README.md
+- docs/MASE-framework.md
+- docs/user-guide.md
+- docs/glossary.md
+- agents/agent-1-orchestrator/SKILL.md
+- agents/agent-2-requirements/SKILL.md
+- agents/agent-3-development/SKILL.md
+- agents/agent-4-quality/SKILL.md
+- skills/code-quality-controller/SKILL.md
+- tests/test_mase_profiles.py
+- tests/test_mase_lite_workflow.py
+- tests/test_mase_governance_models.py
+- openspec/changes/add-risk-adaptive-lite-change-workflow
+approved_symbols:
+- mase_cli/risk.py:resolve_change_risk
+- mase_cli/risk.py:ui gate routing
+- mase_cli/fix.py:start_fix
+- mase_cli/fix.py:promote_fix
+- mase_cli/main.py:fix commands
+forbidden_paths:
+- ../pilot/**
+- /Users/dylanren/Documents/trae_projects/pilot/**
+protected_invariants:
+- Profile 与 Change Risk 与影响等级分开
+- 硬风险下限不得降级
+- 旧 ui_changed true 保守映射为 journey
+- promote 不覆盖未知目标
+call_graph:
+  status: verified
+  baseline_edges: []
+  planned_changes: []
+  actual_changes: []
+  unplanned_changes: []
+protected_tests:
+  baseline: commit:69c7b1c
+  selectors:
+  - tests/test_mase_profiles.py
+  - tests/test_mase_governance_models.py
+  manifest_digest: framework-regression-239-python-15-node
+  changes:
+  - selector: tests/test_mase_profiles.py
+    action: modified
+    rationale: 增加风险下限与 UI 分类回归
+    approval: user-request:optimize-MASE-2.4
+  - selector: tests/test_mase_governance_models.py
+    action: modified
+    rationale: 增加 Change Risk 状态契约回归
+    approval: user-request:optimize-MASE-2.4
+effect_budget:
+  status: verified
+  allowed:
+    file_reads:
+    - MASE 框架源码、Profile、Schema和测试
+    file_writes:
+    - 批准的框架文件及临时目录中的 Lite 工件
+    persistence_writes: []
+    external_calls: []
+    messages: []
+  forbidden:
+  - Pilot 项目文件、数据与测试
+  observed_extra: []
+change_declaration:
+  spec_changes:
+  - 新增 Change Risk L1-L4 与 UI 三分类
+  - 新增 OpenSpec Lite 创建和无损提升
+  - 精简 L1/L2 人工证据
+  incidental_changes: []
+  non_spec_changes: []
+callers:
+- id: state-loader
+  path: mase_cli/state.py
+  symbol: ChangeState loading
+  depth: 1
+  first_party: true
+  via: direct import
+  capability: change-risk-governance
+- id: gate-planner
+  path: mase_cli/gates.py
+  symbol: risk-selected gates
+  depth: 2
+  first_party: true
+  via: state risk resolution
+  capability: adaptive-process-profiles
+- id: cli-dispatch
+  path: mase_cli/main.py
+  symbol: fix command dispatch
+  depth: 1
+  first_party: true
+  via: direct import
+  capability: lite-change-workflow
+implicit_channels:
+- kind: serialization
+  status: discovered
+  risk: controlled
+  evidence: YAML state and JSON Schema tests
+  path: schemas/mase-state.schema.json
+- kind: configuration_spi
+  status: discovered
+  risk: controlled
+  evidence: risk registry and profiles are versioned YAML
+  path: profiles
+- kind: generated_registration
+  status: discovered
+  risk: controlled
+  evidence: CLI parser explicitly registers fix commands
+  path: mase_cli/main.py
+- kind: reflection
+  status: checked_empty
+  risk: controlled
+  evidence: no reflection dispatch
+- kind: async_callback
+  status: checked_empty
+  risk: controlled
+  evidence: synchronous atomic promote
+boundaries:
+- id: mase-fix-cli
+  kind: cli
+  path: mase_cli/main.py
+  depth: 1
+- id: installed-state-schema
+  kind: other
+  path: schemas/mase-state.schema.json
+  depth: 1
+terminations:
+- branch: mase-fix-cli
+  reason: system_boundary
+  depth: 1
+- branch: installed-state-schema
+  reason: system_boundary
+  depth: 1
+classification:
+  level: L3
+  reasons:
+  - 新增安装后 CLI 命令与状态公共契约
+  - 修改门禁风险业务语义
+decision:
+  status: proceed
+  strategy: backward-compatible schema and conservative fallback
+verification:
+  test_types:
+  - unit
+  - contract
+  - integration
+  - full_regression
+  tests:
+  - tests/test_mase_profiles.py
+  - tests/test_mase_lite_workflow.py
+  - tests/test_mase_governance_models.py
+  fixture_sources:
+  - temporary-directory fixtures
+  - versioned profile fixtures
+  expected_differences:
+  - presentation 不再强制 P0
+  - 硬风险会自动提升
+  - L1/L2 不需形式化人工证据
+  side_effect_isolation: Lite 写入仅在 pytest 临时目录验证
+recovery:
+  strategy: 回退新风险解析与 fix 命令，保留 Lite 源文件
+  data_compatibility: 旧状态字段保守可读，无数据迁移
+reconciliation:
+  status: matched
+  actual_diff_digest: 0291169bc7afa2d15bf4aa6451c2fc533a5855e8332e3540ce22d52dcd86f3f8
+  actual_paths:
+  - mase_cli/risk.py
+  - mase_cli/fix.py
+  - mase_cli/state.py
+  - mase_cli/main.py
+  - profiles/risks.yaml
+  - profiles/strict.yaml
+  - schemas/mase-state.schema.json
+  - templates/mase-state.yaml
+  - project-rules.md
+  - README.md
+  - docs/MASE-framework.md
+  - docs/user-guide.md
+  - docs/glossary.md
+  - agents/agent-1-orchestrator/SKILL.md
+  - agents/agent-2-requirements/SKILL.md
+  - agents/agent-3-development/SKILL.md
+  - agents/agent-4-quality/SKILL.md
+  - skills/code-quality-controller/SKILL.md
+  - tests/test_mase_profiles.py
+  - tests/test_mase_lite_workflow.py
+  - tests/test_mase_governance_models.py
+  unplanned_paths: []
+  actual_symbols: []
+  unplanned_symbols: []
+residual_risks:
+- L3 独立综合评审仍需由非实现者确认

@@ -1,0 +1,87 @@
+schema: mase-project/v2
+profile: standard
+stack: python
+toolchains:
+- node
+framework_contract:
+  name: MASE
+  version: 2.4.0
+  interface: installed-cli-and-versioned-schemas
+phase: build
+product:
+  has_ui: false
+  has_public_contract: true
+  ui_platform: null
+impact:
+  ui_changed: false
+  ui_change_kind: none
+  paths:
+  - project-rules.md
+  - README.md
+  - docs
+  - agents
+  - mase_cli/rules.py
+  - scripts/estimate_mase_speed_gain.py
+  - training/mase-framework
+  - tests
+change_risk:
+  level: L3
+  dimensions:
+    public_contract: true
+    core_calculation: false
+    data_write: false
+    authentication: false
+    authorization: false
+    secrets: false
+    quota: false
+    concurrency: false
+    cross_system: false
+    persistent_state_machine: false
+    reversible: true
+    stable_regression: true
+impact_analysis:
+  applicability: required
+  level: L3
+  decision: proceed
+  artifact: impact-analysis.yaml
+  artifact_digest: sha256:04f000b26c71d200ebb15d0739c2066c64a7144b76249e789bab8d0a65c39490
+  baseline_digest: commit:69c7b1c
+  diff_digest: c7f66edb57a3101fcbfe48f604a5dac390307dd824e077d9b797ad6818bd8dbc
+  reconciliation: matched
+risk:
+  triggers:
+  - public_contract_change
+  capabilities:
+    delivery_purpose:
+      profile: standard
+      triggers:
+      - public_contract_change
+      paths:
+      - project-rules.md
+      - README.md
+      - docs
+      - agents
+      - training/mase-framework
+gates:
+  impact_analysis: pending
+  impact_reconcile: pending
+  contract_differential: pending
+  related_tests: pending
+  api_contract: pending
+  integration_tests: pending
+  impact_review: pending
+  architecture_review: pending
+  full_chain_smoke: pending
+  rollback_verification: pending
+  independent_review: pending
+  full_regression: pending
+evidence: []
+dependencies:
+- change: add-gate-cost-planning-and-metrics
+  phase: verify
+conflicts_with: []
+blockers: []
+capabilities:
+- delivery-purpose-and-speed-baseline
+- current-mase-training-deck
+- framework-self-governance-and-training-consistency

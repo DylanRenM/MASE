@@ -1,237 +1,82 @@
-# 项目目录结构规范
+# MASE v2 项目结构规范
 
-> 所有新项目必须遵循此结构，Classify 代码文件时严格遵守。
+## 通用原则
 
-## 规范速查
+1. 每类事实只有一个人工维护位置。
+2. 产品、框架、测试、历史、培训和生成物物理分区。
+3. 目录由 stack adapter 和 Profile 决定，不强迫 Swift 项目采用 Python 结构。
+4. tests 在语义上镜像 capability，而不是机械复制每层目录。
 
-```
-project-root/
-├── src/                          # ① 产品代码（唯一源码位置）
-│   └── {package_name}/           #     Python 包名（snake_case）
-│       ├── __init__.py
-│       ├── {capability}/         #     按 specs/ 中的 capability 分模块
-│       │   ├── __init__.py
-│       │   ├── models/           #     数据模型（ORM/数据类）
-│       │   │   ├── __init__.py
-│       │   │   └── *.py
-│       │   ├── services/         #     业务逻辑
-│       │   │   ├── __init__.py
-│       │   │   └── *.py
-│       │   ├── routes/           #     API 路由（可选，有 HTTP 接口时）
-│       │   │   ├── __init__.py
-│       │   │   └── *.py
-│       │   └── schemas/          #     请求/响应 Schema（可选）
-│       │       ├── __init__.py
-│       │       └── *.py
-│       └── shared/               #     跨 capability 共享
-│           ├── __init__.py
-│           ├── config/           #     全局配置管理
-│           │   ├── __init__.py
-│           │   └── settings.py
-│           ├── database/         #     数据库连接与 ORM 基类
-│           │   ├── __init__.py
-│           │   └── connection.py
-│           └── utils/            #     通用工具函数
-│               ├── __init__.py
-│               └── *.py
-│
-├── tests/                        # ② 测试代码（镜像 src/ 结构）
-│   ├── unit/                     #     单元测试
-│   │   └── {capability}/
-│   │       ├── __init__.py
-│   │       ├── models/           #     镜像 src/{capability}/models/
-│   │       │   ├── __init__.py
-│   │       │   └── test_*.py
-│   │       ├── services/         #     镜像 src/{capability}/services/
-│   │       │   ├── __init__.py
-│   │       │   └── test_*.py
-│   │       └── routes/           #     镜像 src/{capability}/routes/
-│   │           ├── __init__.py
-│   │           └── test_*.py
-│   ├── integration/              #     集成测试（跨 capability）
-│   │   ├── __init__.py
-│   │   └── test_*.py
-│   ├── e2e/                      #     E2E 测试（Playwright）
-│   │   ├── conftest.py           #     Playwright 共享配置
-│   │   └── test_*.py             #     P0 场景 E2E 测试
-│   ├── fixtures/                 #     测试数据文件（json/csv/txt）
-│   │   └── {capability}/
-│   │       ├── models/           #     镜像 src/{capability}/models/
-│   │       └── services/         #     镜像 src/{capability}/services/
-│   ├── conftest.py               #     pytest 共享 fixtures
-│   └── __init__.py
-│
-├── docs/                         # ③ 文档（唯一文档位置）
-│   ├── user-guide.md             #     用户使用手册
-│   ├── lessons/                  #     经验教训（bug-fixer 原则7输出）
-│   │   └── YYYY-MM-DD-{topic}.md
-│   ├── cases/                    #     典型案例（可复用模式/反模式）
-│   │   ├── bugs/                 #     BUG 案例
-│   │   │   └── {case-name}.md
-│   │   ├── patterns/             #     设计模式/代码模式
-│   │   │   └── {pattern-name}.md
-│   │   └── pitfalls/             #     踩坑记录
-│   │       └── {pitfall-name}.md
-│   └── superpowers/              #     设计文档归档
-│       └── specs/
-│           └── YYYY-MM-DD-{topic}-design.md
-│
-├── openspec/                     # ④ 规范文档（只读，由 Agent 产出）
-│   └── changes/
-│       └── {change-name}/
-│           ├── mase-state.yaml
-│           ├── proposal.md
-│           ├── tech-feasibility.md
-│           ├── architecture.md
-│           ├── detailed-design.md
-│           ├── contract.md
-│           ├── tasks.md
-│           └── specs/
-│               └── {capability}/
-│                   └── spec.md
-│
-├── scripts/                      # ⑤ 工具脚本（非产品代码）
-│   ├── run.py                    #     项目入口脚本
-│   └── migrate.py                #     数据迁移等一次性脚本
-│
-├── config/                       # ⑥ 配置文件（非代码）
-│   ├── logging.yaml              #     日志配置
-│   └── {env}.yaml                #     环境配置
-│
-├── pyproject.toml                # ⑦ 项目元信息
-├── Makefile                      #     常用命令快捷入口
-├── .env.example                  #     环境变量模板
-├── .gitignore                    #     Git 忽略规则
-└── README.md                     #     项目说明
+## 最小通用项目
+
+```text
+project/
+├── .mase.yaml                 # 项目元数据：version/profile/stack
+├── project-rules.md           # 唯一项目规则源
+├── AGENTS.md / CLAUDE.md ...  # generated IDE adapters
+├── openspec/
+│   └── changes/{name}/
+│       ├── mase-state.yaml    # change 唯一状态；可绑定 framework_contract
+│       │                      # 发布任务可内嵌可选 Release Overlay
+│       ├── impact-analysis.yaml # 历史行为变更的调用链、分级、测试与回滚事实源
+│       ├── impact-scope.md    # 由影响事实源生成
+│       ├── test-scope.md      # 由影响事实源生成
+│       ├── rollback.md        # 由影响事实源生成
+│       ├── proposal.md
+│       ├── design.md          # Profile/risk 需要时
+│       ├── specs/{capability}/spec.md
+│       └── tasks.md
+├── src/ 或 Sources/           # stack adapter 决定
+├── tests/ 或 Tests/
+└── docs/
 ```
 
-## 设计原则
+`openspec/master/` 是 archive/release 生成的只读快照，不是开发期双写目录。
 
-### 1. 唯一性 — 每类文件只有一个存放位置
-- 产品代码 → `src/`
-- 测试代码 → `tests/`
-- 文档 → `docs/`
-- 规范 → `openspec/`
-- 脚本 → `scripts/`
+三个 Markdown 视图不得独立维护；`mase impact render` 从 `impact-analysis.yaml` 重建并写入相同来源摘要。未修改历史行为的 change 仍需在 state 中完成影响分类或记录结构化豁免。
 
-绝对禁止：
-- 将产品代码放在根目录
-- 将测试和产品代码混放
-- 将文档散落在各处
+## Stack adapter
 
-### 2. 镜像原则 — tests/ 目录结构镜像 src/
+| Stack | 产品根 | 测试根 | 项目清单 |
+|---|---|---|---|
+| generic | 可选 | 可选 | 无强制语言清单 |
+| python | `src/{package}/` | `tests/` | `pyproject.toml` |
+| swift | `Sources/{Module}/` | `Tests/{Module}Tests/` | `Package.swift` |
 
+新增 stack 时实现声明式必需路径和模板，不在 `check_project.py` 堆叠项目专属判断。
+
+## MASE 框架仓库
+
+```text
+MASE/
+├── framework-manifest.yaml    # 版本、发布与上下文边界
+├── project-rules.md           # 规则源
+├── profiles/                  # Lite/Standard/Strict
+├── schemas/                   # 状态等机器契约
+├── mase_cli/                  # CLI 运行时
+├── agents/                    # 短路由器
+├── skills/                    # SKILL.md + 按需 references
+├── templates/                 # stack/Profile 感知模板
+├── docs/                      # 现行规范
+├── training/mase-framework/   # MASE 培训源、受保护模板与可编辑课件
+├── scripts/                   # 框架构建、验证与边界审计
+└── tests/                     # 只验证 MASE 框架
 ```
-src/{pkg}/{capability}/models/foo.py       →  tests/unit/{capability}/models/test_foo.py
-src/{pkg}/{capability}/services/bar.py     →  tests/unit/{capability}/services/test_bar.py
-src/{pkg}/{capability}/routes/baz.py       →  tests/unit/{capability}/routes/test_baz.py
-src/{pkg}/shared/config/settings.py        →  tests/unit/shared/config/test_settings.py
-```
 
-不镜像 = 出问题。文件多了之后找不到对应关系。
+Release Overlay 的独立输入模板为 `templates/release-context.yaml`，契约为 `schemas/mase-release.schema.json`；合入 change 后仍由 `mase-state.yaml` 作为唯一状态源。`skills/release-software/` 保存平台中立流程、确定性计划脚本和一层 adapter references。项目专属的部署命令、CI/CD、Helm、Terraform、PowerShell 或商店自动化留在采用项目中，不复制进 MASE 核心。
 
-### 3. Capability 对齐 — src/ 的一级分组与 specs/ 一一对应
-```
-specs/book-parser/spec.md     →  src/{pkg}/book_parser/
-specs/content-vectorizer/     →  src/{pkg}/content_vectorizer/
-...
-```
+MASE 框架与采用它开发的真实产品必须使用不同项目根和独立 Git 仓库。真实产品、产品数据、通用培训、研究演示、历史备份和构建缓存不得放入 `MASE/`。`scripts/audit_repository_boundary.py` 以显式 allowlist 检查顶层、现行 docs/training 和递归生成残留；manifest 的 `default_context_excludes` 只负责当前框架运行时的上下文预算，不再承担隐藏非框架内容的职责。
 
-`shared/` 例外：跨 capability 共享的代码放这里。
-
-### 4. 根目录整洁 — 根目录只放项目级别文件
-允许在根目录的：
-- `pyproject.toml`、`Makefile`、`.env.example`、`.gitignore`、`README.md`
-- 目录（`src/`、`tests/`、`docs/`、`openspec/`、`scripts/`、`config/`）
-
-禁止在根目录的：
-- Python 源文件（应该放 `src/` 或 `scripts/`）
-- 测试文件（应该放 `tests/`）
-- 数据文件（应该放 `data/`）
-- Python `__pycache__` 目录
-
-## 文件命名规范
-
-| 类型 | 规范 | 示例 |
-|------|------|------|
-| Python 包名 | snake_case | `book_parser/` |
-| Python 模块 | snake_case | `content_vectorizer.py` |
-| Python 类 | PascalCase | `class BookParser` |
-| 函数/方法 | snake_case, 动词开头 | `def parse_epub()` |
-| 测试文件 | `test_{被测模块}.py` | `test_book_parser.py` |
-| 测试函数 | `test_{场景}.py` | `def test_parse_empty_chapter()` |
-| JSON/YAML 配置 | kebab-case | `logging.yaml` |
+采用项目通过已安装 CLI 和版本化 Schema 使用 MASE；`mase-state.yaml` 可声明 `framework_contract` 固定 `name`、语义版本和 `installed-cli-and-versioned-schemas` 接口。框架验证使用临时采用项目，不访问任何命名产品仓库。
 
 ## 禁止模式
 
-### 禁止：根目录散落 Python 文件
-```diff
-- project-root/main.py
-- project-root/batch_import.py
-- project-root/recover_stuck.py
-+ project-root/scripts/run.py
-+ project-root/scripts/batch_import.py
-+ project-root/scripts/recover_stuck.py
-```
-
-### 禁止：测试与产品代码混放
-```diff
-- src/bazi/test_parser.py       # 测试代码不应在 src/
-+ tests/unit/book_parser/test_parser.py
-```
-
-### 禁止：测试无组织结构
-```diff
-- tests/test_book_parser.py
-- tests/test_content_vectorizer.py
-+ tests/unit/book_parser/test_book_parser.py
-+ tests/unit/content_vectorizer/test_content_vectorizer.py
-```
-
-## 创建新项目流程
-
-1. 复制 `openspec/changes/_template/` → `openspec/changes/{name}/`
-2. 确认 `specs/{capability}/` 目录结构（决定 src/ 的模块分组）
-3. 按本规范创建目录骨架：
-   ```bash
-   # 产品代码
-   mkdir -p src/{pkg}/{capability1,capability2}/models
-   mkdir -p src/{pkg}/{capability1,capability2}/services
-   mkdir -p src/{pkg}/{capability1,capability2}/routes
-   mkdir -p src/{pkg}/{capability1,capability2}/schemas
-   mkdir -p src/{pkg}/shared/{config,database,utils}
-   
-   # 测试代码
-   mkdir -p tests/unit/{capability1,capability2}/{models,services,routes}
-   mkdir -p tests/unit/shared/{config,database,utils}
-   mkdir -p tests/integration
-   mkdir -p tests/fixtures/{capability1,capability2}/{models,services}
-   
-   # 其他
-    mkdir -p scripts config
-    mkdir -p docs/lessons
-    mkdir -p docs/cases/{bugs,patterns,pitfalls}
-    touch .env.example .gitignore Makefile README.md
-    ```
-
-## 文档清单
-
-| 路径 | 内容 | 谁维护 |
-|------|------|--------|
-| `README.md` | 项目简介 + 快速开始 | 手动 |
-| `docs/user-guide.md` | 完整使用手册 | Agent 1 (Release 阶段) |
-| `docs/lessons/` | 经验教训记录 | Agent 4 (bug-fixer 原则7输出) |
-| `docs/cases/bugs/` | BUG 经典案例 | Agent 4 (Verify 阶段) |
-| `docs/cases/patterns/` | 可复用设计模式 | Agent 3 (Build 阶段) |
-| `docs/cases/pitfalls/` | 踩坑记录 | 任何 Agent |
-| `docs/superpowers/specs/` | 设计文档归档 | brainstorming Skill |
-| `openspec/changes/` | 当前变更规范 | Agent 2 + Agent 3 |
-
-## 与麦哲思AI软件开发统一流程的关系
-
-| 框架阶段 | 创建的目录 |
-|----------|-----------|
-| 创建新项目 | `src/`, `tests/`, `scripts/`, `config/`, 根目录配置文件 |
-| 阶段 2 (Design L2) | `openspec/changes/{name}/` 完整结构 |
-| 阶段 3 (Build) | `src/{pkg}/{capability}/` + `tests/unit/{capability}/` |
-| 阶段 5 (Release) | `docs/user-guide.md` + `README.md` 更新 |
+- 同时手工维护 project-rules、AGENTS、CLAUDE、CONVENTIONS、Copilot 五份规则。
+- 在 CLI 源码内嵌大段项目模板。
+- 把 Proposal、Specs 和 E2E 报告中的同一场景复制三遍。
+- 把培训 HTML/PPT、历史设计或产品实例作为现行框架规范检索。
+- 把采用 MASE 开发的真实产品源码、需求、OpenSpec 或构建缓存放进 MASE 框架仓库。
+- 用 `.gitignore` 或 `default_context_excludes` 隐藏已经放入 MASE 的产品、备份或演示目录。
+- 为 Lite 项目创建空的 architecture/detailed-design/contract 文档只为满足目录。
+- 把 Windows、容器、HTTP、数据库或 LLM 假设写成所有发布都必须执行的通用清单。
+- 把 release plan/checklist 的 pending 项目直接登记为 passed evidence。

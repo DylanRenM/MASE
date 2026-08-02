@@ -1,0 +1,36 @@
+schema: mase-profile/v1
+name: standard
+rank: 2
+description: 包含 UI、外部依赖、文件解析、并发或持久化的常规产品
+required_artifacts:
+  - change
+  - design
+  - specs
+  - api_contract
+  - tasks
+hard_gates:
+  - api_contract
+  - p0_e2e
+  - full_regression
+capability_gates:
+  - related_tests
+  - integration_tests
+test_schedule:
+  analysis:
+    - impact_classification
+    - impact_analysis
+  micro:
+    - related_unit
+    - related_contract
+  capability:
+    - impact_reconcile
+    - related_integration
+    - related_ui_contract
+    - code_review
+  final:
+    - candidate_freeze
+    - full_unit
+    - full_integration
+    - full_contract
+    - p0_journey
+review: capability-boundary

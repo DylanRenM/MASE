@@ -1,0 +1,13 @@
+.DS_Store
+.mase-backup/
+.mase/cache/
+.mase/telemetry.local.jsonl
+.env
+dist/
+.build/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+node_modules/
+e2e/sandbox/

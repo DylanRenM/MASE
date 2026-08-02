@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://measures.local/schemas/mase-release-v1.json",
+  "title": "MASE platform-neutral release context",
+  "$ref": "#/$defs/release",
+  "$defs": {
+    "nonEmptyStrings": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "release": {
+      "type": "object",
+      "required": [
+        "schema", "intent", "authority", "artifact", "target", "rollout",
+        "state", "interfaces", "external_capabilities", "recovery", "observation"
+      ],
+      "properties": {
+        "schema": {"const": "mase-release/v1"},
+        "intent": {"enum": ["plan", "package", "publish", "deploy", "verify", "recover"]},
+        "authority": {"enum": ["read-only", "release"]},
+        "artifact": {
+          "type": "object",
+          "required": ["kind", "identity"],
+          "properties": {
+            "kind": {"type": "string", "minLength": 1},
+            "identity": {"type": "string", "minLength": 1},
+            "provenance": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "target": {
+          "type": "object",
+          "required": ["kind", "environment"],
+          "properties": {
+            "kind": {"type": "string", "minLength": 1},
+            "environment": {"type": "string", "minLength": 1},
+            "platform": {"type": "string"},
+            "identifier": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "rollout": {
+          "type": "object",
+          "required": ["strategy"],
+          "properties": {
+            "strategy": {"type": "string", "minLength": 1},
+            "max_impact": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "state": {
+          "type": "object",
+          "required": ["classes", "migration"],
+          "properties": {
+            "classes": {"$ref": "#/$defs/nonEmptyStrings"},
+            "migration": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "interfaces": {"$ref": "#/$defs/nonEmptyStrings"},
+        "external_capabilities": {"$ref": "#/$defs/nonEmptyStrings"},
+        "recovery": {
+          "type": "object",
+          "required": ["strategies"],
+          "properties": {"strategies": {"$ref": "#/$defs/nonEmptyStrings"}},
+          "additionalProperties": false
+        },
+        "observation": {
+          "type": "object",
+          "required": ["signals", "window"],
+          "properties": {
+            "signals": {"$ref": "#/$defs/nonEmptyStrings"},
+            "window": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

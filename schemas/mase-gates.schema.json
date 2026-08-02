@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://measures.local/schemas/mase-gates-v1.json",
+  "title": "MASE canonical gate definitions",
+  "type": "object",
+  "required": ["schema", "gates"],
+  "properties": {
+    "schema": {"const": "mase-gates/v1"},
+    "retention": {"type": "integer", "minimum": 1, "maximum": 20},
+    "overlap_warning_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+    "gates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["stage", "command"],
+        "properties": {
+          "stage": {"enum": ["analysis", "micro", "capability", "final", "release_artifact", "release_preflight", "release_live", "release_observe"]},
+          "required_at": {"enum": ["development", "merge", "release", "observe"]},
+          "command": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "minItems": 1
+          },
+          "inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "tests": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "test_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+          "test_tiers": {
+            "type": "array",
+            "items": {"enum": ["unit", "contract", "integration", "ui_contract", "p0_journey", "p1_regression"]},
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "covers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "candidate_bound": {"type": "boolean"},
+          "mode": {"enum": ["automatic", "manual"]},
+          "effect": {"enum": ["read-only", "local-write", "external-write"]},
+          "required_authority": {"enum": ["read-only", "release"]},
+          "requires": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          ,"dependency_locks": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          ,"fixture_inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          ,"config_inputs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          ,"toolchain": {"type": "string"}
+          ,"environment": {"enum": ["standard", "strict"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

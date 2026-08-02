@@ -1,14 +1,14 @@
 {
   "name": "mase",
-  "version": "1.0.0",
-  "description": "> MASE (Measures AI Software Engineering) — v1.2",
-  "main": "index.js",
+  "version": "2.4.0",
+  "description": "MASE v2 E2E sandbox test support",
+  "private": true,
   "directories": {
     "doc": "docs",
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "bugs": {
     "url": "https://github.com/DylanRenM/MASE/issues"
